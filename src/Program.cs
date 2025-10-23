@@ -27,8 +27,21 @@ class Program
     // Fyll listan med rader såsom exemplet i kommentaren nedan 
     List<TipsMatch> tipsRad = new()
     {
-        //new TipsMatch { Number = 1, HomeTeam = "Fulham", AwayTeam = "Arsenal", HomeKey = "Fulham", AwayKey = "Arsenal", Tip = "2" },
+        new TipsMatch { Number = 1, HomeTeam = "Brentford", AwayTeam = "Liverpool", HomeKey = "Brentford", AwayKey = "Liverpool", Tip = "" },
+        new TipsMatch { Number = 2, HomeTeam = "Manchester United", AwayTeam = "Brighton", HomeKey = "Manchester United", AwayKey = "Brighton", Tip = "" },
+        new TipsMatch { Number = 3, HomeTeam = "Chelsea", AwayTeam = "Sunderland", HomeKey = "Chelsea", AwayKey = "Sunderland", Tip = "" },
+        new TipsMatch { Number = 4, HomeTeam = "Newcastle", AwayTeam = "Fulham", HomeKey = "Newcastle", AwayKey = "Fulham", Tip = "" },
+        new TipsMatch { Number = 5, HomeTeam = "Blackburn", AwayTeam = "Southampton", HomeKey = "Blackburn", AwayKey = "Southampton", Tip = "" },
+        new TipsMatch { Number = 6, HomeTeam = "Bristol City", AwayTeam = "Birmingham", HomeKey = "Bristol City", AwayKey = "Birmingham", Tip = "" },
+        new TipsMatch { Number = 7, HomeTeam = "Derby", AwayTeam = "Queens Park Rangers", HomeKey = "Derby", AwayKey = "QPR", Tip = "" },
+        new TipsMatch { Number = 8, HomeTeam = "Hull", AwayTeam = "Charlton", HomeKey = "Hull City", AwayKey = "Charlton", Tip = "" },
+        new TipsMatch { Number = 9, HomeTeam = "Middlesbrough", AwayTeam = "Wrexham", HomeKey = "Middlesbrough", AwayKey = "Wrexham", Tip = "" },
+        new TipsMatch { Number = 10, HomeTeam = "Millwall", AwayTeam = "Leicester", HomeKey = "Millwall", AwayKey = "Leicester", Tip = "" },
+        new TipsMatch { Number = 11, HomeTeam = "Sheffield W", AwayTeam = "Oxford", HomeKey = "Sheffield Wednesday", AwayKey = "Oxford United", Tip = "" },
+        new TipsMatch { Number = 12, HomeTeam = "Swansea", AwayTeam = "Norwich", HomeKey = "Swansea", AwayKey = "Norwich", Tip = "" },
+        new TipsMatch { Number = 13, HomeTeam = "Stevenage", AwayTeam = "Bradford", HomeKey = "Stevenage", AwayKey = "Bradford", Tip = "" },
     };
+
     
     public Program()
     {
