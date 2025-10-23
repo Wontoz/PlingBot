@@ -7,7 +7,7 @@ using System.Timers;
 class Program
 {
     private DiscordSocketClient _client;
-    private readonly HttpClient _http = new HttpClient();
+    private readonly HttpClient _http = new();
     private readonly Dictionary<int, (int Home, int Away)> lastScores = new();
     bool isFirstMessage = true;
 
@@ -15,32 +15,44 @@ class Program
     private readonly ulong ChannelId;
     private readonly string ApiKey;
 
+    private readonly HashSet<ulong> AllowedUsers;
+    private readonly ulong WontozId;
+    private readonly ulong WibbId;
+    private readonly ulong JonasId;
+    private readonly ulong ViktorId;
+    private readonly ulong AndersId;
+    
+
     // Kolla https://dashboard.api-football.com/soccer/ids/teams för korrekta lagnamn i APIt
+    // Fyll listan med rader såsom exemplet i kommentaren nedan 
     List<TipsMatch> tipsRad = new()
     {
-        new TipsMatch { Number = 1, HomeTeam = "Fulham", AwayTeam = "Arsenal", HomeKey = "Fulham", AwayKey = "Arsenal", Tip = "2" },
-        new TipsMatch { Number = 2, HomeTeam = "Brighton", AwayTeam = "Newcastle", HomeKey = "Brighton", AwayKey = "Newcastle", Tip = "1X" },
-        new TipsMatch { Number = 3, HomeTeam = "Manchester City", AwayTeam = "Everton", HomeKey = "Manchester City", AwayKey = "Everton", Tip = "1" },
-        new TipsMatch { Number = 4, HomeTeam = "Burnley", AwayTeam = "Leeds", HomeKey = "Burnley", AwayKey = "Leeds", Tip = "1" },
-        new TipsMatch { Number = 5, HomeTeam = "Crystal Palace", AwayTeam = "Bournemouth", HomeKey = "Crystal Palace", AwayKey = "Bournemouth", Tip = "12" },
-        new TipsMatch { Number = 6, HomeTeam = "Sunderland", AwayTeam = "Wolverhampton", HomeKey = "Sunderland", AwayKey = "Wolves", Tip = "X2" },
-        new TipsMatch { Number = 7, HomeTeam = "Birmingham", AwayTeam = "Hull", HomeKey = "Birmingham", AwayKey = "Hull City", Tip = "12" },
-        new TipsMatch { Number = 8, HomeTeam = "Charlton", AwayTeam = "Sheffield W", HomeKey = "Charlton", AwayKey = "Sheffield Wednesday", Tip = "1" },
-        new TipsMatch { Number = 9, HomeTeam = "Coventry", AwayTeam = "Blackburn", HomeKey = "Coventry", AwayKey = "Blackburn", Tip = "1" },
-        new TipsMatch { Number = 10, HomeTeam = "Norwich", AwayTeam = "Bristol City", HomeKey = "Norwich", AwayKey = "Bristol City", Tip = "X2" },
-        new TipsMatch { Number = 11, HomeTeam = "Sheffield U", AwayTeam = "Watford", HomeKey = "Sheffield Utd", AwayKey = "Watford", Tip = "1X2" },
-        new TipsMatch { Number = 12, HomeTeam = "Stoke", AwayTeam = "Wrexham", HomeKey = "Stoke City", AwayKey = "Wrexham", Tip = "12" },
-        new TipsMatch { Number = 13, HomeTeam = "West Bromwich", AwayTeam = "Preston", HomeKey = "West Brom", AwayKey = "Preston", Tip = "1" },
+        //new TipsMatch { Number = 1, HomeTeam = "Fulham", AwayTeam = "Arsenal", HomeKey = "Fulham", AwayKey = "Arsenal", Tip = "2" },
     };
     
     public Program()
     {
-        // Load environment variables from .env file
         Env.Load();
 
         Token = Environment.GetEnvironmentVariable("DISCORD_TOKEN");
         ApiKey = Environment.GetEnvironmentVariable("FOOTBALL_API_KEY");
         ChannelId = ulong.Parse(Environment.GetEnvironmentVariable("DISCORD_CHANNEL_ID_PROD"));
+
+        WontozId = ulong.Parse(Environment.GetEnvironmentVariable("DISCORD_USER_ID_WILLIAM"));
+        WibbId = ulong.Parse(Environment.GetEnvironmentVariable("DISCORD_USER_ID_WIBB"));
+        JonasId = ulong.Parse(Environment.GetEnvironmentVariable("DISCORD_USER_ID_JONAS"));
+        ViktorId = ulong.Parse(Environment.GetEnvironmentVariable("DISCORD_USER_ID_VIKTOR"));
+        AndersId = ulong.Parse(Environment.GetEnvironmentVariable("DISCORD_USER_ID_ANDERS"));
+
+        AllowedUsers =
+        [
+            WontozId,
+            WibbId,
+            JonasId
+        ];
+
+        _http.BaseAddress = new Uri("https://v3.football.api-sports.io/");
+        _http.DefaultRequestHeaders.Add("x-apisports-key", ApiKey);
     }
     public static async Task Main() => await new Program().MainAsync();
 
@@ -59,7 +71,14 @@ class Program
         var timer = new PeriodicTimer(TimeSpan.FromSeconds(10));
         while (await timer.WaitForNextTickAsync())
         {
-            await CheckScores();
+            try
+            {
+                await CheckScores();
+            }
+            catch (Exception ex)
+            {
+                Log($"Unhandled exception in CheckScores: {ex.Message}", ConsoleColor.Red);
+            }
         }
 
         await Task.Delay(-1); // Keep running
@@ -70,12 +89,9 @@ private async Task CheckScores()
 {
     try
     {
-        _http.DefaultRequestHeaders.Clear();
-        _http.DefaultRequestHeaders.Add("x-apisports-key", ApiKey);
-
         var channel = _client.GetChannel(ChannelId) as IMessageChannel;
         List<Match> allLive = await FetchAllLiveMatches();
-        Log("Fetched matches");
+        Log("Fetched matches", ConsoleColor.DarkBlue);
 
         foreach (var tips in tipsRad)
         {
@@ -90,7 +106,7 @@ private async Task CheckScores()
     }
     catch (Exception ex)
     {
-        Log($"❌ Error fetching scores: {ex.Message}");
+            Log($"❌ Error fetching scores: {ex.Message}");
     }
 }
 
@@ -99,7 +115,7 @@ private async Task CheckScores()
 private async Task ProcessMatchUpdate(IMessageChannel channel, TipsMatch tm)
 {
     Match match = tm.Match;
-    Log($"✅ Checked match {tm.Number}: {match.HomeTeam} - {match.AwayTeam}");
+        Log($"✅ Checked match {tm.Number}: {match.HomeTeam} - {match.AwayTeam}");
 
     if (!lastScores.TryGetValue(match.Id, out var prevScore))
     {
@@ -138,15 +154,6 @@ private async Task AnnounceGoal(IMessageChannel channel, Match match, bool homeT
 #endregion
 
 #region Command Handling
-
-private static readonly HashSet<ulong> AllowedUsers = new()
-{
-    186226697471787009, // Wontoz
-    267355126069460993, // Wibb
-    314039635451969536  // Ek
-};
-private const ulong ViktorId = 691946498791047228;
-private const ulong AndersId = 1186441741868474398;
 
 private async Task HandleMessageAsync(SocketMessage message)
 {
@@ -200,8 +207,7 @@ private static int GetIntHelper(JsonElement el)
 
 private async Task<List<Match>> FetchAllLiveMatches()
 {
-    string url = $"https://v3.football.api-sports.io/fixtures?live=all";
-    string res = await _http.GetStringAsync(url);
+    string res = await _http.GetStringAsync("fixtures?live=all");
     var doc = JsonDocument.Parse(res);
 
     return doc.RootElement.GetProperty("response")
@@ -221,8 +227,8 @@ private async Task<List<Match>> FetchAllLiveMatches()
 
 private async Task<List<MatchEvent>> FetchMatchEvents(int matchId, string type, string detailFilter = null)
 {
-    string url = $"https://v3.football.api-sports.io/fixtures/events?fixture={matchId}";
-    string res = await _http.GetStringAsync(url);
+    
+    string res = await _http.GetStringAsync($"fixtures/events?fixture={matchId}");
     var doc = JsonDocument.Parse(res);
 
     return doc.RootElement.GetProperty("response")
@@ -252,8 +258,13 @@ private async Task<MatchEvent> FetchLatestGoal(int matchId)
         .FirstOrDefault();
 }
 
-private void Log(string message) =>
+private static void Log(string message, ConsoleColor color = ConsoleColor.Gray)
+{
+    var prev = Console.ForegroundColor;
+    Console.ForegroundColor = color;
     Console.WriteLine($"[{DateTime.Now:HH:mm:ss}] {message}");
+    Console.ForegroundColor = prev;
+}
 
     #endregion
 
