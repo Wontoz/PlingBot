@@ -21,31 +21,45 @@ class Program
     private readonly ulong JonasId;
     private readonly ulong ViktorId;
     private readonly ulong AndersId;
+
+    string currentPlayer = string.Empty;
     
 
     // Kolla https://dashboard.api-football.com/soccer/ids/teams för korrekta lagnamn i APIt
     // Fyll listan med rader såsom exemplet i kommentaren nedan 
     List<TipsMatch> tipsRad = new()
     {
-        new TipsMatch { Number = 1, HomeTeam = "Brentford", AwayTeam = "Liverpool", HomeKey = "Brentford", AwayKey = "Liverpool", Tip = "" },
-        new TipsMatch { Number = 2, HomeTeam = "Manchester United", AwayTeam = "Brighton", HomeKey = "Manchester United", AwayKey = "Brighton", Tip = "" },
-        new TipsMatch { Number = 3, HomeTeam = "Chelsea", AwayTeam = "Sunderland", HomeKey = "Chelsea", AwayKey = "Sunderland", Tip = "" },
-        new TipsMatch { Number = 4, HomeTeam = "Newcastle", AwayTeam = "Fulham", HomeKey = "Newcastle", AwayKey = "Fulham", Tip = "" },
-        new TipsMatch { Number = 5, HomeTeam = "Blackburn", AwayTeam = "Southampton", HomeKey = "Blackburn", AwayKey = "Southampton", Tip = "" },
-        new TipsMatch { Number = 6, HomeTeam = "Bristol City", AwayTeam = "Birmingham", HomeKey = "Bristol City", AwayKey = "Birmingham", Tip = "" },
-        new TipsMatch { Number = 7, HomeTeam = "Derby", AwayTeam = "Queens Park Rangers", HomeKey = "Derby", AwayKey = "QPR", Tip = "" },
-        new TipsMatch { Number = 8, HomeTeam = "Hull", AwayTeam = "Charlton", HomeKey = "Hull City", AwayKey = "Charlton", Tip = "" },
-        new TipsMatch { Number = 9, HomeTeam = "Middlesbrough", AwayTeam = "Wrexham", HomeKey = "Middlesbrough", AwayKey = "Wrexham", Tip = "" },
-        new TipsMatch { Number = 10, HomeTeam = "Millwall", AwayTeam = "Leicester", HomeKey = "Millwall", AwayKey = "Leicester", Tip = "" },
-        new TipsMatch { Number = 11, HomeTeam = "Sheffield W", AwayTeam = "Oxford", HomeKey = "Sheffield Wednesday", AwayKey = "Oxford United", Tip = "" },
-        new TipsMatch { Number = 12, HomeTeam = "Swansea", AwayTeam = "Norwich", HomeKey = "Swansea", AwayKey = "Norwich", Tip = "" },
-        new TipsMatch { Number = 13, HomeTeam = "Stevenage", AwayTeam = "Bradford", HomeKey = "Stevenage", AwayKey = "Bradford", Tip = "" },
+        new TipsMatch { Number = 1, HomeTeam = "Nottingham", AwayTeam = "Arsenal", HomeKey = "Nottingham Forest", AwayKey = "Arsenal", Tip = "X2" },
+        new TipsMatch { Number = 2, HomeTeam = "Chelsea", AwayTeam = "Brentford", HomeKey = "Chelsea", AwayKey = "Brentford", Tip = "1" },
+        new TipsMatch { Number = 3, HomeTeam = "Leeds", AwayTeam = "Fulham", HomeKey = "Leeds", AwayKey = "Fulham", Tip = "1" },
+        new TipsMatch { Number = 4, HomeTeam = "Liverpool", AwayTeam = "Burnley", HomeKey = "Liverpool", AwayKey = "Burnley", Tip = "1X" },
+        new TipsMatch { Number = 5, HomeTeam = "Tottenham", AwayTeam = "West Ham", HomeKey = "Tottenham", AwayKey = "West Ham", Tip = "1" },
+        new TipsMatch { Number = 6, HomeTeam = "Sunderland", AwayTeam = "Crystal Palace", HomeKey = "Sunderland", AwayKey = "Crystal Palace", Tip = "12" },
+        new TipsMatch { Number = 7, HomeTeam = "Charlton", AwayTeam = "Sheffield U", HomeKey = "Charlton", AwayKey = "Sheffield Utd", Tip = "X2" },
+        new TipsMatch { Number = 8, HomeTeam = "Oxford", AwayTeam = "Bristol City", HomeKey = "Oxford United", AwayKey = "Bristol City", Tip = "1X2" },
+        new TipsMatch { Number = 9, HomeTeam = "Preston", AwayTeam = "Derby", HomeKey = "Preston", AwayKey = "Derby", Tip = "1X" },
+        new TipsMatch { Number = 10, HomeTeam = "Southampton", AwayTeam = "Hull", HomeKey = "Southampton", AwayKey = "Hull City", Tip = "1" },
+        new TipsMatch { Number = 11, HomeTeam = "Stoke", AwayTeam = "Queens Park Rangers", HomeKey = "Stoke City", AwayKey = "QPR", Tip = "1" },
+        new TipsMatch { Number = 12, HomeTeam = "Swansea", AwayTeam = "Birmingham", HomeKey = "Swansea", AwayKey = "Birmingham", Tip = "2" },
+        new TipsMatch { Number = 13, HomeTeam = "Wrexham", AwayTeam = "Norwich", HomeKey = "Wrexham", AwayKey = "Norwich", Tip = "12" },
     };
+
 
     
     public Program()
     {
         Env.Load();
+
+        while (currentPlayer != "Wibb" && currentPlayer != "Ek" && currentPlayer != "Wille")
+        {
+            Console.WriteLine("Who is playing? Wibb, Ek or Wille");
+            currentPlayer = Console.ReadLine();
+
+            if(currentPlayer != "Wibb" && currentPlayer != "Ek" && currentPlayer != "Wille")
+                Console.WriteLine("Error: Player not found- Please enter a valid value.");
+            else
+                Console.WriteLine("Player successfully initialized. Todays player is: " + currentPlayer);
+        }
 
         Token = Environment.GetEnvironmentVariable("DISCORD_TOKEN");
         ApiKey = Environment.GetEnvironmentVariable("FOOTBALL_API_KEY");
@@ -97,7 +111,7 @@ class Program
         await Task.Delay(-1); // Keep running
     }
 
-private static readonly string[] IgnoredStatuses = ["Match Finished", "Halftime"];
+private static readonly string[] IgnoredStatuses = []; // Match Finished", "Halftime
 private async Task CheckScores()
 {
     try
@@ -192,11 +206,31 @@ private async Task HandleMessageAsync(SocketMessage message)
             return;
         }
 
-        int correct = CheckTipsRad();
-        string msg = isFirstMessage
-            ? $"Just nu har vi {correct} rätt! Körvi"
-            : $"Just nu har vi {correct} rätt!";
+        string suffix = string.Empty;
+        switch (currentPlayer)
+        {
+            case "Ek":
+                if(isFirstMessage)
+                    suffix = "Eeeeeeeeeeeeeek";
+                else
+                    suffix = "Eeeeek";
+            break;
+            case "Wibb":
+                if(isFirstMessage)
+                    suffix = "PleeeeeEEEEASE Wibb";
+                else
+                    suffix = "Körvi Wibb";
+            break;
+            case "Wille":
+            if(isFirstMessage)
+                    suffix = "Kan ju knappast bli sämre än förra gången du körde";
+                else
+                    suffix = "Suck...";
+            break;
+        }
 
+        var (correct, evaluated) = EvaluateCoupon();
+        string msg = $"Just nu har vi {correct}/{evaluated} rätt! " + suffix;
         await message.Channel.SendMessageAsync(msg);
         isFirstMessage = false;
     }
@@ -289,19 +323,21 @@ private static string GetTipsResult(Match match)
     return "X";
 }
 
-private int CheckTipsRad()
+private int EvaluateCoupon()
 {
-    int correctMatches = 0;
+    int correct = 0, evaluated = 0;
 
     foreach (var tips in tipsRad)
     {
-        if ((tips.Match == null && tips.Tip.Contains("X")) || (tips.Match != null && tips.Tip.Contains(tips.Match.Symbol)))
-        {
-            correctMatches++;
-        }
-    }
+        var m = tips.Match;
+        if (m == null) continue;
 
-    return correctMatches;
+        var symbol = GetTipsResult(m);
+        if(!string.IsNullOrWhiteSpace(tips.Tip) && tips.Tip.Contains(symbol))
+            correct++;
+        evaluated++;
+    }
+    return correct;
 }
 
 #endregion
