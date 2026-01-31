@@ -10,7 +10,7 @@ using PlingBot.Utils;
 public class AnnouncementService
 {
     private readonly FootballApiClient _api;
-    private readonly TipsConfig _tipsConfig;   // ← Added
+    private readonly TipsConfig _tipsConfig;
     private readonly Logger _logger;
 
     public AnnouncementService(
@@ -23,88 +23,103 @@ public class AnnouncementService
         _logger = logger;
     }
 
-    /// <summary>
-    /// Checks for new goals and announces them if detected.
-    /// Updates stored scores in TipsMatch and saves to JSON when a goal occurs.
-    /// </summary>
-    public async Task ProcessMatchUpdateAsync(IMessageChannel channel, TipsMatch tm)
+    public async Task ProcessMatchUpdateAsync(IMessageChannel channel, TipsMatch tip)
     {
-        var match = tm.Match ?? throw new ArgumentNullException(nameof(tm.Match));
+        var match = tip.Match ?? throw new ArgumentNullException(nameof(tip.Match));
 
-        _logger.Log($"✅ Checked match {tm.Number}: {match.HomeTeam} - {match.AwayTeam}");
+        _logger.Log($"Checked match {tip.Number,-2}: {match.HomeTeam} - {match.AwayTeam}", ConsoleColor.DarkGray);
 
-        // First time seeing this match → sync only, no announcement
-        if (tm.LastHomeGoals == null || tm.LastAwayGoals == null)
+        // First time: just sync, no announcement
+        if (!tip.LastHomeGoals.HasValue || !tip.LastAwayGoals.HasValue)
         {
-            tm.LastHomeGoals = match.HomeGoals;
-            tm.LastAwayGoals = match.AwayGoals;
-
-            tm.HomeScore = match.HomeGoals;
-            tm.AwayScore = match.AwayGoals;
-
-            _tipsConfig.SaveToJson();
-
-            _logger.Log(
-                $"Initial sync for tip {tm.Number}: {match.HomeGoals}-{match.AwayGoals}",
-                ConsoleColor.DarkGray
-            );
+            await SyncInitialScoresAsync(tip, match);
             return;
         }
 
-        int homeDiff = match.HomeGoals - tm.LastHomeGoals.Value;
-        int awayDiff = match.AwayGoals - tm.LastAwayGoals.Value;
-        bool anyChange = false;
+        int homeDiff = match.HomeGoals - tip.LastHomeGoals.Value;
+        int awayDiff = match.AwayGoals - tip.LastAwayGoals.Value;
+
+        bool anyNewGoals = false;
 
         if (homeDiff > 0)
         {
-            anyChange = true;
-            var latest = await _api.FetchLatestGoalAsync(match.Id);
+            anyNewGoals = true;
+            var latestGoal = await _api.FetchLatestGoalAsync(match.Id);
             for (int i = 0; i < homeDiff; i++)
-                await AnnounceGoalAsync(channel, tm, true, latest);
+            {
+                await AnnounceGoalAsync(channel, tip, match, true, latestGoal);
+            }
         }
 
         if (awayDiff > 0)
         {
-            anyChange = true;
-            var latest = await _api.FetchLatestGoalAsync(match.Id);
+            anyNewGoals = true;
+            var latestGoal = await _api.FetchLatestGoalAsync(match.Id);
             for (int i = 0; i < awayDiff; i++)
-                await AnnounceGoalAsync(channel, tm, false, latest);
+            {
+                await AnnounceGoalAsync(channel, tip, match, false, latestGoal);
+            }
         }
 
-        if (anyChange)
+        if (anyNewGoals)
         {
-            tm.LastHomeGoals = match.HomeGoals;
-            tm.LastAwayGoals = match.AwayGoals;
-            tm.HomeScore     = match.HomeGoals;
-            tm.AwayScore     = match.AwayGoals;
+            tip.LastHomeGoals = match.HomeGoals;
+            tip.LastAwayGoals = match.AwayGoals;
+            tip.HomeScore     = match.HomeGoals;
+            tip.AwayScore     = match.AwayGoals;
+
             _tipsConfig.SaveToJson();
-            _logger.Log($"Processed +{homeDiff}/{awayDiff} goals → updated stored state to {match.HomeGoals}-{match.AwayGoals}", ConsoleColor.Cyan);
+
+            _logger.Log(
+                $"Processed +{homeDiff}/{awayDiff} goals for tip {tip.Number} → stored {match.HomeGoals}-{match.AwayGoals}",
+                ConsoleColor.Cyan
+            );
         }
         else if (homeDiff < 0 || awayDiff < 0)
         {
-            // Optional: log drift but do NOT update stored values downward
-            _logger.Log($"Score decreased or API glitch? Tip {tm.Number}: stored {tm.LastHomeGoals}-{tm.LastAwayGoals} → API {match.HomeGoals}-{match.AwayGoals} — ignoring downward sync", ConsoleColor.DarkRed);
+            _logger.Log(
+                $"Score drift (API glitch?) tip {tip.Number}: stored {tip.LastHomeGoals}-{tip.LastAwayGoals} → API {match.HomeGoals}-{match.AwayGoals} — ignoring",
+                ConsoleColor.DarkRed
+            );
         }
     }
 
-    private async Task AnnounceGoalAsync(IMessageChannel channel, TipsMatch tm, bool homeTeamScored,MatchEvent? latestGoal)
+    private async Task SyncInitialScoresAsync(TipsMatch tip, Match match)
     {
-        var match = tm.Match;
+        tip.LastHomeGoals = match.HomeGoals;
+        tip.LastAwayGoals = match.AwayGoals;
+        tip.HomeScore     = match.HomeGoals;
+        tip.AwayScore     = match.AwayGoals;
 
-        string emoji = tm.Tip.Contains(match.Symbol) ? "✅" : "❌";
+        _tipsConfig.SaveToJson();
+
+        _logger.Log(
+            $"Initial sync for tip {tip.Number}: {match.HomeGoals}-{match.AwayGoals}",
+            ConsoleColor.DarkGray
+        );
+    }
+
+    private async Task AnnounceGoalAsync(
+        IMessageChannel channel,
+        TipsMatch tip,
+        Match match,
+        bool homeTeamScored,
+        MatchEvent? latestGoal)
+    {
+        string emoji = tip.Tip.Contains(match.Symbol) ? "✅" : "❌";
 
         string scoreDisplay = homeTeamScored
             ? $"**{match.HomeGoals}** - {match.AwayGoals}"
             : $"{match.HomeGoals} - **{match.AwayGoals}**";
 
-        string minute = !string.IsNullOrWhiteSpace(latestGoal.ExtraTime)
+        string minute = !string.IsNullOrWhiteSpace(latestGoal?.ExtraTime)
             ? $"{match.Elapsed} ({latestGoal.ExtraTime})'"
             : $"{match.Elapsed}'";
 
-        string msg = $"⚽ {emoji} Mål! {match.HomeTeam} {scoreDisplay} {match.AwayTeam} ({minute})";
+        string message = $"⚽ {emoji} Mål! {match.HomeTeam} {scoreDisplay} {match.AwayTeam} ({minute})";
 
-        await channel.SendMessageAsync(msg);
-        _logger.Log($"Announced goal: {msg}", ConsoleColor.Magenta);
+        await channel.SendMessageAsync(message);
+
+        _logger.Log($"Announced goal: {message}", ConsoleColor.Magenta);
     }
-
 }

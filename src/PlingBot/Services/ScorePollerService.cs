@@ -30,12 +30,13 @@ public class ScorePollerService
     {
         var todayMatches = await _api.FetchTodaysMatchesAsync();
 
-        _logger.Log($"Starting fixture mapping — { _tipsConfig.TipsMatches.Count } tips loaded from JSON", ConsoleColor.Blue);
-        foreach (var tip in _tipsConfig.TipsMatches)
-        { 
-            // Method for testing of JSON save functionality, uncomment when needed
-            // if(tip.Number == 1) SimulateGoal(tip);
+        _logger.Log($"Mapping { _tipsConfig.TipsMatches.Count } tips to today's {todayMatches.Count} fixtures", ConsoleColor.Blue);
 
+        int mapped = 0;
+        int failed = 0;
+
+        foreach (var tip in _tipsConfig.TipsMatches)
+        {
             if (tip.FixtureId.HasValue) continue;
 
             var match = todayMatches.FirstOrDefault(m =>
@@ -45,15 +46,17 @@ public class ScorePollerService
             if (match != null)
             {
                 tip.FixtureId = match.Id;
-                _logger.Log($"Mapped Tip #{tip.Number} to fixture {match.Id}", ConsoleColor.Green);
+                _logger.Log($"Mapped tip #{tip.Number,-2} → fixture {match.Id} ({tip.HomeKey} vs {tip.AwayKey})", ConsoleColor.Green);
+                mapped++;
             }
             else
             {
-                _logger.Error($"Could not map Tip #{tip.Number} ({tip.HomeKey} vs {tip.AwayKey})");
+                _logger.Log($"Failed to map tip #{tip.Number,-2} ({tip.HomeKey} vs {tip.AwayKey})", ConsoleColor.DarkRed);
+                failed++;
             }
         }
 
-        _logger.Log($"After mapping: { _tipsConfig.TipsMatches.Count(t => t.FixtureId.HasValue) } / { _tipsConfig.TipsMatches.Count } tips have fixture IDs", ConsoleColor.Green);
+        _logger.Log($"Mapping complete: {mapped} succeeded, {failed} failed", ConsoleColor.Cyan);
     }
 
 
@@ -79,36 +82,29 @@ public class ScorePollerService
 
     private async Task CheckScoresAsync(DiscordSocketClient client)
     {
-        if (client.GetChannel(ulong.Parse(Environment.GetEnvironmentVariable("DISCORD_CHANNEL_ID_PROD") ?? "0")) is not IMessageChannel channel)
+        var channel = client.GetChannel(ulong.Parse(Environment.GetEnvironmentVariable("DISCORD_CHANNEL_ID_PROD") ?? "0")) as IMessageChannel;
+        if (channel == null)
         {
-            _logger.Error("Channel not found");
+            _logger.Error("Discord channel not found");
             return;
         }
 
         var matches = await _api.FetchTodaysMatchesAsync();
-        _logger.Log($"Fetched {matches.Count} live matches", ConsoleColor.DarkBlue);
+        _logger.Log($"Fetched {matches.Count} matches for today", ConsoleColor.DarkBlue);
 
         foreach (var tip in _tipsConfig.TipsMatches)
         {
-            if (!tip.FixtureId.HasValue)
-                continue;
+            if (!tip.FixtureId.HasValue) continue;
 
-            // Find match in today's matches
             var current = matches.FirstOrDefault(m => m.Id == tip.FixtureId.Value);
-
             if (current == null)
             {
-                _logger.Log(
-                    $"Fixture {tip.FixtureId} not found in today's matches",
-                    ConsoleColor.DarkRed
-                );
+                _logger.Log($"Fixture {tip.FixtureId} (tip #{tip.Number}) not found in today's matches", ConsoleColor.DarkRed);
                 continue;
             }
 
-            // Log to confirm freshness
             _logger.Log(
-                $"Fresh poll for tip #{tip.Number} (fid {tip.FixtureId}): " +
-                $"{current.HomeGoals}-{current.AwayGoals} ({current.Status}, {current.Elapsed} min)",
+                $"Poll tip #{tip.Number,-2} (fid {tip.FixtureId}): {current.HomeGoals}-{current.AwayGoals} ({current.Status}, {current.Elapsed}'')",
                 ConsoleColor.Yellow
             );
 

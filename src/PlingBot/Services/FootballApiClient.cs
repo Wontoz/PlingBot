@@ -28,23 +28,16 @@ public class FootballApiClient
     public async Task<List<Match>> FetchTodaysMatchesAsync()
     {
         var today = DateTime.UtcNow.ToString("yyyy-MM-dd");
+        string url = $"fixtures?date={today}";
 
-        string todayRes = await _http.GetStringAsync($"fixtures?date={today}");
-        var doc = JsonDocument.Parse(todayRes);
+        _logger.Log($"Fetching today's fixtures: {url}", ConsoleColor.DarkGray);
 
-        return doc.RootElement.GetProperty("response")
+        string json = await _http.GetStringAsync(url);
+        var doc = JsonDocument.Parse(json);
+
+        return [.. doc.RootElement.GetProperty("response")
             .EnumerateArray()
-            .Select(m => new Match
-            {
-                Id = m.GetProperty("fixture").GetProperty("id").GetInt32(),
-                Status = m.GetProperty("fixture").GetProperty("status").GetProperty("long").GetString(),
-                HomeTeam = m.GetProperty("teams").GetProperty("home").GetProperty("name").GetString(),
-                AwayTeam = m.GetProperty("teams").GetProperty("away").GetProperty("name").GetString(),
-                HomeGoals = GetInt(m.GetProperty("goals").GetProperty("home")),
-                AwayGoals = GetInt(m.GetProperty("goals").GetProperty("away")),
-                Elapsed = GetInt(m.GetProperty("fixture").GetProperty("status").GetProperty("elapsed"))
-            })
-            .ToList();
+            .Select(CreateMatchFromJson)];
     }
 
 
@@ -98,6 +91,20 @@ public class FootballApiClient
                             : ""
             })
             .ToList();
+    }
+
+    private static Match CreateMatchFromJson(JsonElement element)
+    {
+        return new Match
+        {
+            Id        = element.GetProperty("fixture").GetProperty("id").GetInt32(),
+            Status    = element.GetProperty("fixture").GetProperty("status").GetProperty("long").GetString() ?? "Unknown",
+            HomeTeam  = element.GetProperty("teams").GetProperty("home").GetProperty("name").GetString() ?? "",
+            AwayTeam  = element.GetProperty("teams").GetProperty("away").GetProperty("name").GetString() ?? "",
+            HomeGoals = GetInt(element.GetProperty("goals").GetProperty("home")),
+            AwayGoals = GetInt(element.GetProperty("goals").GetProperty("away")),
+            Elapsed   = GetInt(element.GetProperty("fixture").GetProperty("status").GetProperty("elapsed"))
+        };
     }
 
     private static int GetInt(JsonElement el)
