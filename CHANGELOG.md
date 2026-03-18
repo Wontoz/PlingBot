@@ -81,8 +81,4 @@ This project follows Semantic Versioning.
 - Initial project setup
 - Basic Discord bot structure
 - Match polling foundation
-<<<<<<< HEAD
 - Basic coupon evaluation system
-=======
-- Basic coupon evaluation system
->>>>>>> 35a40a5 (Add README and CHANGELOG for v2.0.0)
