@@ -1,6 +1,7 @@
 # PlingBot
 
-PlingBot is a Discord bot that tracks live football matches from a Stryktips/Europatips/Topptips coupon and posts match updates directly to a Discord channel.
+Live football coupon tracking bot for Discord.
+**Documentation:** [Changelog](CHANGELOG.md)
 
 The bot announces:
 
