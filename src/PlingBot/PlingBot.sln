@@ -2,7 +2,7 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 17
 VisualStudioVersion = 17.5.2.0
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "PlingBot", "PlingBot\PlingBot.csproj", "{2B6851C9-1244-E49B-DD13-8E8E21E6EFF5}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "PlingBot", "PlingBot.csproj", "{6293F3B9-AD81-6814-ADA5-43D538591874}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -10,15 +10,15 @@ Global
 		Release|Any CPU = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(ProjectConfigurationPlatforms) = postSolution
-		{2B6851C9-1244-E49B-DD13-8E8E21E6EFF5}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{2B6851C9-1244-E49B-DD13-8E8E21E6EFF5}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{2B6851C9-1244-E49B-DD13-8E8E21E6EFF5}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{2B6851C9-1244-E49B-DD13-8E8E21E6EFF5}.Release|Any CPU.Build.0 = Release|Any CPU
+		{6293F3B9-AD81-6814-ADA5-43D538591874}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{6293F3B9-AD81-6814-ADA5-43D538591874}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{6293F3B9-AD81-6814-ADA5-43D538591874}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{6293F3B9-AD81-6814-ADA5-43D538591874}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
-		SolutionGuid = {34471BCB-8FEF-4684-B4D7-393EA14C4F61}
+		SolutionGuid = {DCE7324C-F485-4533-B7F1-42D6DD057EBC}
 	EndGlobalSection
 EndGlobal

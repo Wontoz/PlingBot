@@ -1,14 +1,25 @@
 using System;
 using System.Text.Json;
+using PlingBot.Models;
 
 namespace PlingBot.Utils;
 
-public class Helpers
+public static class Helpers
 {
-    private static int GetInt(JsonElement el)
+    public static string BuildEventKey(MatchEvent ev)
     {
-        if (el.ValueKind == JsonValueKind.Number) return el.GetInt32();
-        if (el.ValueKind == JsonValueKind.String && int.TryParse(el.GetString(), out int v)) return v;
-        return 0;
+        return $"{ev.Type}|{ev.Detail}|{ev.Team}|{ev.Player}|{ev.Elapsed}|{ev.ExtraTime}";
+    }
+
+    public static string FormatScore(int homeGoals, int awayGoals, bool highlightHome)
+    {
+        return highlightHome
+            ? $"**{homeGoals}** - {awayGoals}"
+            : $"{homeGoals} - **{awayGoals}**";
+    }
+
+    public static int GetEventSortValue(MatchEvent ev)
+    {
+        return ev.Elapsed * 100 + ev.ExtraTime;
     }
 }

@@ -11,14 +11,31 @@ public class CouponEvaluator
 
         foreach (var tip in tips)
         {
-            var m = tip.Match;
-            if (m == null) continue;
+            string? symbol = GetCurrentSymbol(tip);
+            if (symbol == null)
+                continue;
 
             evaluated++;
-            if (tip.Tip.Contains(m.Symbol))
+
+            if (!string.IsNullOrWhiteSpace(tip.Tip) && tip.Tip.Contains(symbol))
                 correct++;
         }
 
         return (correct, evaluated);
+    }
+
+    private static string? GetCurrentSymbol(TipsMatch tip)
+    {
+        if (tip.Match != null)
+            return tip.Match.Symbol;
+
+        return GetSymbolFromScores(tip.HomeScore, tip.AwayScore);
+    }
+
+    private static string GetSymbolFromScores(int homeScore, int awayScore)
+    {
+        if (homeScore > awayScore) return "1";
+        if (homeScore < awayScore) return "2";
+        return "X";
     }
 }

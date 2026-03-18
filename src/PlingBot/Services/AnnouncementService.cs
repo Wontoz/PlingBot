@@ -2,6 +2,7 @@ namespace PlingBot.Services;
 
 using Discord;
 using System;
+using System.Linq;
 using System.Threading.Tasks;
 using PlingBot.Config;
 using PlingBot.Models;
@@ -27,99 +28,153 @@ public class AnnouncementService
     {
         var match = tip.Match ?? throw new ArgumentNullException(nameof(tip.Match));
 
-        _logger.Log($"Checked match {tip.Number,-2}: {match.HomeTeam} - {match.AwayTeam}", ConsoleColor.DarkGray);
+        int homeGoalDiff = match.HomeGoals - tip.LastHomeGoals;
+        int awayGoalDiff = match.AwayGoals - tip.LastAwayGoals;
 
-        // First time: just sync, no announcement
-        if (!tip.LastHomeGoals.HasValue || !tip.LastAwayGoals.HasValue)
-        {
-            await SyncInitialScoresAsync(tip, match);
+        bool isLive = match.Status is "First Half" or "Second Half";
+        bool scoreChanged = homeGoalDiff != 0 || awayGoalDiff != 0;
+
+        if (!scoreChanged && !isLive)
             return;
-        }
 
-        int homeDiff = match.HomeGoals - tip.LastHomeGoals.Value;
-        int awayDiff = match.AwayGoals - tip.LastAwayGoals.Value;
-
-        bool anyNewGoals = false;
-
-        if (homeDiff > 0)
+        // Goal cancellations
+        if (homeGoalDiff < 0 || awayGoalDiff < 0)
         {
-            anyNewGoals = true;
-            var latestGoal = await _api.FetchLatestGoalAsync(match.Id);
-            for (int i = 0; i < homeDiff; i++)
+            if (homeGoalDiff < 0)
             {
-                await AnnounceGoalAsync(channel, tip, match, true, latestGoal);
+                int cancellations = -homeGoalDiff;
+
+                for (int i = 0; i < cancellations; i++)
+                {
+                    await AnnounceGoalCancelledAsync(channel, tip, match, true);
+                }
+            }
+
+            if (awayGoalDiff < 0)
+            {
+                int cancellations = -awayGoalDiff;
+
+                for (int i = 0; i < cancellations; i++)
+                {
+                    await AnnounceGoalCancelledAsync(channel, tip, match, false);
+                }
             }
         }
 
-        if (awayDiff > 0)
+        // Goals
+        if (homeGoalDiff > 0)
         {
-            anyNewGoals = true;
-            var latestGoal = await _api.FetchLatestGoalAsync(match.Id);
-            for (int i = 0; i < awayDiff; i++)
+            for (int i = 0; i < homeGoalDiff; i++)
+                await AnnounceGoalAsync(channel, tip, match, true);
+        }
+
+        if (awayGoalDiff > 0)
+        {
+            for (int i = 0; i < awayGoalDiff; i++)
+                await AnnounceGoalAsync(channel, tip, match, false);
+        }
+
+        // Red cards
+        if (isLive)
+        {
+            var cardEvents = await _api.FetchMatchEventsByTypeAsync(match.Id, "card");
+
+            foreach (var ev in cardEvents
+                .Where(e =>
+                    string.Equals(e.Detail, "Red Card", StringComparison.OrdinalIgnoreCase) ||
+                    string.Equals(e.Detail, "Second Yellow Card", StringComparison.OrdinalIgnoreCase))
+                .OrderBy(Helpers.GetEventSortValue))
             {
-                await AnnounceGoalAsync(channel, tip, match, false, latestGoal);
+                string key = Helpers.BuildEventKey(ev);
+
+                if (tip.AnnouncedEventKeys.Contains(key))
+                    continue;
+
+                bool isHome = string.Equals(ev.Team, match.HomeTeam, StringComparison.OrdinalIgnoreCase);
+
+                await AnnounceRedCardAsync(channel, tip, match, isHome, ev);
+
+                tip.AnnouncedEventKeys.Add(key);
             }
         }
 
-        if (anyNewGoals)
-        {
-            tip.LastHomeGoals = match.HomeGoals;
-            tip.LastAwayGoals = match.AwayGoals;
-            tip.HomeScore     = match.HomeGoals;
-            tip.AwayScore     = match.AwayGoals;
-
-            _tipsConfig.SaveToJson();
-
-            _logger.Log(
-                $"Processed +{homeDiff}/{awayDiff} goals for tip {tip.Number} → stored {match.HomeGoals}-{match.AwayGoals}",
-                ConsoleColor.Cyan
-            );
-        }
-        else if (homeDiff < 0 || awayDiff < 0)
-        {
-            _logger.Log(
-                $"Score drift (API glitch?) tip {tip.Number}: stored {tip.LastHomeGoals}-{tip.LastAwayGoals} → API {match.HomeGoals}-{match.AwayGoals} — ignoring",
-                ConsoleColor.DarkRed
-            );
-        }
-    }
-
-    private async Task SyncInitialScoresAsync(TipsMatch tip, Match match)
-    {
         tip.LastHomeGoals = match.HomeGoals;
         tip.LastAwayGoals = match.AwayGoals;
-        tip.HomeScore     = match.HomeGoals;
-        tip.AwayScore     = match.AwayGoals;
+        tip.HomeScore = match.HomeGoals;
+        tip.AwayScore = match.AwayGoals;
+        tip.LastUpdatedUtc = DateTime.UtcNow;
 
         _tipsConfig.SaveToJson();
 
         _logger.Log(
-            $"Initial sync for tip {tip.Number}: {match.HomeGoals}-{match.AwayGoals}",
-            ConsoleColor.DarkGray
+            $"Update tip {tip.Number}: score {match.HomeGoals}-{match.AwayGoals}",
+            ConsoleColor.Cyan
         );
     }
 
-    private async Task AnnounceGoalAsync(
-        IMessageChannel channel,
-        TipsMatch tip,
-        Match match,
-        bool homeTeamScored,
-        MatchEvent? latestGoal)
+    private async Task AnnounceGoalAsync(IMessageChannel channel, TipsMatch tip, Match match, bool homeScored)
     {
-        string emoji = tip.Tip.Contains(match.Symbol) ? "✅" : "❌";
+        string symbol = GetEventSymbol(tip, match.Symbol);
+        string score = Helpers.FormatScore(match.HomeGoals, match.AwayGoals, homeScored);
 
-        string scoreDisplay = homeTeamScored
-            ? $"**{match.HomeGoals}** - {match.AwayGoals}"
-            : $"{match.HomeGoals} - **{match.AwayGoals}**";
+        string msg = $"⚽ {symbol} Mål! {tip.HomeTeam} {score} {tip.AwayTeam} ({match.Elapsed}')";
+        await channel.SendMessageAsync(msg);
 
-        string minute = !string.IsNullOrWhiteSpace(latestGoal?.ExtraTime)
-            ? $"{match.Elapsed} ({latestGoal.ExtraTime})'"
-            : $"{match.Elapsed}'";
+        _logger.Log($"Goal announced: {msg}", ConsoleColor.Magenta);
+    }
 
-        string message = $"⚽ {emoji} Mål! {match.HomeTeam} {scoreDisplay} {match.AwayTeam} ({minute})";
+    private async Task AnnounceGoalCancelledAsync(IMessageChannel channel, TipsMatch tip, Match match, bool isHome)
+    {
+        string symbol = isHome
+            ? GetEventSymbol(tip, match.Symbol, match.HomeTeam, isHomeEvent: true, isBadEvent: true)
+            : GetEventSymbol(tip, match.Symbol, match.AwayTeam, isHomeEvent: false, isBadEvent: true);
 
-        await channel.SendMessageAsync(message);
+        string score = Helpers.FormatScore(match.HomeGoals, match.AwayGoals, isHome);
 
-        _logger.Log($"Announced goal: {message}", ConsoleColor.Magenta);
+        string msg = $"⚠️ {symbol} Mål bortdömt! {tip.HomeTeam} {score} {tip.AwayTeam} ({match.Elapsed}')";
+        await channel.SendMessageAsync(msg);
+        _logger.Log($"Cancelled goal announced: {msg}", ConsoleColor.Red);
+    }
+
+    private async Task AnnounceRedCardAsync(IMessageChannel channel, TipsMatch tip, Match match, bool isHome, MatchEvent? evt)
+    {
+        string team = isHome ? tip.HomeTeam : tip.AwayTeam;
+
+        string symbol = isHome
+            ? GetEventSymbol(tip, match.Symbol, match.HomeTeam, isHomeEvent: true, isBadEvent: true)
+            : GetEventSymbol(tip, match.Symbol, match.AwayTeam, isHomeEvent: false, isBadEvent: true);
+
+        string player = string.IsNullOrEmpty(evt?.Player) ? "Okänd spelare" : evt.Player;
+
+        string msg = $"🟥 {symbol} Rött kort! {team} – {player} ({match.Elapsed}')";
+        await channel.SendMessageAsync(msg);
+
+        _logger.Log($"Red card announced: {msg}", ConsoleColor.DarkRed);
+    }
+
+    public static string GetEventSymbol(TipsMatch tip, string matchSymbol, string? team = null, bool? isHomeEvent = null, bool isBadEvent = false)
+    {
+        if (tip.Tip == "1X2")
+            return "➖";
+
+        bool isGood;
+
+        if (team != null && isHomeEvent.HasValue)
+        {
+            bool teamMatchesTip =
+                (isHomeEvent.Value && tip.Tip.Contains("1")) ||
+                (!isHomeEvent.Value && tip.Tip.Contains("2"));
+
+            isGood = teamMatchesTip;
+        }
+        else
+        {
+            isGood = tip.Tip.Contains(matchSymbol);
+        }
+
+        if (isBadEvent)
+            isGood = !isGood;
+
+        return isGood ? "✅" : "❌";
     }
 }

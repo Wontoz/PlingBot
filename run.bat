@@ -1,2 +1,4 @@
 @echo off
-dotnet run --project src\PlingBot.csproj
+cd /d %~dp0\src\PlingBot
+echo Starting PlingBot...
+dotnet run

@@ -1,20 +1,41 @@
 namespace PlingBot.Config;
 
+using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Text;
+using System.Text.Encodings.Web;
 using System.Text.Json;
-using PlingBot.Utils;
+using System.Text.Unicode;
 using PlingBot.Models;
+using PlingBot.Utils;
+
+public class TipsDataWrapper
+{
+    public MetaData MetaData { get; set; } = new();
+    public List<TipsMatch> TipsData { get; set; } = [];
+}
+
+public class MetaData
+{
+    public string Player { get; set; } = string.Empty;
+    public string Date { get; set; } = DateTime.UtcNow.ToString("yyyy-MM-dd");
+    public int TotalCorrect { get; set; }
+}
 
 public class TipsConfig
 {
-    public List<TipsMatch> TipsMatches { get; private set; } // Mutable list for updates
+    public TipsDataWrapper Data { get; private set; } = new();
+
     private readonly Logger _logger;
-    private readonly string _jsonPath = "json/tips.json"; // Path to the JSON file (adjust if needed based on your working directory)
+    private readonly string _jsonPath;
+
+    private readonly string jsonFileName = $"stryktipset_{DateTime.UtcNow:yyyy-MM-dd}.json";
 
     public TipsConfig(Logger logger)
     {
         _logger = logger;
+        _jsonPath = Path.Combine("..", "PlingBot", "json", jsonFileName);
         LoadFromJson();
     }
 
@@ -24,59 +45,40 @@ public class TipsConfig
         {
             try
             {
-                var json = File.ReadAllText(_jsonPath);
-                TipsMatches = JsonSerializer.Deserialize<List<TipsMatch>>(json) ?? new List<TipsMatch>();
+                var json = File.ReadAllText(_jsonPath, Encoding.UTF8);
+                Data = JsonSerializer.Deserialize<TipsDataWrapper>(json) ?? new TipsDataWrapper();
 
-                // ← Add this logging block
-                _logger?.Log($"Loaded tips.json from {_jsonPath} — found {TipsMatches.Count} matches", ConsoleColor.Green);
-
-                foreach (var m in TipsMatches.Take(5)) // show first 5 to avoid flooding console
-                {
-                    string fid = m.FixtureId.HasValue ? m.FixtureId.Value.ToString() : "—";
-                    _logger?.Log($"  Tip #{m.Number,-2} | {m.HomeTeam,-18} vs {m.AwayTeam,-18} | fid:{fid,-8} | score:{m.HomeScore}-{m.AwayScore} | tip:{m.Tip}", ConsoleColor.DarkGray);
-                }
-
-                if (TipsMatches.Count > 5)
-                    _logger?.Log($"  ... and {TipsMatches.Count - 5} more matches", ConsoleColor.DarkGray);
+                _logger.Log(
+                    $"Loaded {jsonFileName} — {Data.TipsData.Count} tips + metadata (player: {Data.MetaData.Player}, correct: {Data.MetaData.TotalCorrect})",
+                    ConsoleColor.Green);
             }
             catch (Exception ex)
             {
-                _logger?.Error($"Failed to load tips.json: {ex.Message}");
-                TipsMatches = new List<TipsMatch>();
+                _logger.Error($"Failed to load {jsonFileName}: {ex.Message}");
+                Data = new TipsDataWrapper();
             }
         }
         else
         {
-            _logger?.Log($"tips.json not found at {_jsonPath} — starting with empty list", ConsoleColor.DarkRed);
-            TipsMatches = new List<TipsMatch>();
-            SaveToJson(); // create empty file
+            _logger.Log($"{jsonFileName} not found — creating new empty structure", ConsoleColor.Yellow);
+            Data = new TipsDataWrapper();
+            SaveToJson();
         }
-    }
-
-    public void TestSave()
-    {
-        if (TipsMatches.Count == 0)
-        {
-            _logger.Log("No matches to save — list is empty", ConsoleColor.Yellow);
-            return;
-        }
-
-        // Make a small, visible change for testing
-        var firstMatch = TipsMatches[0];
-        string originalTip = firstMatch.Tip;
-        firstMatch.Tip = "TEST-SAVE-" + DateTime.Now.ToString("HHmmss");
-
-        _logger.Log($"Test save: Changed Tip #{firstMatch.Number} from '{originalTip}' → '{firstMatch.Tip}'", ConsoleColor.Yellow);
-
-        SaveToJson();
-
-        _logger.Log("Test save completed — check Config/tips.json", ConsoleColor.Green);
     }
 
     public void SaveToJson()
     {
-        var json = JsonSerializer.Serialize(TipsMatches, new JsonSerializerOptions { WriteIndented = true });
-        File.WriteAllText(_jsonPath, json);
+        var options = new JsonSerializerOptions
+        {
+            WriteIndented = true,
+            Encoder = JavaScriptEncoder.Create(UnicodeRanges.All)
+        };
+
+        var json = JsonSerializer.Serialize(Data, options);
+        File.WriteAllText(_jsonPath, json, Encoding.UTF8);
+
+        _logger.Log($"Saved {jsonFileName}", ConsoleColor.Cyan);
     }
-    
+
+    public List<TipsMatch> TipsMatches => Data.TipsData;
 }

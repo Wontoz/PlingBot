@@ -1,8 +1,12 @@
 namespace PlingBot.Models;
-public record MatchEvent
+
+public class MatchEvent
 {
-    public string Player { get; init; }
-    public string Team { get; init; }
-    public int Minute { get; init; }
-    public string ExtraTime { get; init; }
+    public string? Type { get; set; }
+    public string? Detail { get; set; }
+    public string? Player { get; set; }
+    public string? Team { get; set; }
+
+    public int Elapsed { get; set; }
+    public int ExtraTime { get; set; }
 }

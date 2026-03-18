@@ -1,5 +1,4 @@
 namespace PlingBot;
-using PlingBot.Models;
 using PlingBot.Services;
 using PlingBot.Config;
 using PlingBot.Utils;
@@ -12,17 +11,16 @@ class Program
 {
     static async Task Main(string[] args)
     {
-        // Attempt to locate and load .env from likely locations so constructors can read env vars
+        bool testMode = args.Any(a =>
+            string.Equals(a, "-TestMode", StringComparison.OrdinalIgnoreCase));
+
         string? envFile = null;
 
-        // 1) Current working directory
         var cwdCandidate = Path.Combine(Environment.CurrentDirectory, ".env");
         if (File.Exists(cwdCandidate)) envFile = cwdCandidate;
 
-        // 2) Walk up from AppContext.BaseDirectory
         if (envFile == null) envFile = FindEnvFile(AppContext.BaseDirectory, ".env");
 
-        // 3) Look specifically for a parent folder named "PlingBot" (project root)
         if (envFile == null)
         {
             try
@@ -53,14 +51,20 @@ class Program
 
         var services = new ServiceCollection();
 
-        // Register services
         services.AddSingleton<Logger>();
         services.AddSingleton<TipsConfig>();
         services.AddSingleton<FootballApiClient>();
         services.AddSingleton<AnnouncementService>();
         services.AddSingleton<CouponEvaluator>();
         services.AddSingleton<MessageHandler>();
+        services.AddSingleton<TestService>();
         services.AddSingleton<ScorePollerService>();
+
+        services.AddSingleton(new BotOptions
+        {
+            TestMode = testMode
+        });
+
         services.AddSingleton<BotHost>();
 
         var provider = services.BuildServiceProvider();
@@ -68,7 +72,6 @@ class Program
         var bot = provider.GetRequiredService<BotHost>();
         await bot.RunAsync();
 
-        // Keep alive
         await Task.Delay(-1);
     }
 

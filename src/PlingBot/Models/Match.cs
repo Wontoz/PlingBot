@@ -5,9 +5,12 @@ public record Match
     public string Status { get; init; }
     public string HomeTeam { get; init; }
     public string AwayTeam { get; init; }
+    public int? HomeTeamId { get; init; }
+    public int? AwayTeamId { get; init; }
     public int HomeGoals { get; init; }
     public int AwayGoals { get; init; }
     public int Elapsed { get; init; }
+
     public string Score => $"{HomeGoals} - {AwayGoals}";
     public string Symbol
     {

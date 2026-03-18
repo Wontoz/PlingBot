@@ -13,7 +13,7 @@ public class MessageHandler
     private readonly Logger _logger;
     private readonly HashSet<ulong> _allowedUsers;
     private readonly ulong _viktorId;
-    private string _currentPlayer = "";
+    private string _player = "";
     private bool _isFirstMessage = true;
 
     public MessageHandler(TipsConfig tipsConfig, CouponEvaluator evaluator, Logger logger)
@@ -32,16 +32,8 @@ public class MessageHandler
 
         _viktorId = ulong.Parse(Environment.GetEnvironmentVariable("DISCORD_USER_ID_VIKTOR") ?? "0");
 
-        // Player selection – could be moved to startup or command later
-        while (string.IsNullOrWhiteSpace(_currentPlayer) || !new[] { "Wibb", "Ek", "Wille" }.Contains(_currentPlayer))
-        {
-            Console.WriteLine("Who is playing? Wibb, Ek or Wille");
-            _currentPlayer = Console.ReadLine()?.Trim() ?? "";
-            if (!new[] { "Wibb", "Ek", "Wille" }.Contains(_currentPlayer))
-                Console.WriteLine("Invalid player. Try again.");
-            else
-                Console.WriteLine($"Player set to: {_currentPlayer}");
-        }
+        _player = _tipsConfig.Data.MetaData.Player;
+        if(!string.IsNullOrEmpty(_player)) _logger.Log("Player detected, setting player: " + _player);
     }
 
     public async Task HandleMessageAsync(SocketMessage message)
@@ -65,16 +57,32 @@ public class MessageHandler
 
             var (correct, evaluated) = _evaluator.Evaluate(_tipsConfig.TipsMatches);
 
-            string suffix = _currentPlayer switch
+            string suffix = _player.ToLower() switch
             {
-                "Ek" => _isFirstMessage ? "Eeeeeeeeeeeeeek" : "Eeeeek",
-                "Wibb" => _isFirstMessage ? "PleeeeeEEEEASE Wibb" : "Körvi Wibb",
-                "Wille" => _isFirstMessage ? "Kan ju knappast bli sämre än förra gången du körde" : "Suck...",
+                "jonas" => _isFirstMessage ? "Eeeeeeeeeeeeeek" : "Eeeeek",
+                "fredrik" => _isFirstMessage ? "PleeeeeEEEEASE Wibb" : "Körvi Wibb",
+                "william" => _isFirstMessage ? "Kan ju knappast bli sämre än förra gången du körde William" : "Suck...",
                 _ => ""
             };
-
+            
             await message.Channel.SendMessageAsync($"Just nu har vi {correct}/{evaluated} rätt! {suffix}");
             _isFirstMessage = false;
+        }
+
+        if (content.Equals("!updatemeta", StringComparison.OrdinalIgnoreCase) && _allowedUsers.Contains(message.Author.Id))
+        {
+            var (correct, evaluated) = _evaluator.Evaluate(_tipsConfig.TipsMatches);
+            _tipsConfig.Data.MetaData.TotalCorrect = correct;
+
+            // Optional: update date/player if you want commands for that
+            // _tipsConfig.Data.MetaData.RoundDate = DateTime.UtcNow.ToString("yyyy-MM-dd");
+            // _tipsConfig.Data.MetaData.Player = "william";
+
+            _tipsConfig.SaveToJson();
+
+            await message.Channel.SendMessageAsync(
+                $"Metadata updated: {correct}/{evaluated} correct | Player: {_tipsConfig.Data.MetaData.Player} | Date: {_tipsConfig.Data.MetaData.Date}"
+            );
         }
 
         // Add more commands here later...
