@@ -1,6 +1,7 @@
 # PlingBot
 
 Live football coupon tracking bot for Discord.
+
 **Documentation:** [Changelog](CHANGELOG.md)
 
 The bot announces:
