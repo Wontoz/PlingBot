@@ -20,9 +20,6 @@ public class ScorePollerService
     private readonly Logger _logger;
     private readonly BotOptions _options;
     private readonly TestService _testService;
-    private readonly CouponEvaluator _evaluator;
-
-    private bool _hasFetchedOnce;
 
     public ScorePollerService(
         FootballApiClient api,
@@ -30,8 +27,7 @@ public class ScorePollerService
         TipsConfig tipsConfig,
         Logger logger,
         BotOptions options,
-        TestService testService,
-        CouponEvaluator evaluator)
+        TestService testService)
     {
         _api = api;
         _announcer = announcer;
@@ -39,7 +35,6 @@ public class ScorePollerService
         _logger = logger;
         _options = options;
         _testService = testService;
-        _evaluator = evaluator;
     }
 
     public async Task StartPollingAsync(DiscordSocketClient client)
@@ -144,8 +139,6 @@ public class ScorePollerService
             return;
 
         var matches = await _api.FetchTodaysMatchesAsync();
-
-        LogInitialFetchOnce(matches.Count);
         _logger.Log("-----------------------------------------------------------------------", ConsoleColor.DarkYellow);
 
         foreach (var tip in _tipsConfig.TipsMatches)
@@ -198,15 +191,6 @@ public class ScorePollerService
         return channel;
     }
 
-    private void LogInitialFetchOnce(int matchCount)
-    {
-        if (_hasFetchedOnce)
-            return;
-
-        _logger.Log($"Fetched {matchCount} matches for today", ConsoleColor.DarkBlue);
-        _hasFetchedOnce = true;
-    }
-
     private void HandleFinishedMatch(TipsMatch tip, Match current)
     {
         tip.LastHomeGoals = current.HomeGoals;
@@ -215,18 +199,6 @@ public class ScorePollerService
         tip.AwayScore = current.AwayGoals;
         tip.LastUpdatedUtc = DateTime.UtcNow;
         tip.IsFinished = true;
-
-        var (correct, evaluated) = _evaluator.Evaluate(_tipsConfig.TipsMatches);
-
-        if (correct != _tipsConfig.Data.MetaData.TotalCorrect)
-        {
-            var old = _tipsConfig.Data.MetaData.TotalCorrect;
-            _tipsConfig.Data.MetaData.TotalCorrect = correct;
-
-            _logger.Log(
-                $"Match finished → correct updated: {old} → {correct} (evaluated {evaluated}/{_tipsConfig.TipsMatches.Count})",
-                ConsoleColor.Green);
-        }
 
         _tipsConfig.SaveToJson();
     }

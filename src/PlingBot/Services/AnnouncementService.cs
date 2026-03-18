@@ -12,15 +12,19 @@ public class AnnouncementService
 {
     private readonly FootballApiClient _api;
     private readonly TipsConfig _tipsConfig;
+    private readonly CouponEvaluator _evaluator;
     private readonly Logger _logger;
+    
 
     public AnnouncementService(
         FootballApiClient api,
         TipsConfig tipsConfig,
+        CouponEvaluator evaluator,
         Logger logger)
     {
         _api = api;
         _tipsConfig = tipsConfig;
+        _evaluator = evaluator;
         _logger = logger;
     }
 
@@ -104,12 +108,17 @@ public class AnnouncementService
         tip.AwayScore = match.AwayGoals;
         tip.LastUpdatedUtc = DateTime.UtcNow;
 
-        _tipsConfig.SaveToJson();
+        // Re-evaluate coupon upon score change
+        if (scoreChanged)
+        {
+            var (correct, evaluated) = _evaluator.Evaluate(_tipsConfig.TipsMatches);
+            _tipsConfig.Data.MetaData.TotalCorrect = correct;
+            _logger.Log(
+                $"Re-evaluated coupon: {correct}/{evaluated} correct",
+                ConsoleColor.Green);
+        }
 
-        _logger.Log(
-            $"Update tip {tip.Number}: score {match.HomeGoals}-{match.AwayGoals}",
-            ConsoleColor.Cyan
-        );
+        _tipsConfig.SaveToJson();
     }
 
     private async Task AnnounceGoalAsync(IMessageChannel channel, TipsMatch tip, Match match, bool homeScored)

@@ -2,9 +2,9 @@ namespace PlingBot.Models;
 public record Match
 {
     public int Id { get; init; }
-    public string Status { get; init; }
-    public string HomeTeam { get; init; }
-    public string AwayTeam { get; init; }
+    public required string Status { get; init; }
+    public required string HomeTeam { get; init; }
+    public  required string AwayTeam { get; init; }
     public int? HomeTeamId { get; init; }
     public int? AwayTeamId { get; init; }
     public int HomeGoals { get; init; }
