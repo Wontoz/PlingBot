@@ -1,17 +1,13 @@
 # PlingBot
 
-<<<<<<< HEAD
 Live football coupon tracking bot for Discord.
 
 **Documentation:** [Changelog](CHANGELOG.md)
 =======
-PlingBot is a Discord bot that tracks live football matches from a Stryktips/Europatips/Topptips coupon and posts match updates directly to a Discord channel.
->>>>>>> 35a40a5 (Add README and CHANGELOG for v2.0.0)
 
 The bot announces:
-
-- Goals (with correct player attribution)
-- Goal cancellations (VAR decisions)
+- Goals
+- Goal cancellations
 - Red cards
 - Current coupon status via command
 
@@ -48,9 +44,5 @@ The bot requires environment variables for:
 ---
 
 ## Running the Bot
+Coming soon!
 
-<<<<<<< HEAD
-Coming soon!
-=======
-Coming soon!
->>>>>>> 35a40a5 (Add README and CHANGELOG for v2.0.0)
