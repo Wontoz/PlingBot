@@ -2,7 +2,7 @@
 
 Live football coupon tracking bot for Discord.
 
-It maps coupon matches to real fixtures, polls live score updates, announces important events, and continuously evaluates the current coupon result.
+
 
 ## Features
 
@@ -54,3 +54,5 @@ Runtime JSON files (coupons) are not tracked by Git.
 ## License
 
 This project is provided as-is for personal and educational use.
+
+![alt text](https://github.com/Wontoz/PlingBot/blob/main/assets/icon1024.png "PlingBot's icon")
