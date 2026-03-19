@@ -177,7 +177,7 @@ public class ScorePollerService
 
     private IMessageChannel? GetChannel(DiscordSocketClient client)
     {
-        var channelIdRaw = Environment.GetEnvironmentVariable("DISCORD_CHANNEL_ID_TEST");
+        var channelIdRaw = Environment.GetEnvironmentVariable("DISCORD_CHANNEL_ID_PROD");
         if (!ulong.TryParse(channelIdRaw, out var channelId))
         {
             _logger.Error("DISCORD_CHANNEL_ID_PROD missing or invalid");

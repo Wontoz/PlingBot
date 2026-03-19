@@ -28,6 +28,8 @@ public class AnnouncementService
         _logger = logger;
     }
 
+    // Detect goal cancellations, goals and red cards in this particular order, then announce them properly.
+    // Can be refactored into separate methods, but i think this is pretty readable as-is.
     public async Task ProcessMatchUpdateAsync(IMessageChannel channel, TipsMatch tip)
     {
         var match = tip.Match ?? throw new ArgumentNullException(nameof(tip.Match));
@@ -37,6 +39,7 @@ public class AnnouncementService
 
         bool isLive = match.Status is "First Half" or "Second Half";
         bool scoreChanged = homeGoalDiff != 0 || awayGoalDiff != 0;
+        bool somethingHappened = false;
 
         if (!scoreChanged && !isLive)
             return;
@@ -99,26 +102,33 @@ public class AnnouncementService
                 await AnnounceRedCardAsync(channel, tip, match, isHome, ev);
 
                 tip.AnnouncedEventKeys.Add(key);
+                somethingHappened = true;
             }
         }
-
-        tip.LastHomeGoals = match.HomeGoals;
-        tip.LastAwayGoals = match.AwayGoals;
-        tip.HomeScore = match.HomeGoals;
-        tip.AwayScore = match.AwayGoals;
-        tip.LastUpdatedUtc = DateTime.UtcNow;
 
         // Re-evaluate coupon upon score change
         if (scoreChanged)
         {
+            tip.LastHomeGoals = match.HomeGoals;
+            tip.LastAwayGoals = match.AwayGoals;
+            tip.HomeScore = match.HomeGoals;
+            tip.AwayScore = match.AwayGoals;
+
             var (correct, evaluated) = _evaluator.Evaluate(_tipsConfig.TipsMatches);
             _tipsConfig.Data.MetaData.TotalCorrect = correct;
             _logger.Log(
                 $"Re-evaluated coupon: {correct}/{evaluated} correct",
                 ConsoleColor.Green);
+            
+            somethingHappened = true;
         }
 
-        _tipsConfig.SaveToJson();
+        // Update JSON if something happened
+        if (somethingHappened)
+        {
+            tip.LastUpdatedUtc = DateTime.UtcNow;
+            _tipsConfig.SaveToJson();
+        }
     }
 
     private async Task AnnounceGoalAsync(IMessageChannel channel, TipsMatch tip, Match match, bool homeScored)
@@ -126,7 +136,7 @@ public class AnnouncementService
         string symbol = GetEventSymbol(tip, match.Symbol);
         string score = Helpers.FormatScore(match.HomeGoals, match.AwayGoals, homeScored);
 
-        string msg = $"⚽ {symbol} Mål! {tip.HomeTeam} {score} {tip.AwayTeam} ({match.Elapsed}')";
+        string msg = $"⚽ {symbol} Mål! {tip.HomeTeam} {score} {tip.AwayTeam} {Helpers.GetMinute(match)}";
         await channel.SendMessageAsync(msg);
 
         _logger.Log($"Goal announced: {msg}", ConsoleColor.Magenta);
@@ -140,7 +150,7 @@ public class AnnouncementService
 
         string score = Helpers.FormatScore(match.HomeGoals, match.AwayGoals, isHome);
 
-        string msg = $"⚠️ {symbol} Mål bortdömt! {tip.HomeTeam} {score} {tip.AwayTeam} ({match.Elapsed}')";
+        string msg = $"⚠️ {symbol} Mål bortdömt! {tip.HomeTeam} {score} {tip.AwayTeam} {Helpers.GetMinute(match)}";
         await channel.SendMessageAsync(msg);
         _logger.Log($"Cancelled goal announced: {msg}", ConsoleColor.Red);
     }
@@ -155,7 +165,7 @@ public class AnnouncementService
 
         string player = string.IsNullOrEmpty(evt?.Player) ? "Okänd spelare" : evt.Player;
 
-        string msg = $"🟥 {symbol} Rött kort! {team} – {player} ({match.Elapsed}')";
+        string msg = $"🟥 {symbol} Rött kort! {team} – {player} {Helpers.GetMinute(match)}";
         await channel.SendMessageAsync(msg);
 
         _logger.Log($"Red card announced: {msg}", ConsoleColor.DarkRed);

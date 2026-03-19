@@ -8,5 +8,5 @@ public class MatchEvent
     public string? Team { get; set; }
 
     public int Elapsed { get; set; }
-    public int ExtraTime { get; set; }
+    public int Extra { get; set; }
 }

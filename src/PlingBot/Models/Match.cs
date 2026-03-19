@@ -10,7 +10,7 @@ public record Match
     public int HomeGoals { get; init; }
     public int AwayGoals { get; init; }
     public int Elapsed { get; init; }
-
+    public int Extra { get; init; }
     public string Score => $"{HomeGoals} - {AwayGoals}";
     public string Symbol
     {

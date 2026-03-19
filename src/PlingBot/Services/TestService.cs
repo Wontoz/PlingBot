@@ -226,7 +226,7 @@ public class TestService
             Team = isHome ? tip.HomeTeam : tip.AwayTeam,
             Player = "Testspelare",
             Elapsed = 67,
-            ExtraTime = 0
+            Extra = 0
         };
 
         var eventKey = Helpers.BuildEventKey(fakeEvent);

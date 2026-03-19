@@ -32,7 +32,7 @@ public class FootballApiClient
 
         _http.DefaultRequestHeaders.Add("x-apisports-key", apiKey);
     }
-    
+
     public async Task<List<Match>> FetchMatchesByDateAsync(DateTime date)
     {
         string dateString = date.ToString("yyyy-MM-dd");
@@ -116,12 +116,13 @@ public class FootballApiClient
             var teamElem = e.GetProperty("team");
             var playerElem = e.TryGetProperty("player", out var p) ? p : default;
 
-            int extraTime = 0;
-            if (timeElem.TryGetProperty("extra", out var extraElem) &&
-                extraElem.ValueKind != JsonValueKind.Null)
-            {
-                extraTime = extraElem.GetInt32();
-            }
+            int elapsed = timeElem.TryGetProperty("elapsed", out var elapsedElem)
+                ? GetInt(elapsedElem)
+                : 0;
+
+            int extra = timeElem.TryGetProperty("extra", out var extraElem)
+                ? GetInt(extraElem)
+                : 0;
 
             return new MatchEvent
             {
@@ -134,8 +135,8 @@ public class FootballApiClient
                 Team = teamElem.TryGetProperty("name", out var teamNameElem)
                     ? teamNameElem.GetString()
                     : null,
-                Elapsed = timeElem.GetProperty("elapsed").GetInt32(),
-                ExtraTime = extraTime
+                Elapsed = elapsed,
+                Extra = extra
             };
         }
         catch
@@ -146,20 +147,26 @@ public class FootballApiClient
 
     private static Match CreateMatchFromJson(JsonElement element)
     {
+        var fixtureElem = element.GetProperty("fixture");
+        var statusElem = fixtureElem.GetProperty("status");
+        var teamsElem = element.GetProperty("teams");
+        var goalsElem = element.GetProperty("goals");
+
         return new Match
         {
-            Id = element.GetProperty("fixture").GetProperty("id").GetInt32(),
-            Status = element.GetProperty("fixture").GetProperty("status").GetProperty("long").GetString() ?? "Unknown",
+            Id = GetInt(fixtureElem.GetProperty("id")),
+            Status = statusElem.GetProperty("long").GetString() ?? "Unknown",
 
-            HomeTeam = element.GetProperty("teams").GetProperty("home").GetProperty("name").GetString() ?? "",
-            AwayTeam = element.GetProperty("teams").GetProperty("away").GetProperty("name").GetString() ?? "",
+            HomeTeam = teamsElem.GetProperty("home").GetProperty("name").GetString() ?? "",
+            AwayTeam = teamsElem.GetProperty("away").GetProperty("name").GetString() ?? "",
 
-            HomeTeamId = element.GetProperty("teams").GetProperty("home").GetProperty("id").GetInt32(),
-            AwayTeamId = element.GetProperty("teams").GetProperty("away").GetProperty("id").GetInt32(),
+            HomeTeamId = GetNullableInt(teamsElem.GetProperty("home").GetProperty("id")),
+            AwayTeamId = GetNullableInt(teamsElem.GetProperty("away").GetProperty("id")),
 
-            HomeGoals = GetInt(element.GetProperty("goals").GetProperty("home")),
-            AwayGoals = GetInt(element.GetProperty("goals").GetProperty("away")),
-            Elapsed = GetInt(element.GetProperty("fixture").GetProperty("status").GetProperty("elapsed"))
+            HomeGoals = GetInt(goalsElem.GetProperty("home")),
+            AwayGoals = GetInt(goalsElem.GetProperty("away")),
+            Elapsed = GetInt(statusElem.GetProperty("elapsed")),
+            Extra = GetInt(statusElem.GetProperty("extra"))
         };
     }
 
@@ -172,5 +179,19 @@ public class FootballApiClient
             return v;
 
         return 0;
+    }
+
+    private static int? GetNullableInt(JsonElement el)
+    {
+        if (el.ValueKind == JsonValueKind.Null || el.ValueKind == JsonValueKind.Undefined)
+            return null;
+
+        if (el.ValueKind == JsonValueKind.Number)
+            return el.GetInt32();
+
+        if (el.ValueKind == JsonValueKind.String && int.TryParse(el.GetString(), out int v))
+            return v;
+
+        return null;
     }
 }
