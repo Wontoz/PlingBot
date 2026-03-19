@@ -2,6 +2,14 @@
 
 ---
 
+## [2.0.1] - 2026-03-19
+
+- Bot now handles and announces extra time again, which accidentally got removed in the previous version.
+- Fixed JSON files being rewritten every poll even if nothing had changed.
+  - Now it only updates when an announced event occurs (Goal, Cancellation or Red Card).
+- Minor readability cleanup in announcement service method flow
+---
+
 ## [2.0.0] - 2026-03-19
 
 This version represents a structural cleanup and stabilization of the bot's live polling and evaluation logic.
