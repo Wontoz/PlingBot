@@ -70,7 +70,7 @@ This version represents a structural cleanup and stabilization of the bot's live
 
 ---
 
-## [1.0.1] - 2026-01-31
+## [1.3.1] - 2026-01-31
 
 ### Changed
 - Minor readability improvements
@@ -78,7 +78,7 @@ This version represents a structural cleanup and stabilization of the bot's live
 
 ---
 
-## [1.0.0] - 2026-01-31
+## [1.3.0] - 2026-01-31
 
 ### Added
 - JSON-based coupon structure replacing list-based handling
@@ -91,7 +91,7 @@ This version represents a structural cleanup and stabilization of the bot's live
 
 ---
 
-## [0.4.0] - 2026-01-21
+## [1.2.0] - 2026-01-21
 
 ### Added
 - General bot feature improvements
@@ -99,7 +99,7 @@ This version represents a structural cleanup and stabilization of the bot's live
 
 ---
 
-## [0.3.0] - 2025-10-23
+## [1.1.0] - 2025-10-23
 
 ### Added
 - Initial README documentation
@@ -113,7 +113,7 @@ This version represents a structural cleanup and stabilization of the bot's live
 
 ---
 
-## [0.1.0] - 2025-10-23
+## [1.0.0] - 2025-08-30
 
 ### Added
 - Initial project setup
