@@ -1,4 +1,4 @@
-# PlingBot ![Version](https://img.shields.io/github/v/release/Wontoz/PlingBot)
+# PlingBot
 
 Live football coupon tracking bot for Discord.
 
