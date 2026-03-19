@@ -4,8 +4,6 @@ Live football coupon tracking bot for Discord.
 
 It maps coupon matches to real fixtures, polls live score updates, announces important events, and continuously evaluates the current coupon result.
 
----
-
 ## Features
 
 - Maps coupon matches to fixtures up to 3 days ahead
@@ -18,15 +16,11 @@ It maps coupon matches to real fixtures, polls live score updates, announces imp
 - Persists state to JSON between runs
 - Optional local test mode for simulating events
 
----
-
 ## Requirements
 
 - .NET 7 or newer
 - A Discord bot token
 - An [API-Football key](https://www.api-football.com/)
-
----
 
 ## Configuration
 
@@ -46,8 +40,6 @@ dotnet run --project src/PlingBot/PlingBot.csproj
 
 Or use:
 run.bat
-
----
 
 ## Storage
 
