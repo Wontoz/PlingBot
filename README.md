@@ -2,47 +2,63 @@
 
 Live football coupon tracking bot for Discord.
 
-**Documentation:** [Changelog](CHANGELOG.md)
-=======
-
-The bot announces:
-- Goals
-- Goal cancellations
-- Red cards
-- Current coupon status via command
+It maps coupon matches to real fixtures, polls live score updates, announces important events, and continuously evaluates the current coupon result.
 
 ---
 
 ## Features
 
-- Event-based goal tracking using official match events
-- Support for goal cancellations (VAR)
-- Duplicate-safe announcements
-- Live coupon evaluation
-- JSON-based coupon storage
-- Discord command support (`!status`)
-- Optional startup test mode
+- Maps coupon matches to fixtures up to 3 days ahead
+- Live polling of match scores
+- Announces:
+  - Goals
+  - Cancelled goals
+  - Red cards
+- Recalculates total correct picks on score change
+- Persists state to JSON between runs
+- Optional local test mode for simulating events
 
 ---
 
-## Commands
+## Requirements
 
-### `!status`
-Displays current number of correct picks.
+- .NET 7 or newer
+- A Discord bot token
+- An [API-Football key](https://www.api-football.com/)
 
 ---
 
 ## Configuration
 
-The bot requires environment variables for:
+PlingBot uses environment variables for configuration.
 
-- Discord bot token
-- Discord channel IDs (Where the bot will post messages)
-- Football API URL + Key
-- (Optional) Allowed user IDs
+Required variables:
+- DISCORD_TOKEN
+- DISCORD_CHANNEL_ID_TEST
+- FOOTBALL_API_URL
+- FOOTBALL_API_KEY
+
+## Running the Bot
+
+From the project root:
+
+dotnet run --project src/PlingBot/PlingBot.csproj
+
+Or use:
+run.bat
 
 ---
 
-## Running the Bot
-Coming soon!
+## Storage
 
+The bot stores runtime state (coupon data) in:
+
+src/PlingBot/json/
+
+This folder must exist. It is created automatically if missing.
+
+Runtime JSON files (coupons) are not tracked by Git.
+
+## License
+
+This project is provided as-is for personal and educational use.

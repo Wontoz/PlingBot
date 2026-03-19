@@ -1,34 +1,72 @@
 # Changelog
 
-All notable changes to this project will be documented in this file.
+---
 
-This project follows Semantic Versioning.
+## [2.0.0] - 2026-03-19
+
+This version represents a structural cleanup and stabilization of the bot's live polling and evaluation logic.
 
 ---
 
-## [2.0.0] - Coming Soon!
+### Core Architecture
 
-### Added
-- Event-based live engine for goal tracking
-- Full support for goal cancellations (VAR decisions)
-- Tracking of announced goal/event history to prevent duplicates
-- Improved coupon state handling in JSON
-- Safer live state persistence
-- Evaluation fallback using stored scores
+- Moved solution file to repository root
+- Moved testing functionality to separate class (TestService.cs)
+  - No longer resides in `ScorePollerService`
+- Improved dependency injection structure
+- Cleaned up project structure under `src/PlingBot`
+- Removed runtime JSON files (coupons) from version control
 
-### Changed
-- Goal detection logic now relies on official match events instead of score differences
-- Cancellation handling is processed before new goal announcements
-- Score formatting now highlights updated values for both goals and cancellations
-- Live updates are more resilient to delayed API responses
-- Coupon evaluation no longer depends on runtime-polled match objects
-- Extra time explicitly ignored in accordance with Stryktipset / Europatips rules
+---
 
-### Fixed
-- Duplicate goal announcements
-- Incorrect scorer attribution
-- Re-announcing cancelled goals
-- Evaluation failing when matches had not yet been polled
+### Score Polling
+
+- Extended fixture mapping to check matches up to 3 days ahead
+  - Previously only same day matches where polled
+- Introduced `IsFinished` flag to prevent reprocessing of completed matches
+- Improved match mapping logs and diagnostics
+- Refined polling interval handling
+
+---
+
+### Announcements
+
+- Added cancelled goal (VAR) detection
+- Added red card detection 
+- Moved result symbol logic (✅ / ❌) to it's own method
+
+---
+
+### Coupon Evaluation
+
+- Improved fallback logic when match object is not available
+
+---
+
+### Persistence (JSON Handling)
+
+- Improved state synchronization when match ends
+- Fixed path resolution issues when running from different working directories
+- Cleaner JSON structure for match state
+
+---
+
+### Discord / Infrastructure
+
+- Removed unused gateway intents
+- Fixed intent warnings related to scheduled events and invites
+- Improved channel resolution error handling
+- Cleaned up test-mode startup logic
+
+---
+
+### Testing / Development
+
+- Added a dedicated `TestService` for simulating:
+  - Goals
+  - Cancelled goals
+  - Red cards
+- Cleaned up batch file and startup configuration
 
 ---
 
