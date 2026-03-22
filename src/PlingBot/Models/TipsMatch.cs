@@ -21,7 +21,7 @@ public record class TipsMatch
     public int LastAwayGoals { get; set; }
 
     public DateTime? LastUpdatedUtc { get; set; }
-    
+    public DateTime? LastRedCardCheckUtc { get; set; }
     public HashSet<string> AnnouncedEventKeys { get; set; } = new();
 
     [JsonIgnore]

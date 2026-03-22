@@ -14,6 +14,7 @@ public class AnnouncementService
     private readonly TipsConfig _tipsConfig;
     private readonly CouponEvaluator _evaluator;
     private readonly Logger _logger;
+    private readonly Dictionary<int, DateTime> _lastRedCardChecks = new();
     
 
     public AnnouncementService(
@@ -84,25 +85,36 @@ public class AnnouncementService
         // Red cards
         if (isLive)
         {
-            var cardEvents = await _api.FetchMatchEventsByTypeAsync(match.Id, "card");
+            bool shouldCheckRedCards =
+                !_lastRedCardChecks.TryGetValue(match.Id, out var lastCheck) ||
+                
+                // How many minutes should pass between red card checks
+                DateTime.UtcNow - lastCheck >= TimeSpan.FromMinutes(2);
 
-            foreach (var ev in cardEvents
-                .Where(e =>
-                    string.Equals(e.Detail, "Red Card", StringComparison.OrdinalIgnoreCase) ||
-                    string.Equals(e.Detail, "Second Yellow Card", StringComparison.OrdinalIgnoreCase))
-                .OrderBy(Helpers.GetEventSortValue))
+            if (shouldCheckRedCards)
             {
-                string key = Helpers.BuildEventKey(ev);
+                _lastRedCardChecks[match.Id] = DateTime.UtcNow;
 
-                if (tip.AnnouncedEventKeys.Contains(key))
-                    continue;
+                var cardEvents = await _api.FetchMatchEventsByTypeAsync(match.Id, "card");
 
-                bool isHome = string.Equals(ev.Team, match.HomeTeam, StringComparison.OrdinalIgnoreCase);
+                foreach (var ev in cardEvents
+                    .Where(e =>
+                        string.Equals(e.Detail, "Red Card", StringComparison.OrdinalIgnoreCase) ||
+                        string.Equals(e.Detail, "Second Yellow Card", StringComparison.OrdinalIgnoreCase))
+                    .OrderBy(Helpers.GetEventSortValue))
+                {
+                    string key = Helpers.BuildEventKey(ev);
 
-                await AnnounceRedCardAsync(channel, tip, match, isHome, ev);
+                    if (tip.AnnouncedEventKeys.Contains(key))
+                        continue;
 
-                tip.AnnouncedEventKeys.Add(key);
-                somethingHappened = true;
+                    bool isHome = string.Equals(ev.Team, match.HomeTeam, StringComparison.OrdinalIgnoreCase);
+
+                    await AnnounceRedCardAsync(channel, tip, match, isHome, ev);
+
+                    tip.AnnouncedEventKeys.Add(key);
+                    somethingHappened = true;
+                }
             }
         }
 
@@ -174,7 +186,7 @@ public class AnnouncementService
     public static string GetEventSymbol(TipsMatch tip, string matchSymbol, string? team = null, bool? isHomeEvent = null, bool isBadEvent = false)
     {
         if (tip.Tip == "1X2")
-            return "➖";
+            return "✅";
 
         bool isGood;
 

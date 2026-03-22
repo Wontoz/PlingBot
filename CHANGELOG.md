@@ -1,5 +1,9 @@
 # Changelog
+## [2.0.2] - 2026-03-21
 
+- Changed red card polling to only occur every second minute after bot launch
+  - Polling every cycle caused a noticeable slowdown in match processing speed
+- Extra time has also been added to match events.
 ---
 
 ## [2.0.1] - 2026-03-19
@@ -8,6 +12,7 @@
 - Fixed JSON files being rewritten every poll even if nothing had changed.
   - Now it only updates when an announced event occurs (Goal, Cancellation or Red Card).
 - Minor readability cleanup in announcement service method flow
+
 ---
 
 ## [2.0.0] - 2026-03-19

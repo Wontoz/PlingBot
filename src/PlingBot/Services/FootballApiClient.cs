@@ -135,6 +135,9 @@ public class FootballApiClient
                 Team = teamElem.TryGetProperty("name", out var teamNameElem)
                     ? teamNameElem.GetString()
                     : null,
+                TeamId = teamElem.TryGetProperty("id", out var teamIdElem)
+                    ? GetNullableInt(teamIdElem)
+                    : null,
                 Elapsed = elapsed,
                 Extra = extra
             };
