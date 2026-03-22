@@ -1,5 +1,5 @@
 # Changelog
-## [2.0.2] - 2026-03-21
+## [2.0.2] - 2026-03-22
 
 - Changed red card polling to only occur every second minute after bot launch
   - Polling every cycle caused a noticeable slowdown in match processing speed
