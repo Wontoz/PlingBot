@@ -1,4 +1,8 @@
 # Changelog
+## [2.1.0] - 2026-04-16
+- Integrated TipsScraper to PlingBot, now the tips scraping app and the discord bot is contained within the same repository.
+- Disabled goal correction notifications as they were not working properly
+
 ## [2.0.2] - 2026-03-22
 
 - Changed red card polling to only occur every second minute after bot launch
