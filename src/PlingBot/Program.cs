@@ -52,7 +52,6 @@ class Program
         var services = new ServiceCollection();
 
         services.AddSingleton<Logger>();
-        services.AddSingleton<TipsConfig>();
         services.AddSingleton<FootballApiClient>();
         services.AddSingleton<AnnouncementService>();
         services.AddSingleton<CouponEvaluator>();
@@ -60,8 +59,17 @@ class Program
         services.AddSingleton<TestService>();
         services.AddSingleton<ScorePollerService>();
 
+        services.AddSingleton<TipsConfig>(sp =>
+        {
+            var logger = sp.GetRequiredService<Logger>();
+            var options = sp.GetRequiredService<BotOptions>();
+
+            return new TipsConfig(logger, options.Game);
+        });
+
         services.AddSingleton(new BotOptions
         {
+            Game = Environment.GetEnvironmentVariable("GAME") ?? "Stryktipset",
             TestMode = testMode
         });
 

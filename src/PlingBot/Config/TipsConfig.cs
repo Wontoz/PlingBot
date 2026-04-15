@@ -19,7 +19,8 @@ public class TipsDataWrapper
 public class MetaData
 {
     public string Player { get; set; } = string.Empty;
-    public string Date { get; set; } = DateTime.UtcNow.ToString("yyyy-MM-dd");
+    public string Date { get; set; } = DateTime.Today.ToString("yyyy-MM-dd");
+    public string Game { get; set; } = string.Empty;
     public int TotalCorrect { get; set; }
 }
 
@@ -30,13 +31,56 @@ public class TipsConfig
     private readonly Logger _logger;
     private readonly string _jsonPath;
 
-    private readonly string jsonFileName = $"stryktipset_{DateTime.UtcNow:yyyy-MM-dd}.json";
+    private readonly string _jsonFileName;
 
-    public TipsConfig(Logger logger)
+    public TipsConfig(Logger logger, string game)
     {
         _logger = logger;
-        _jsonPath = Path.Combine("..", "PlingBot", "json", jsonFileName);
+
+        string filePrefix = GetFilePrefix(game);
+        _jsonFileName = $"{filePrefix}_{DateTime.Today:yyyy-MM-dd}.json";
+        _logger.Log($"Using game: {game}", ConsoleColor.Cyan);
+
+        string jsonDir = ResolveJsonDirectory();
+        Directory.CreateDirectory(jsonDir);
+
+        _jsonPath = Path.Combine(jsonDir, _jsonFileName);
         LoadFromJson();
+    }
+
+    private static string GetFilePrefix(string game)
+    {
+        if (string.IsNullOrWhiteSpace(game))
+            return "stryktipset";
+
+        if (game.Equals("Stryktipset", StringComparison.OrdinalIgnoreCase))
+            return "stryktipset";
+
+        if (game.Equals("Europatipset", StringComparison.OrdinalIgnoreCase))
+            return "europatipset";
+
+        if (game.Equals("Topptipset", StringComparison.OrdinalIgnoreCase))
+            return "topptipset";
+
+        throw new ArgumentException("Invalid game: " + game);
+    }
+
+    private static string ResolveJsonDirectory()
+    {
+        DirectoryInfo? current = new DirectoryInfo(AppContext.BaseDirectory);
+
+        while (current != null)
+        {
+            string candidate = Path.Combine(current.FullName, "src", "PlingBot", "json");
+            string projectDir = Path.Combine(current.FullName, "src", "PlingBot");
+
+            if (Directory.Exists(projectDir))
+                return candidate;
+
+            current = current.Parent;
+        }
+
+        throw new DirectoryNotFoundException("Could not locate src\\PlingBot\\json.");
     }
 
     private void LoadFromJson()
@@ -49,18 +93,18 @@ public class TipsConfig
                 Data = JsonSerializer.Deserialize<TipsDataWrapper>(json) ?? new TipsDataWrapper();
 
                 _logger.Log(
-                    $"Loaded {jsonFileName} — {Data.TipsData.Count} tips + metadata (player: {Data.MetaData.Player}, correct: {Data.MetaData.TotalCorrect})",
+                    $"Loaded {_jsonFileName} — {Data.TipsData.Count} tips + metadata (player: {Data.MetaData.Player}, correct: {Data.MetaData.TotalCorrect})",
                     ConsoleColor.Green);
             }
             catch (Exception ex)
             {
-                _logger.Error($"Failed to load {jsonFileName}: {ex.Message}");
+                _logger.Error($"Failed to load {_jsonFileName}: {ex.Message}");
                 Data = new TipsDataWrapper();
             }
         }
         else
         {
-            _logger.Log($"{jsonFileName} not found — creating new empty structure", ConsoleColor.Yellow);
+            _logger.Log($"{_jsonFileName} not found — creating new empty structure", ConsoleColor.Yellow);
             Data = new TipsDataWrapper();
             SaveToJson();
         }
@@ -68,6 +112,8 @@ public class TipsConfig
 
     public void SaveToJson()
     {
+        Directory.CreateDirectory(Path.GetDirectoryName(_jsonPath)!);
+
         var options = new JsonSerializerOptions
         {
             WriteIndented = true,
@@ -77,7 +123,7 @@ public class TipsConfig
         var json = JsonSerializer.Serialize(Data, options);
         File.WriteAllText(_jsonPath, json, Encoding.UTF8);
 
-        _logger.Log($"Saved {jsonFileName}", ConsoleColor.Cyan);
+        _logger.Log($"Saved {_jsonFileName}", ConsoleColor.Cyan);
     }
 
     public List<TipsMatch> TipsMatches => Data.TipsData;

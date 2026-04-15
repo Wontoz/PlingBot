@@ -1,0 +1,165 @@
+{
+  "MetaData": {
+    "Player": "Fredrik",
+    "Date": "2026-03-14",
+    "TotalCorrect": 0
+  },
+  "TipsData": [
+    {
+      "Number": 1,
+      "HomeTeam": "West Ham",
+      "AwayTeam": "Manchester City",
+      "HomeKey": "West Ham",
+      "AwayKey": "Manchester City",
+      "HomeScore": 0,
+      "AwayScore": 0,
+      "Tip": "",
+      "LastHomeGoals": 0,
+      "LastAwayGoals": 0
+    },
+    {
+      "Number": 2,
+      "HomeTeam": "Arsenal",
+      "AwayTeam": "Everton",
+      "HomeKey": "Arsenal",
+      "AwayKey": "Everton",
+      "HomeScore": 0,
+      "AwayScore": 0,
+      "Tip": "",
+      "LastHomeGoals": 0,
+      "LastAwayGoals": 0
+    },
+    {
+      "Number": 3,
+      "HomeTeam": "Chelsea",
+      "AwayTeam": "Newcastle",
+      "HomeKey": "Chelsea",
+      "AwayKey": "Newcastle",
+      "HomeScore": 0,
+      "AwayScore": 0,
+      "Tip": "",
+      "LastHomeGoals": 0,
+      "LastAwayGoals": 0
+    },
+    {
+      "Number": 4,
+      "HomeTeam": "Sunderland",
+      "AwayTeam": "Brighton",
+      "HomeKey": "Sunderland",
+      "AwayKey": "Brighton",
+      "HomeScore": 0,
+      "AwayScore": 0,
+      "Tip": "",
+      "LastHomeGoals": 0,
+      "LastAwayGoals": 0
+    },
+    {
+      "Number": 5,
+      "HomeTeam": "Burnley",
+      "AwayTeam": "Bournemouth",
+      "HomeKey": "Burnley",
+      "AwayKey": "Bournemouth",
+      "HomeScore": 0,
+      "AwayScore": 0,
+      "Tip": "",
+      "LastHomeGoals": 0,
+      "LastAwayGoals": 0
+    },
+    {
+      "Number": 6,
+      "HomeTeam": "Birmingham",
+      "AwayTeam": "Sheffield U",
+      "HomeKey": "Birmingham",
+      "AwayKey": "Sheffield Utd",
+      "HomeScore": 0,
+      "AwayScore": 0,
+      "Tip": "",
+      "LastHomeGoals": 0,
+      "LastAwayGoals": 0
+    },
+    {
+      "Number": 7,
+      "HomeTeam": "Leicester",
+      "AwayTeam": "Queens Park Rangers",
+      "HomeKey": "Leicester",
+      "AwayKey": "QPR",
+      "HomeScore": 0,
+      "AwayScore": 0,
+      "Tip": "",
+      "LastHomeGoals": 0,
+      "LastAwayGoals": 0
+    },
+    {
+      "Number": 8,
+      "HomeTeam": "Millwall",
+      "AwayTeam": "Blackburn",
+      "HomeKey": "Millwall",
+      "AwayKey": "Blackburn",
+      "HomeScore": 0,
+      "AwayScore": 0,
+      "Tip": "",
+      "LastHomeGoals": 0,
+      "LastAwayGoals": 0
+    },
+    {
+      "Number": 9,
+      "HomeTeam": "Norwich",
+      "AwayTeam": "Preston",
+      "HomeKey": "Norwich",
+      "AwayKey": "Preston",
+      "HomeScore": 0,
+      "AwayScore": 0,
+      "Tip": "",
+      "LastHomeGoals": 0,
+      "LastAwayGoals": 0
+    },
+    {
+      "Number": 10,
+      "HomeTeam": "Stoke",
+      "AwayTeam": "Watford",
+      "HomeKey": "Stoke City",
+      "AwayKey": "Watford",
+      "HomeScore": 0,
+      "AwayScore": 0,
+      "Tip": "",
+      "LastHomeGoals": 0,
+      "LastAwayGoals": 0
+    },
+    {
+      "Number": 11,
+      "HomeTeam": "West Bromwich",
+      "AwayTeam": "Hull",
+      "HomeKey": "West Brom",
+      "AwayKey": "Hull City",
+      "HomeScore": 0,
+      "AwayScore": 0,
+      "Tip": "",
+      "LastHomeGoals": 0,
+      "LastAwayGoals": 0
+    },
+    {
+      "Number": 12,
+      "HomeTeam": "Reading",
+      "AwayTeam": "Plymouth",
+      "HomeKey": "Reading",
+      "AwayKey": "Plymouth",
+      "HomeScore": 0,
+      "AwayScore": 0,
+      "Tip": "",
+      "LastHomeGoals": 0,
+      "LastAwayGoals": 0
+    },
+    {
+      "Number": 13,
+      "HomeTeam": "Wycombe",
+      "AwayTeam": "Luton",
+      "HomeKey": "Wycombe",
+      "AwayKey": "Luton",
+      "HomeScore": 0,
+      "AwayScore": 0,
+      "Tip": "",
+      "LastHomeGoals": 0,
+      "LastAwayGoals": 0
+    }
+  ]
+}

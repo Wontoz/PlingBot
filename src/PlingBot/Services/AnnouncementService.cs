@@ -46,28 +46,28 @@ public class AnnouncementService
             return;
 
         // Goal cancellations
-        if (homeGoalDiff < 0 || awayGoalDiff < 0)
-        {
-            if (homeGoalDiff < 0)
-            {
-                int cancellations = -homeGoalDiff;
+        // if (homeGoalDiff < 0 || awayGoalDiff < 0)
+        // {
+        //     if (homeGoalDiff < 0)
+        //     {
+        //         int cancellations = -homeGoalDiff;
 
-                for (int i = 0; i < cancellations; i++)
-                {
-                    await AnnounceGoalCancelledAsync(channel, tip, match, true);
-                }
-            }
+        //         for (int i = 0; i < cancellations; i++)
+        //         {
+        //             await AnnounceGoalCancelledAsync(channel, tip, match, true);
+        //         }
+        //     }
 
-            if (awayGoalDiff < 0)
-            {
-                int cancellations = -awayGoalDiff;
+        //     if (awayGoalDiff < 0)
+        //     {
+        //         int cancellations = -awayGoalDiff;
 
-                for (int i = 0; i < cancellations; i++)
-                {
-                    await AnnounceGoalCancelledAsync(channel, tip, match, false);
-                }
-            }
-        }
+        //         for (int i = 0; i < cancellations; i++)
+        //         {
+        //             await AnnounceGoalCancelledAsync(channel, tip, match, false);
+        //         }
+        //     }
+        // }
 
         // Goals
         if (homeGoalDiff > 0)

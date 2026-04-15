@@ -1,0 +1,165 @@
+{
+  "MetaData": {
+    "Player": "Fredrik",
+    "Date": "2026-02-21",
+    "TotalCorrect": 0
+  },
+  "TipsData": [
+    {
+      "Number": 1,
+      "HomeTeam": "Manchester City",
+      "AwayTeam": "Newcastle",
+      "HomeKey": "Manchester City",
+      "AwayKey": "Newcastle",
+      "HomeScore": 0,
+      "AwayScore": 0,
+      "Tip": "",
+      "LastHomeGoals": 0,
+      "LastAwayGoals": 0
+    },
+    {
+      "Number": 2,
+      "HomeTeam": "West Ham",
+      "AwayTeam": "Bournemouth",
+      "HomeKey": "West Ham",
+      "AwayKey": "Bournemouth",
+      "HomeScore": 0,
+      "AwayScore": 0,
+      "Tip": "",
+      "LastHomeGoals": 0,
+      "LastAwayGoals": 0
+    },
+    {
+      "Number": 3,
+      "HomeTeam": "Aston Villa",
+      "AwayTeam": "Leeds",
+      "HomeKey": "Aston Villa",
+      "AwayKey": "Leeds",
+      "HomeScore": 0,
+      "AwayScore": 0,
+      "Tip": "",
+      "LastHomeGoals": 0,
+      "LastAwayGoals": 0
+    },
+    {
+      "Number": 4,
+      "HomeTeam": "Chelsea",
+      "AwayTeam": "Burnley",
+      "HomeKey": "Chelsea",
+      "AwayKey": "Burnley",
+      "HomeScore": 0,
+      "AwayScore": 0,
+      "Tip": "",
+      "LastHomeGoals": 0,
+      "LastAwayGoals": 0
+    },
+    {
+      "Number": 5,
+      "HomeTeam": "Brentford",
+      "AwayTeam": "Brighton",
+      "HomeKey": "Brentford",
+      "AwayKey": "Brighton",
+      "HomeScore": 0,
+      "AwayScore": 0,
+      "Tip": "",
+      "LastHomeGoals": 0,
+      "LastAwayGoals": 0
+    },
+    {
+      "Number": 6,
+      "HomeTeam": "Middlesbrough",
+      "AwayTeam": "Oxford",
+      "HomeKey": "Middlesbrough",
+      "AwayKey": "Oxford United",
+      "HomeScore": 0,
+      "AwayScore": 0,
+      "Tip": "",
+      "LastHomeGoals": 0,
+      "LastAwayGoals": 0
+    },
+    {
+      "Number": 7,
+      "HomeTeam": "Millwall",
+      "AwayTeam": "Portsmouth",
+      "HomeKey": "Millwall",
+      "AwayKey": "Portsmouth",
+      "HomeScore": 0,
+      "AwayScore": 0,
+      "Tip": "",
+      "LastHomeGoals": 0,
+      "LastAwayGoals": 0
+    },
+    {
+      "Number": 8,
+      "HomeTeam": "Norwich",
+      "AwayTeam": "Birmingham",
+      "HomeKey": "Norwich",
+      "AwayKey": "Birmingham",
+      "HomeScore": 0,
+      "AwayScore": 0,
+      "Tip": "",
+      "LastHomeGoals": 0,
+      "LastAwayGoals": 0
+    },
+    {
+      "Number": 9,
+      "HomeTeam": "Southampton",
+      "AwayTeam": "Charlton",
+      "HomeKey": "Southampton",
+      "AwayKey": "Charlton",
+      "HomeScore": 0,
+      "AwayScore": 0,
+      "Tip": "",
+      "LastHomeGoals": 0,
+      "LastAwayGoals": 0
+    },
+    {
+      "Number": 10,
+      "HomeTeam": "Watford",
+      "AwayTeam": "Derby",
+      "HomeKey": "Watford",
+      "AwayKey": "Derby",
+      "HomeScore": 0,
+      "AwayScore": 0,
+      "Tip": "",
+      "LastHomeGoals": 0,
+      "LastAwayGoals": 0
+    },
+    {
+      "Number": 11,
+      "HomeTeam": "Wrexham",
+      "AwayTeam": "Ipswich",
+      "HomeKey": "Wrexham",
+      "AwayKey": "Ipswich",
+      "HomeScore": 0,
+      "AwayScore": 0,
+      "Tip": "",
+      "LastHomeGoals": 0,
+      "LastAwayGoals": 0
+    },
+    {
+      "Number": 12,
+      "HomeTeam": "Mansfield",
+      "AwayTeam": "Lincoln",
+      "HomeKey": "Mansfield Town",
+      "AwayKey": "Lincoln",
+      "HomeScore": 0,
+      "AwayScore": 0,
+      "Tip": "",
+      "LastHomeGoals": 0,
+      "LastAwayGoals": 0
+    },
+    {
+      "Number": 13,
+      "HomeTeam": "Wimbledon",
+      "AwayTeam": "Bradford",
+      "HomeKey": "AFC Wimbledon",
+      "AwayKey": "Bradford",
+      "HomeScore": 0,
+      "AwayScore": 0,
+      "Tip": "",
+      "LastHomeGoals": 0,
+      "LastAwayGoals": 0
+    }
+  ]
+}
