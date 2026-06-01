@@ -1,4 +1,22 @@
 # Changelog
+## [2.2.0] - 2026-06-01
+- Bot now creates a realtime updating dashboard in the selected Discord channel
+  - You can now see the scores and elapsed time for each match in realtime, just like checking a coupon on the official App
+  - This means that the bot no longer requires specific commands to show current amount of correct matches
+  - Goals, Cancellations and Red Cards are still announced as messages, but are later moved to dashboard and removed from channel to prevent spam
+- Added funny status messages for each player that rotates during runtime
+- Reworked event state support by storing them in the data file
+- Added start date to match objects
+  - Bot now knows when all matches on a coupon are meant to start
+  - This feature is also used to determine when polling should start
+- Bot now waits for Discord to be ready when starting the poller
+- Re-enabled goal correction notifications.
+- Reduced duplicate poller startup risk by guarding poller start
+- Moved event symbol handling toward shared helper function
+- Added persisted dashboard events so event history can survive restarts.
+- Reworked Announcement Service slightly.
+
+
 ## [2.1.0] - 2026-04-16
 - Integrated TipsScraper to PlingBot, now the tips scraping app and the discord bot is contained within the same repository.
 - Disabled goal correction notifications as they were not working properly
