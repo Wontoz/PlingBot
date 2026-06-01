@@ -4,6 +4,7 @@ using Discord;
 using System;
 using System.Linq;
 using System.Threading.Tasks;
+using System.Collections.Generic;
 using PlingBot.Config;
 using PlingBot.Models;
 using PlingBot.Utils;
@@ -15,127 +16,47 @@ public class AnnouncementService
     private readonly CouponEvaluator _evaluator;
     private readonly Logger _logger;
     private readonly Dictionary<int, DateTime> _lastRedCardChecks = new();
-    
+    private readonly DashboardService _dashboardService;
 
-    public AnnouncementService(
-        FootballApiClient api,
-        TipsConfig tipsConfig,
-        CouponEvaluator evaluator,
-        Logger logger)
+    public AnnouncementService(FootballApiClient api, TipsConfig tipsConfig, CouponEvaluator evaluator, Logger logger, DashboardService dashboardService)
     {
         _api = api;
         _tipsConfig = tipsConfig;
         _evaluator = evaluator;
         _logger = logger;
+        _dashboardService = dashboardService;
     }
 
-    // Detect goal cancellations, goals and red cards in this particular order, then announce them properly.
-    // Can be refactored into separate methods, but i think this is pretty readable as-is.
     public async Task ProcessMatchUpdateAsync(IMessageChannel channel, TipsMatch tip)
     {
         var match = tip.Match ?? throw new ArgumentNullException(nameof(tip.Match));
 
-        int homeGoalDiff = match.HomeGoals - tip.LastHomeGoals;
-        int awayGoalDiff = match.AwayGoals - tip.LastAwayGoals;
-
         bool isLive = match.Status is "First Half" or "Second Half";
-        bool scoreChanged = homeGoalDiff != 0 || awayGoalDiff != 0;
-        bool somethingHappened = false;
+        bool scoreChanged = match.HomeGoals != tip.LastHomeGoals || match.AwayGoals != tip.LastAwayGoals;
 
         if (!scoreChanged && !isLive)
             return;
 
-        // Goal cancellations
-        // if (homeGoalDiff < 0 || awayGoalDiff < 0)
-        // {
-        //     if (homeGoalDiff < 0)
-        //     {
-        //         int cancellations = -homeGoalDiff;
+        bool somethingHappened = false;
 
-        //         for (int i = 0; i < cancellations; i++)
-        //         {
-        //             await AnnounceGoalCancelledAsync(channel, tip, match, true);
-        //         }
-        //     }
-
-        //     if (awayGoalDiff < 0)
-        //     {
-        //         int cancellations = -awayGoalDiff;
-
-        //         for (int i = 0; i < cancellations; i++)
-        //         {
-        //             await AnnounceGoalCancelledAsync(channel, tip, match, false);
-        //         }
-        //     }
-        // }
-
-        // Goals
-        if (homeGoalDiff > 0)
-        {
-            for (int i = 0; i < homeGoalDiff; i++)
-                await AnnounceGoalAsync(channel, tip, match, true);
-        }
-
-        if (awayGoalDiff > 0)
-        {
-            for (int i = 0; i < awayGoalDiff; i++)
-                await AnnounceGoalAsync(channel, tip, match, false);
-        }
-
-        // Red cards
-        if (isLive)
-        {
-            bool shouldCheckRedCards =
-                !_lastRedCardChecks.TryGetValue(match.Id, out var lastCheck) ||
-                
-                // How many minutes should pass between red card checks
-                DateTime.UtcNow - lastCheck >= TimeSpan.FromMinutes(2);
-
-            if (shouldCheckRedCards)
-            {
-                _lastRedCardChecks[match.Id] = DateTime.UtcNow;
-
-                var cardEvents = await _api.FetchMatchEventsByTypeAsync(match.Id, "card");
-
-                foreach (var ev in cardEvents
-                    .Where(e =>
-                        string.Equals(e.Detail, "Red Card", StringComparison.OrdinalIgnoreCase) ||
-                        string.Equals(e.Detail, "Second Yellow Card", StringComparison.OrdinalIgnoreCase))
-                    .OrderBy(Helpers.GetEventSortValue))
-                {
-                    string key = Helpers.BuildEventKey(ev);
-
-                    if (tip.AnnouncedEventKeys.Contains(key))
-                        continue;
-
-                    bool isHome = string.Equals(ev.Team, match.HomeTeam, StringComparison.OrdinalIgnoreCase);
-
-                    await AnnounceRedCardAsync(channel, tip, match, isHome, ev);
-
-                    tip.AnnouncedEventKeys.Add(key);
-                    somethingHappened = true;
-                }
-            }
-        }
-
-        // Re-evaluate coupon upon score change
         if (scoreChanged)
         {
-            tip.LastHomeGoals = match.HomeGoals;
-            tip.LastAwayGoals = match.AwayGoals;
-            tip.HomeScore = match.HomeGoals;
-            tip.AwayScore = match.AwayGoals;
+            string key = Helpers.BuildScoreTransitionKey(match, tip.LastHomeGoals, tip.LastAwayGoals);
 
-            var (correct, evaluated) = _evaluator.Evaluate(_tipsConfig.TipsMatches);
-            _tipsConfig.Data.MetaData.TotalCorrect = correct;
-            _logger.Log(
-                $"Re-evaluated coupon: {correct}/{evaluated} correct",
-                ConsoleColor.Green);
-            
+            if (!tip.AnnouncedEventKeys.Contains(key))
+            {
+                tip.AnnouncedEventKeys.Add(key);
+                await AnnounceScoreChangeAsync(channel, tip, match);
+            }
+
+            UpdateScore(tip, match);
+            ReEvaluateCoupon();
             somethingHappened = true;
         }
 
-        // Update JSON if something happened
+        if (isLive && await AnnounceRedCardsAsync(channel, tip, match))
+            somethingHappened = true;
+
         if (somethingHappened)
         {
             tip.LastUpdatedUtc = DateTime.UtcNow;
@@ -143,69 +64,124 @@ public class AnnouncementService
         }
     }
 
+    private async Task AnnounceScoreChangeAsync(IMessageChannel channel, TipsMatch tip, Match match)
+    {
+        int homeDiff = match.HomeGoals - tip.LastHomeGoals;
+        int awayDiff = match.AwayGoals - tip.LastAwayGoals;
+
+        if (homeDiff > 0)
+            await AnnounceGoalAsync(channel, tip, match, true);
+
+        if (awayDiff > 0)
+            await AnnounceGoalAsync(channel, tip, match, false);
+
+        if (homeDiff < 0)
+            await AnnounceGoalCancelledAsync(channel, tip, match, true);
+
+        if (awayDiff < 0)
+            await AnnounceGoalCancelledAsync(channel, tip, match, false);
+    }
+
+    private async Task<bool> AnnounceRedCardsAsync(IMessageChannel channel, TipsMatch tip, Match match)
+    {
+        bool shouldCheck = !_lastRedCardChecks.TryGetValue(match.Id, out var lastCheck) || DateTime.UtcNow - lastCheck >= TimeSpan.FromMinutes(2);
+        if (!shouldCheck)
+            return false;
+
+        _lastRedCardChecks[match.Id] = DateTime.UtcNow;
+
+        var cardEvents = await _api.FetchMatchEventsByTypeAsync(match.Id, "card");
+        bool announced = false;
+
+        foreach (var ev in cardEvents
+            .Where(e => string.Equals(e.Detail, "Red Card", StringComparison.OrdinalIgnoreCase) || string.Equals(e.Detail, "Second Yellow Card", StringComparison.OrdinalIgnoreCase))
+            .OrderBy(Helpers.GetEventSortValue))
+        {
+            string key = "card|" + match.Id + "|" + Helpers.BuildEventKey(ev);
+
+            if (tip.AnnouncedEventKeys.Contains(key))
+                continue;
+
+            bool isHome = string.Equals(ev.Team, match.HomeTeam, StringComparison.OrdinalIgnoreCase);
+
+            await AnnounceRedCardAsync(channel, tip, match, isHome, ev);
+
+            tip.AnnouncedEventKeys.Add(key);
+            announced = true;
+        }
+
+        return announced;
+    }
+
+    private void UpdateScore(TipsMatch tip, Match match)
+    {
+        tip.LastHomeGoals = match.HomeGoals;
+        tip.LastAwayGoals = match.AwayGoals;
+        tip.HomeScore = match.HomeGoals;
+        tip.AwayScore = match.AwayGoals;
+    }
+
+    private void ReEvaluateCoupon()
+    {
+        var (correct, evaluated) = _evaluator.Evaluate(_tipsConfig.TipsMatches);
+        _tipsConfig.Data.MetaData.TotalCorrect = correct;
+        _logger.Log($"Re-evaluated coupon: {correct}/{evaluated} correct", ConsoleColor.Green);
+    }
+
     private async Task AnnounceGoalAsync(IMessageChannel channel, TipsMatch tip, Match match, bool homeScored)
     {
-        string symbol = GetEventSymbol(tip, match.Symbol);
+        string symbol = Helpers.GetEventSymbol(tip, match.Symbol);
         string score = Helpers.FormatScore(match.HomeGoals, match.AwayGoals, homeScored);
-
         string msg = $"⚽ {symbol} Mål! {tip.HomeTeam} {score} {tip.AwayTeam} {Helpers.GetMinute(match)}";
-        await channel.SendMessageAsync(msg);
 
-        _logger.Log($"Goal announced: {msg}", ConsoleColor.Magenta);
+        await AnnounceMessageAsync(channel, msg, ConsoleColor.Magenta, "Goal announced");
     }
 
     private async Task AnnounceGoalCancelledAsync(IMessageChannel channel, TipsMatch tip, Match match, bool isHome)
     {
         string symbol = isHome
-            ? GetEventSymbol(tip, match.Symbol, match.HomeTeam, isHomeEvent: true, isBadEvent: true)
-            : GetEventSymbol(tip, match.Symbol, match.AwayTeam, isHomeEvent: false, isBadEvent: true);
+            ? Helpers.GetEventSymbol(tip, match.Symbol, match.HomeTeam, isHomeEvent: true, isBadEvent: true)
+            : Helpers.GetEventSymbol(tip, match.Symbol, match.AwayTeam, isHomeEvent: false, isBadEvent: true);
 
         string score = Helpers.FormatScore(match.HomeGoals, match.AwayGoals, isHome);
-
         string msg = $"⚠️ {symbol} Mål bortdömt! {tip.HomeTeam} {score} {tip.AwayTeam} {Helpers.GetMinute(match)}";
-        await channel.SendMessageAsync(msg);
-        _logger.Log($"Cancelled goal announced: {msg}", ConsoleColor.Red);
+        
+        await AnnounceMessageAsync(channel, msg, ConsoleColor.Red, "Cancelled goal announced");
     }
 
     private async Task AnnounceRedCardAsync(IMessageChannel channel, TipsMatch tip, Match match, bool isHome, MatchEvent? evt)
     {
         string team = isHome ? tip.HomeTeam : tip.AwayTeam;
-
         string symbol = isHome
-            ? GetEventSymbol(tip, match.Symbol, match.HomeTeam, isHomeEvent: true, isBadEvent: true)
-            : GetEventSymbol(tip, match.Symbol, match.AwayTeam, isHomeEvent: false, isBadEvent: true);
+            ? Helpers.GetEventSymbol(tip, match.Symbol, match.HomeTeam, isHomeEvent: true, isBadEvent: true)
+            : Helpers.GetEventSymbol(tip, match.Symbol, match.AwayTeam, isHomeEvent: false, isBadEvent: true);
 
         string player = string.IsNullOrEmpty(evt?.Player) ? "Okänd spelare" : evt.Player;
-
         string msg = $"🟥 {symbol} Rött kort! {team} – {player} {Helpers.GetMinute(match)}";
-        await channel.SendMessageAsync(msg);
-
-        _logger.Log($"Red card announced: {msg}", ConsoleColor.DarkRed);
+        
+        await AnnounceMessageAsync(channel, msg, ConsoleColor.DarkRed, "Red card announced");
     }
 
-    public static string GetEventSymbol(TipsMatch tip, string matchSymbol, string? team = null, bool? isHomeEvent = null, bool isBadEvent = false)
+    private async Task AnnounceMessageAsync(IMessageChannel channel, string msg, ConsoleColor logColor, string logPrefix)
     {
-        if (tip.Tip == "1X2")
-            return "✅";
+        _dashboardService.AddEvent(msg);
 
-        bool isGood;
+        var sentMessage = await channel.SendMessageAsync(msg);
+        _logger.Log($"{logPrefix}: {msg}", logColor);
 
-        if (team != null && isHomeEvent.HasValue)
+        _ = DeleteMessageAsync(sentMessage, TimeSpan.FromMinutes(1));
+    }
+
+    private async Task DeleteMessageAsync(IUserMessage message, TimeSpan delay)
+    {
+        try
         {
-            bool teamMatchesTip =
-                (isHomeEvent.Value && tip.Tip.Contains("1")) ||
-                (!isHomeEvent.Value && tip.Tip.Contains("2"));
-
-            isGood = teamMatchesTip;
+            await Task.Delay(delay);
+            await message.DeleteAsync();
         }
-        else
+        catch (Exception ex)
         {
-            isGood = tip.Tip.Contains(matchSymbol);
+            _logger.Log($"Could not delete message: {ex.Message}", ConsoleColor.DarkYellow);
         }
-
-        if (isBadEvent)
-            isGood = !isGood;
-
-        return isGood ? "✅" : "❌";
     }
 }

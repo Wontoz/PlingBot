@@ -14,6 +14,7 @@ public class BotHost
     private readonly MessageHandler _messageHandler;
     private readonly Logger _logger;
     private readonly BotOptions _options;
+    private bool _pollerStarted;
 
     public BotHost(
         ScorePollerService poller,
@@ -49,6 +50,8 @@ public class BotHost
         if (string.IsNullOrWhiteSpace(token))
             throw new InvalidOperationException("DISCORD_TOKEN not set");
 
+        _client.Ready += OnReadyAsync;
+
         await _client.LoginAsync(TokenType.Bot, token);
         await _client.StartAsync();
 
@@ -56,7 +59,20 @@ public class BotHost
             _options.TestMode ? "Bot started in TEST MODE" : "Bot logged in and started",
             ConsoleColor.Green
         );
+    }
+
+    private async Task OnReadyAsync()
+    {
+        if (_pollerStarted)
+            return;
+
+        _pollerStarted = true;
+
+        _logger.Log("Discord client ready, starting poller", ConsoleColor.Green);
 
         _ = Task.Run(() => _poller.StartPollingAsync(_client));
+
+        await Task.CompletedTask;
     }
+    
 }

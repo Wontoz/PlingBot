@@ -2,6 +2,7 @@ namespace PlingBot.Models;
 public record Match
 {
     public int Id { get; init; }
+    public DateTime Date { get; init; }
     public required string Status { get; init; }
     public required string HomeTeam { get; init; }
     public  required string AwayTeam { get; init; }

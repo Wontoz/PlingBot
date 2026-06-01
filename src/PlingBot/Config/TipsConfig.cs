@@ -14,6 +14,7 @@ public class TipsDataWrapper
 {
     public MetaData MetaData { get; set; } = new();
     public List<TipsMatch> TipsData { get; set; } = [];
+    public List<string> Events { get; set; } = [];
 }
 
 public class MetaData

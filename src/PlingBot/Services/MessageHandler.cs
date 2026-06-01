@@ -1,6 +1,7 @@
 namespace PlingBot.Services;
 using Discord.WebSocket;
 using System;
+using System.Linq;
 using System.Threading.Tasks;
 using System.Collections.Generic;
 using PlingBot.Config;
@@ -11,16 +12,19 @@ public class MessageHandler
     private readonly TipsConfig _tipsConfig;
     private readonly CouponEvaluator _evaluator;
     private readonly Logger _logger;
+    private readonly DashboardService _dashboardService;
+    private readonly StatusMessageService _statusMessageService;
     private readonly HashSet<ulong> _allowedUsers;
     private readonly ulong _viktorId;
     private string _player = "";
-    private bool _isFirstMessage = true;
-
-    public MessageHandler(TipsConfig tipsConfig, CouponEvaluator evaluator, Logger logger)
+    private const int RecentMessageLimit = 10;
+    public MessageHandler(TipsConfig tipsConfig, CouponEvaluator evaluator, Logger logger, DashboardService dashboardService, StatusMessageService statusMessageService)
     {
         _tipsConfig = tipsConfig;
         _evaluator = evaluator;
         _logger = logger;
+        _dashboardService = dashboardService;
+        _statusMessageService = statusMessageService;
 
         // Load allowed users and IDs from env (you can keep hard-coding or move to env)
         _allowedUsers = new HashSet<ulong>
@@ -46,27 +50,31 @@ public class MessageHandler
         {
             if (!_allowedUsers.Contains(message.Author.Id))
             {
-                await message.Channel.SendMessageAsync("I är icke med på stryket, i har inget att se här.");
-                if (message.Author.Id == _viktorId)
-                {
-                    await Task.Delay(5000);
-                    await message.Channel.SendMessageAsync("Särkilt inte du Viktor.");
-                }
+                await message.Channel.SendMessageAsync("He");
                 return;
             }
 
             var (correct, evaluated) = _evaluator.Evaluate(_tipsConfig.TipsMatches);
 
-            string suffix = _player.ToLower() switch
+            string suffix = _statusMessageService.Generate(_player);
+
+            await message.Channel.SendMessageAsync($"Just nu har vi {correct}/{evaluated} rätt!\n{suffix}");
+            return;
+        }
+
+        if(content.Equals("!snaz", StringComparison.OrdinalIgnoreCase) || content.Equals("!kupong", StringComparison.OrdinalIgnoreCase))
+        {
+            if (!_allowedUsers.Contains(message.Author.Id))
             {
-                "jonas" => _isFirstMessage ? "Eeeeeeeeeeeeeek" : "Eeeeek",
-                "fredrik" => _isFirstMessage ? "PleeeeeEEEEASE Wibb" : "Körvi Wibb",
-                "william" => _isFirstMessage ? "Kan ju knappast bli sämre än förra gången du körde William" : "Suck...",
-                _ => ""
-            };
-            
-            await message.Channel.SendMessageAsync($"Just nu har vi {correct}/{evaluated} rätt! {suffix}");
-            _isFirstMessage = false;
+                await message.Channel.SendMessageAsync("He");
+                return;
+            }
+
+            string extraMessage = _statusMessageService.Generate(_player);
+
+            await _dashboardService.DeletePreviousDashboardsAsync(message.Channel);
+            await _dashboardService.CreateOrUpdateAsync(message.Channel, extraMessage);
+            return;
         }
 
         if (content.Equals("!updatemeta", StringComparison.OrdinalIgnoreCase) && _allowedUsers.Contains(message.Author.Id))
@@ -87,4 +95,5 @@ public class MessageHandler
 
         // Add more commands here later...
     }
+
 }

@@ -34,6 +34,7 @@ class Program
         {"Newport", "Newport County"},
         {"Swindon", "Swindon Town"},
         {"Fleetwood", "Fleetwood Town"},
+        {"Harrogate", "Harrogate Town"},
 
 
         // Sverige
@@ -43,11 +44,28 @@ class Program
         {"Djurgården", "Djurgardens IF"},
         {"Hammarby", "Hammarby FF"},
         {"Hammarby TFF", "Hammarby Talang"},
+        {"Mjällby", "Mjallby AIF"},
+        {"Häcken", "BK Hacken"},
+        {"Västerås", "Vasteras SK FK"},
+        {"Norrby", "Norrby IF"},
+        {"Elfsborg", "IF Elfsborg"},
+        {"IFK Göteborg", "IFK Goteborg"},
+        {"Öster", "Osters IF"},
+        {"Åtvidaberg", "Atvidabergs FF"},
+        {"AFC Malmö", "AFC Malmo"},
+
 
         // Norge / Danmark
         {"Randers", "Randers FC"},
         {"Nordsjälland", "FC Nordsjaelland"},
         {"Midtjylland", "FC Midtjylland"},
+        {"Bodö/Glimt", "Bodo/Glimt"},
+        {"Fredrikstad FK", "Fredrikstad"},
+
+        // Finland
+        {"IF Gnistan", "Gnistan"},
+        {"Inter Åbo", "Inter Turku"},
+        {"TPS", "Turku PS"},
 
         // Spanien
         {"Granada", "Granada CF"},
@@ -57,12 +75,21 @@ class Program
 
         // Tyskland
         {"Stuttgart", "VfB Stuttgart"},
+        {"Wolfsburg", "VfL Wolfsburg"},
+        {"Paderborn", "SC Paderborn 07"},
 
         // Italien
         {"Roma", "AS Roma"},
 
         // Belgien
         {"Royale Union SG", "Union St. Gilloise"},
+        {"Mechelen", "KV Mechelen"},
+        {"Club Brügge", "Club Brugge KV"},
+        {"St. Truidense","St. Truiden"},
+
+        // Skottland
+        {"Partick Thistle", "Partick"},
+        {"St. Mirren"," ST Mirren"},
 
         // Portugal
         {"Porto", "FC Porto"},
@@ -75,6 +102,7 @@ class Program
 
         //Brasilien
         {"Botafogo RJ", "Botafogo"},
+        {"Paranaense", "Atletico Paranaense"},
 
         // Landslag
         {"Sverige", "Sweden"},

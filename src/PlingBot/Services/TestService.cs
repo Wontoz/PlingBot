@@ -136,7 +136,7 @@ public class TestService
             Elapsed = 42
         };
 
-        string symbol = AnnouncementService.GetEventSymbol(tip, simulatedMatch.Symbol);
+        string symbol = Helpers.GetEventSymbol(tip, simulatedMatch.Symbol);
 
         string score = isHome
             ? $"**{simulatedMatch.HomeGoals}** - {simulatedMatch.AwayGoals}"
@@ -185,8 +185,8 @@ public class TestService
         };
 
         string symbol = isHome
-            ? AnnouncementService.GetEventSymbol(tip, simulatedMatch.Symbol, simulatedMatch.HomeTeam, true, true)
-            : AnnouncementService.GetEventSymbol(tip, simulatedMatch.Symbol, simulatedMatch.AwayTeam, false, true);
+            ? Helpers.GetEventSymbol(tip, simulatedMatch.Symbol, simulatedMatch.HomeTeam, true, true)
+            : Helpers.GetEventSymbol(tip, simulatedMatch.Symbol, simulatedMatch.AwayTeam, false, true);
 
         string score = isHome
             ? $"**{simulatedMatch.HomeGoals}** - {simulatedMatch.AwayGoals}"
@@ -239,8 +239,8 @@ public class TestService
         tip.AnnouncedEventKeys.Add(eventKey);
 
         string symbol = isHome
-            ? AnnouncementService.GetEventSymbol(tip, match.Symbol, match.HomeTeam, true, true)
-            : AnnouncementService.GetEventSymbol(tip, match.Symbol, match.AwayTeam, false, true);
+            ? Helpers.GetEventSymbol(tip, match.Symbol, match.HomeTeam, true, true)
+            : Helpers.GetEventSymbol(tip, match.Symbol, match.AwayTeam, false, true);
 
         string team = isHome ? tip.HomeTeam : tip.AwayTeam;
         string msg = $"🟥 {symbol} Rött kort! {team} – {fakeEvent.Player} ({fakeEvent.Elapsed})";

@@ -148,6 +148,24 @@ public class FootballApiClient
         }
     }
 
+    public async Task<Match?> FindMatchForTeamsInNextDaysAsync(string homeKey, string awayKey, int daysForward = 7)
+    {
+        for (int i = 0; i <= daysForward; i++)
+        {
+            DateTime date = DateTime.UtcNow.Date.AddDays(i);
+            var matches = await FetchMatchesByDateAsync(date);
+
+            var match = matches.FirstOrDefault(m =>
+                string.Equals(m.HomeTeam, homeKey, StringComparison.OrdinalIgnoreCase) &&
+                string.Equals(m.AwayTeam, awayKey, StringComparison.OrdinalIgnoreCase));
+
+            if (match != null)
+                return match;
+        }
+
+        return null;
+    }
+
     private static Match CreateMatchFromJson(JsonElement element)
     {
         var fixtureElem = element.GetProperty("fixture");
@@ -158,6 +176,7 @@ public class FootballApiClient
         return new Match
         {
             Id = GetInt(fixtureElem.GetProperty("id")),
+            Date = fixtureElem.GetProperty("date").GetDateTime(),
             Status = statusElem.GetProperty("long").GetString() ?? "Unknown",
 
             HomeTeam = teamsElem.GetProperty("home").GetProperty("name").GetString() ?? "",

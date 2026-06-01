@@ -58,6 +58,8 @@ class Program
         services.AddSingleton<MessageHandler>();
         services.AddSingleton<TestService>();
         services.AddSingleton<ScorePollerService>();
+        services.AddSingleton<DashboardService>();
+        services.AddSingleton<StatusMessageService>();
 
         services.AddSingleton<TipsConfig>(sp =>
         {
