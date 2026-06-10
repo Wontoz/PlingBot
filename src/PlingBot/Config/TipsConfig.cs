@@ -6,7 +6,6 @@ using System.IO;
 using System.Text;
 using System.Text.Encodings.Web;
 using System.Text.Json;
-using System.Text.Unicode;
 using PlingBot.Models;
 using PlingBot.Utils;
 
@@ -14,7 +13,7 @@ public class TipsDataWrapper
 {
     public MetaData MetaData { get; set; } = new();
     public List<TipsMatch> TipsData { get; set; } = [];
-    public List<string> Events { get; set; } = [];
+    public List<CouponEvent> Events { get; set; } = [];
 }
 
 public class MetaData
@@ -23,6 +22,7 @@ public class MetaData
     public string Date { get; set; } = DateTime.Today.ToString("yyyy-MM-dd");
     public string Game { get; set; } = string.Empty;
     public int TotalCorrect { get; set; }
+    public DateTime? StartTime { get; set; }
 }
 
 public class TipsConfig
@@ -34,13 +34,15 @@ public class TipsConfig
 
     private readonly string _jsonFileName;
 
-    public TipsConfig(Logger logger, string game)
+    public TipsConfig(Logger logger, string game, DateOnly? couponDate = null)
     {
         _logger = logger;
 
         string filePrefix = GetFilePrefix(game);
-        _jsonFileName = $"{filePrefix}_{DateTime.Today:yyyy-MM-dd}.json";
+        DateOnly selectedDate = couponDate ?? DateOnly.FromDateTime(DateTime.Today);
+        _jsonFileName = $"{filePrefix}_{selectedDate:yyyy-MM-dd}.json";
         _logger.Log($"Using game: {game}", ConsoleColor.Cyan);
+        _logger.Log($"Using coupon date: {selectedDate:yyyy-MM-dd}", ConsoleColor.Cyan);
 
         string jsonDir = ResolveJsonDirectory();
         Directory.CreateDirectory(jsonDir);
@@ -118,7 +120,7 @@ public class TipsConfig
         var options = new JsonSerializerOptions
         {
             WriteIndented = true,
-            Encoder = JavaScriptEncoder.Create(UnicodeRanges.All)
+            Encoder = JavaScriptEncoder.UnsafeRelaxedJsonEscaping
         };
 
         var json = JsonSerializer.Serialize(Data, options);

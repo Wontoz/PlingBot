@@ -5,7 +5,7 @@ using System.Collections.Generic;
 using System.Linq;
 using PlingBot.Config;
 
-public class StatusMessageService
+public class PlayerMessageService
 {
     private readonly Queue<string> recentMessages = new();
     private const int RecentMessageLimit = 10;

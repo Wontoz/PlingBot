@@ -3,5 +3,6 @@ public class BotOptions
 {
     public bool TestMode { get; set; }
     public string Game { get; set; } = "Stryktipset";
+    public DateOnly? CouponDate { get; set; }
     
 }

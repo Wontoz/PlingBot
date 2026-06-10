@@ -12,6 +12,7 @@ public record class TipsMatch
     public string HomeKey { get; set; } = "";
     public string AwayKey { get; set; } = "";
     public string Tip { get; set; } = "";
+    public string Outcome { get; set; } = "";
     public int? FixtureId { get; set; }
     public bool IsFinished { get; set; }
 
@@ -20,8 +21,12 @@ public record class TipsMatch
     public int LastHomeGoals { get; set; }
     public int LastAwayGoals { get; set; }
 
+    public int? Percentage1 { get; set; }
+    public int? PercentageX { get; set; }
+    public int? Percentage2 { get; set; }
+    public DateTime? PercentagesUpdatedUtc { get; set; }
+
     public DateTime? LastUpdatedUtc { get; set; }
-    public DateTime? LastRedCardCheckUtc { get; set; }
     public HashSet<string> AnnouncedEventKeys { get; set; } = new();
 
     [JsonIgnore]

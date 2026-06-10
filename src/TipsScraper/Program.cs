@@ -1,11 +1,12 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Globalization;
 using System.IO;
 using System.Text;
 using System.Text.Encodings.Web;
 using System.Text.Json;
 using System.Text.Json.Serialization;
-using System.Text.Unicode;
+using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using Microsoft.Playwright;
 
@@ -53,6 +54,10 @@ class Program
         {"Öster", "Osters IF"},
         {"Åtvidaberg", "Atvidabergs FF"},
         {"AFC Malmö", "AFC Malmo"},
+        {"Jönköpings Södra", "Jonkopings Sodra"},
+        {"Gefle", "Gefle IF"},
+        {"Sölvesborgs GoIF", "Sölvesborg"},
+        {"Torn", "Torns"},
 
 
         // Norge / Danmark
@@ -106,11 +111,54 @@ class Program
 
         // Landslag
         {"Sverige", "Sweden"},
+        {"Spanien", "Spain"},
+        {"Irak", "Iraq"},
+        {"Frankrike", "France"},
+        {"Elfenbenskusten", "Ivory Coast"},
+        {"Mexiko", "Mexico"},
+        {"Paraguay", "Paraguay"},
+        {"Brasilien", "Brazil"},
+        {"Marocko", "Morocco"},
+        {"Australien", "Australia"},
+        {"Japan", "Japan"},
+        {"Ecuador", "Ecuador"},
+        {"Belgien", "Belgium"},
+        {"Egypten", "Egypt"},
+        {"Senegal", "Senegal"},
+        {"Argentina", "Argentina"},
+        {"Serbien", "Serbia"},
+        {"Nederländerna", "Netherlands"},
+        {"Algeriet", "Algeria"},
+        {"DR Kongo", "Congo DR"},
+        {"Danmark", "Denmark"},
+        {"Polen", "Poland"},
+        {"Nigeria", "Nigeria"},
+        {"Luxemburg", "Luxembourg"},
+        {"Italien", "Italy"},
+        {"Albanien", "Albania"},
+        {"Israel", "Israel"},
         {"Schweiz", "Switzerland"},
-        {"Bosnien & Herzegovina", "Bosnia & Herzegovina"},
+        {"Bosnien & Hercegovina", "Bosnia & Herzegovina"},
         {"Rumänien", "Romania"},
         {"Grekland", "Greece"},
-        {"Skottland", "Scotland"}
+        {"Skottland", "Scotland"},
+        {"Norge", "Norway"},
+        {"Turkiet", "Türkiye"},
+        {"Nordmakedonien", "North Macedonia"},
+        {"Österrike", "Austria"},
+        {"Tunisien", "Tunisia"},
+        {"Kanada", "Canada"},
+        {"Sydkorea", "South Korea"},
+        {"El Salvador", "El Salvador"},
+        {"Sydafrika", "South Africa"},
+        {"Tjeckien", "Czech Republic"},
+
+
+        // Damlag (Ändra manuellt)
+        {"Sverige D", "Sweden W"},
+        {"Italien D", "Italy W"},
+        {"Serbien D", "Serbia W"},
+        {"Danmark D", "Denmark W"}
     };
 
     private static readonly HashSet<string> AllowedPlayers = new(StringComparer.OrdinalIgnoreCase)
@@ -125,25 +173,28 @@ class Program
             string player = GetPlayerFromArgs(args);
             GameType selectedGame = GetGameFromArgs(args);
 
-            var tips = await ScrapeMatchesAsync(selectedGame);
+            var coupon = await ScrapeCouponAsync(selectedGame);
+            DateTime couponDate = GetCouponDate(coupon.StartTime);
 
             var result = new StryktipsetJson
             {
                 MetaData = new MetaData
                 {
                     Player = NormalizePlayerName(player),
-                    Date = DateTime.Today.ToString("yyyy-MM-dd"),
+                    Date = couponDate.ToString("yyyy-MM-dd"),
                     TotalCorrect = 0,
-                    Game = selectedGame.DisplayName
+                    Game = selectedGame.DisplayName,
+                    StartTime = coupon.StartTime
                 },
-                TipsData = tips
+                TipsData = coupon.Tips,
+                Events = new List<CouponEventJson>()
             };
 
             var jsonOptions = new JsonSerializerOptions
             {
                 WriteIndented = true,
                 DefaultIgnoreCondition = JsonIgnoreCondition.Never,
-                Encoder = JavaScriptEncoder.Create(UnicodeRanges.All)
+                Encoder = JavaScriptEncoder.UnsafeRelaxedJsonEscaping
             };
 
             string json = JsonSerializer.Serialize(result, jsonOptions);
@@ -151,7 +202,7 @@ class Program
             string fileName = string.Format(
                 "{0}_{1:yyyy-MM-dd}.json",
                 selectedGame.FilePrefix,
-                DateTime.Today);
+                couponDate);
 
             string jsonDir = ResolvePlingBotJsonFolder(args);
             Directory.CreateDirectory(jsonDir);
@@ -250,7 +301,7 @@ class Program
         return input;
     }
 
-    private static async Task<List<TipsMatchJson>> ScrapeMatchesAsync(GameType selectedGame)
+    private static async Task<CouponScrapeResult> ScrapeCouponAsync(GameType selectedGame)
     {
         using var playwright = await Playwright.CreateAsync();
         await using var browser = await playwright.Chromium.LaunchAsync(new BrowserTypeLaunchOptions
@@ -264,6 +315,8 @@ class Program
         await page.WaitForSelectorAsync(".coupon-row-description-primary");
 
         var matches = await page.QuerySelectorAllAsync(".coupon-row-description-primary");
+        var percentageRows = await ScrapePercentageRowsAsync(page);
+        DateTime? startTime = await ScrapeStartTimeAsync(page);
 
         var tips = new List<TipsMatchJson>();
         int index = 1;
@@ -278,6 +331,9 @@ class Program
 
             string homeKey = aliasMap.TryGetValue(homeText, out var aliasHome) ? aliasHome : homeText;
             string awayKey = aliasMap.TryGetValue(awayText, out var aliasAway) ? aliasAway : awayText;
+            var percentages = index <= percentageRows.Count
+                ? percentageRows[index - 1]
+                : new CouponPercentages();
 
             tips.Add(new TipsMatchJson
             {
@@ -287,18 +343,175 @@ class Program
                 HomeKey = homeKey,
                 AwayKey = awayKey,
                 Tip = "",
+                Outcome = "",
                 FixtureId = null,
+                IsFinished = false,
                 HomeScore = 0,
                 AwayScore = 0,
                 LastHomeGoals = 0,
                 LastAwayGoals = 0,
+                Percentage1 = percentages.One,
+                PercentageX = percentages.X,
+                Percentage2 = percentages.Two,
+                PercentagesUpdatedUtc = percentages.HasAllValues ? DateTime.UtcNow : null,
                 LastUpdatedUtc = null,
+                LastRedCardCheckUtc = null,
                 AnnouncedEventKeys = new HashSet<string>(),
             });
         }
 
-        return tips;
+        return new CouponScrapeResult(tips, startTime);
     }
+
+    private static async Task<DateTime?> ScrapeStartTimeAsync(IPage page)
+    {
+        var closeElement = await page.QuerySelectorAsync(".pg_draw_card__reg_close_time.pg_draw_card_component");
+        if (closeElement == null)
+            return null;
+
+        string closeText = await closeElement.InnerTextAsync();
+        return ParseSwedishStartTimeUtc(closeText, GetStockholmNow());
+    }
+
+    private static async Task<List<CouponPercentages>> ScrapePercentageRowsAsync(IPage page)
+    {
+        var rawRows = await page.EvaluateAsync<string[][]>(
+            """
+            () => Array.from(document.querySelectorAll('[data-testid="coupon-row-tips-info-svenska-folket"]'))
+                .map(row => Array.from(row.querySelectorAll('td div'))
+                    .slice(0, 3)
+                    .map(cell => cell.textContent.trim()))
+            """);
+
+        var rows = new List<CouponPercentages>();
+
+        foreach (var rawRow in rawRows)
+        {
+            rows.Add(new CouponPercentages
+            {
+                One = rawRow.Length > 0 ? ParsePercentage(rawRow[0]) : null,
+                X = rawRow.Length > 1 ? ParsePercentage(rawRow[1]) : null,
+                Two = rawRow.Length > 2 ? ParsePercentage(rawRow[2]) : null
+            });
+        }
+
+        return rows;
+    }
+
+    private static int? ParsePercentage(string value)
+    {
+        value = value.Trim().TrimEnd('%').Trim();
+        return int.TryParse(value, out int percentage) ? percentage : null;
+    }
+
+    private static DateTime GetCouponDate(DateTime? startTimeUtc)
+    {
+        if (!startTimeUtc.HasValue)
+            return DateTime.Today;
+
+        return TimeZoneInfo.ConvertTimeFromUtc(startTimeUtc.Value, GetStockholmTimeZone()).Date;
+    }
+
+    private static DateTime? ParseSwedishStartTimeUtc(string value, DateTime nowLocal)
+    {
+        var match = Regex.Match(
+            value,
+            @"(?:(?<day>idag|i dag|imorgon|i morgon|måndag|tisdag|onsdag|torsdag|fredag|lördag|söndag|\d{4}-\d{2}-\d{2}|\d{1,2}/\d{1,2})\s+)?(?<time>\d{1,2}:\d{2})",
+            RegexOptions.IgnoreCase | RegexOptions.CultureInvariant);
+
+        if (!match.Success)
+            return null;
+
+        if (!TimeOnly.TryParseExact(match.Groups["time"].Value, "H:mm", CultureInfo.InvariantCulture, DateTimeStyles.None, out var time))
+            return null;
+
+        string rawDay = match.Groups["day"].Value;
+        DateOnly date = ResolveSwedishDate(rawDay, nowLocal);
+        var localStart = date.ToDateTime(time, DateTimeKind.Unspecified);
+
+        if (IsSwedishWeekday(rawDay) && localStart <= nowLocal)
+            localStart = localStart.AddDays(7);
+
+        return TimeZoneInfo.ConvertTimeToUtc(localStart, GetStockholmTimeZone());
+    }
+
+    private static DateOnly ResolveSwedishDate(string rawDay, DateTime nowLocal)
+    {
+        if (string.IsNullOrWhiteSpace(rawDay))
+            return DateOnly.FromDateTime(nowLocal);
+
+        string day = rawDay.Trim().ToLower(new CultureInfo("sv-SE"));
+
+        if (day is "idag" or "i dag")
+            return DateOnly.FromDateTime(nowLocal);
+
+        if (day is "imorgon" or "i morgon")
+            return DateOnly.FromDateTime(nowLocal.AddDays(1));
+
+        if (DateTime.TryParseExact(day, "yyyy-MM-dd", CultureInfo.InvariantCulture, DateTimeStyles.None, out var exactDate))
+            return DateOnly.FromDateTime(exactDate);
+
+        if (DateTime.TryParseExact(day, "d/M", CultureInfo.InvariantCulture, DateTimeStyles.None, out var shortDate))
+            return new DateOnly(nowLocal.Year, shortDate.Month, shortDate.Day);
+
+        DayOfWeek? weekday = ParseSwedishWeekday(day);
+        if (!weekday.HasValue)
+            return DateOnly.FromDateTime(nowLocal);
+
+        int daysForward = ((int)weekday.Value - (int)nowLocal.DayOfWeek + 7) % 7;
+        return DateOnly.FromDateTime(nowLocal.AddDays(daysForward));
+    }
+
+    private static DayOfWeek? ParseSwedishWeekday(string value)
+    {
+        return value switch
+        {
+            "måndag" => DayOfWeek.Monday,
+            "tisdag" => DayOfWeek.Tuesday,
+            "onsdag" => DayOfWeek.Wednesday,
+            "torsdag" => DayOfWeek.Thursday,
+            "fredag" => DayOfWeek.Friday,
+            "lördag" => DayOfWeek.Saturday,
+            "söndag" => DayOfWeek.Sunday,
+            _ => null
+        };
+    }
+
+    private static bool IsSwedishWeekday(string value)
+    {
+        if (string.IsNullOrWhiteSpace(value))
+            return false;
+
+        string day = value.Trim().ToLower(new CultureInfo("sv-SE"));
+        return ParseSwedishWeekday(day).HasValue;
+    }
+
+    private static TimeZoneInfo GetStockholmTimeZone()
+    {
+        try
+        {
+            return TimeZoneInfo.FindSystemTimeZoneById("Europe/Stockholm");
+        }
+        catch (TimeZoneNotFoundException)
+        {
+            return TimeZoneInfo.FindSystemTimeZoneById("W. Europe Standard Time");
+        }
+    }
+
+    private static DateTime GetStockholmNow()
+    {
+        return TimeZoneInfo.ConvertTimeFromUtc(DateTime.UtcNow, GetStockholmTimeZone());
+    }
+}
+
+public sealed record CouponScrapeResult(List<TipsMatchJson> Tips, DateTime? StartTime);
+
+public class CouponPercentages
+{
+    public int? One { get; set; }
+    public int? X { get; set; }
+    public int? Two { get; set; }
+    public bool HasAllValues => One.HasValue && X.HasValue && Two.HasValue;
 }
 
 public sealed class GameType
@@ -334,6 +547,7 @@ public class StryktipsetJson
 {
     public MetaData MetaData { get; set; } = new MetaData();
     public List<TipsMatchJson> TipsData { get; set; } = new List<TipsMatchJson>();
+    public List<CouponEventJson> Events { get; set; } = new List<CouponEventJson>();
 }
 
 public class MetaData
@@ -342,6 +556,7 @@ public class MetaData
     public string Date { get; set; } = "";
     public int TotalCorrect { get; set; }
     public string Game { get; set; } = "";
+    public DateTime? StartTime { get; set; }
 }
 
 public class TipsMatchJson
@@ -352,7 +567,9 @@ public class TipsMatchJson
     public string HomeKey { get; set; } = "";
     public string AwayKey { get; set; } = "";
     public string Tip { get; set; } = "";
+    public string Outcome { get; set; } = "";
     public int? FixtureId { get; set; }
+    public bool IsFinished { get; set; }
 
     public int HomeScore { get; set; }
     public int AwayScore { get; set; }
@@ -360,8 +577,32 @@ public class TipsMatchJson
     public int LastHomeGoals { get; set; }
     public int LastAwayGoals { get; set; }
 
+    public int? Percentage1 { get; set; }
+    public int? PercentageX { get; set; }
+    public int? Percentage2 { get; set; }
+    public DateTime? PercentagesUpdatedUtc { get; set; }
+
     public DateTime? LastUpdatedUtc { get; set; }
+    public DateTime? LastRedCardCheckUtc { get; set; }
 
     public HashSet<string> AnnouncedEventKeys { get; set; } = new HashSet<string>();
-    public List<string> AnnouncedGoalKeys { get; set; } = new List<string>();
+}
+
+public class CouponEventJson
+{
+    public string Key { get; set; } = "";
+    public string Type { get; set; } = "";
+    public int FixtureId { get; set; }
+    public string? Detail { get; set; }
+    public int? TeamId { get; set; }
+    public string Team { get; set; } = "";
+    public int Elapsed { get; set; }
+    public int Extra { get; set; }
+    public string Score { get; set; } = "";
+    public string Text { get; set; } = "";
+    public int? PlayerId { get; set; }
+    public string? Player { get; set; }
+    public int? AssistId { get; set; }
+    public string? Assist { get; set; }
+    public DateTime CreatedUtc { get; set; } = DateTime.UtcNow;
 }

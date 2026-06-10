@@ -52,27 +52,35 @@ class Program
         var services = new ServiceCollection();
 
         services.AddSingleton<Logger>();
+        services.AddSingleton<ApiUsageTracker>();
         services.AddSingleton<FootballApiClient>();
+        services.AddSingleton<DiscordAnnouncementService>();
+        services.AddSingleton<GoalAnnouncementService>();
+        services.AddSingleton<CardAnnouncementService>();
         services.AddSingleton<AnnouncementService>();
+        services.AddSingleton<CouponEventSyncService>();
         services.AddSingleton<CouponEvaluator>();
+        services.AddSingleton<DashboardBuilder>();
         services.AddSingleton<MessageHandler>();
         services.AddSingleton<TestService>();
         services.AddSingleton<ScorePollerService>();
         services.AddSingleton<DashboardService>();
-        services.AddSingleton<StatusMessageService>();
+        services.AddSingleton<PlayerMessageService>();
+        services.AddSingleton<CouponPercentageService>();
 
         services.AddSingleton<TipsConfig>(sp =>
         {
             var logger = sp.GetRequiredService<Logger>();
             var options = sp.GetRequiredService<BotOptions>();
 
-            return new TipsConfig(logger, options.Game);
+            return new TipsConfig(logger, options.Game, options.CouponDate);
         });
 
         services.AddSingleton(new BotOptions
         {
             Game = Environment.GetEnvironmentVariable("GAME") ?? "Stryktipset",
-            TestMode = testMode
+            TestMode = testMode,
+            CouponDate = GetCouponDateOverride()
         });
 
         services.AddSingleton<BotHost>();
@@ -99,6 +107,21 @@ class Program
         }
         catch { }
 
+        return null;
+    }
+
+    private static DateOnly? GetCouponDateOverride()
+    {
+        string? rawDate = Environment.GetEnvironmentVariable("COUPON_DATE") ??
+            Environment.GetEnvironmentVariable("TIPS_DATE");
+
+        if (string.IsNullOrWhiteSpace(rawDate))
+            return null;
+
+        if (DateOnly.TryParse(rawDate, out var date))
+            return date;
+
+        Console.WriteLine($"Ignoring invalid COUPON_DATE/TIPS_DATE value: {rawDate}");
         return null;
     }
 }

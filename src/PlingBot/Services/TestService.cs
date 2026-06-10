@@ -123,7 +123,7 @@ public class TestService
             Id = tip.FixtureId ?? 999999,
             HomeTeam = tip.HomeTeam,
             AwayTeam = tip.AwayTeam,
-            Status = "First Half",
+            Status = new Status("1H", "First Half", "In Play", "First half in play"),
             HomeGoals = tip.HomeScore,
             AwayGoals = tip.AwayScore,
             Elapsed = 42
@@ -171,7 +171,7 @@ public class TestService
             Id = tip.FixtureId ?? 999999,
             HomeTeam = tip.HomeTeam,
             AwayTeam = tip.AwayTeam,
-            Status = "Second Half",
+            Status = new Status("2H", "Second Half", "In Play", "Second half in play"),
             HomeGoals = tip.HomeScore,
             AwayGoals = tip.AwayScore,
             Elapsed = 70
@@ -213,7 +213,7 @@ public class TestService
             Id = tip.FixtureId ?? 999999,
             HomeTeam = tip.HomeTeam,
             AwayTeam = tip.AwayTeam,
-            Status = "Second Half",
+            Status = new Status("2H", "Second Half", "In Play", "Second half in play"),
             HomeGoals = tip.HomeScore,
             AwayGoals = tip.AwayScore,
             Elapsed = 67

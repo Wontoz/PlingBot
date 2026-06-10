@@ -3,12 +3,13 @@ namespace PlingBot.Services;
 using Discord;
 using Discord.WebSocket;
 using PlingBot.Config;
+using PlingBot.Models;
 using PlingBot.Utils;
 
 public class DashboardService
 {
     private readonly TipsConfig _tipsConfig;
-    private readonly CouponEvaluator _evaluator;
+    private readonly DashboardBuilder _dashboardBuilder;
     private readonly Logger _logger;
 
     private ulong? _channelId;
@@ -19,10 +20,10 @@ public class DashboardService
     private string? _currentExtraMessage;
     private DateTime _lastExtraMessageChangedUtc = DateTime.MinValue;
     private static readonly TimeSpan ExtraMessageInterval = TimeSpan.FromMinutes(10);
-    public DashboardService(TipsConfig tipsConfig, CouponEvaluator evaluator, Logger logger)
+    public DashboardService(TipsConfig tipsConfig, DashboardBuilder dashboardBuilder, Logger logger)
     {
         _tipsConfig = tipsConfig;
-        _evaluator = evaluator;
+        _dashboardBuilder = dashboardBuilder;
         _logger = logger;
     }
 
@@ -131,11 +132,43 @@ public class DashboardService
         _lastContent = null;
     }
 
-    public void AddEvent(string eventText)
+    public void AddEvent(CouponEvent couponEvent)
     {
-        _tipsConfig.Data.Events.Add(eventText);
+        _tipsConfig.Data.Events.Add(couponEvent);
         _tipsConfig.SaveToJson();
-        _logger.Log($"Event added to list: {eventText}");
+        _logger.Log($"Event added to list: {couponEvent.Text}");
+    }
+
+    public bool UpdateEvent(string oldText, CouponEvent newEvent)
+    {
+        int index = _tipsConfig.Data.Events.FindIndex(e => e.Text == oldText);
+        if (index < 0)
+            return false;
+
+        if (_tipsConfig.Data.Events[index].Text == newEvent.Text)
+            return false;
+
+        newEvent.CreatedUtc = _tipsConfig.Data.Events[index].CreatedUtc;
+        _tipsConfig.Data.Events[index] = newEvent;
+        _tipsConfig.SaveToJson();
+        _logger.Log($"Event updated in list: {newEvent.Text}");
+        return true;
+    }
+
+    public bool UpdateEventContaining(string textFragment, CouponEvent newEvent)
+    {
+        int index = _tipsConfig.Data.Events.FindIndex(e => e.Text.Contains(textFragment, StringComparison.Ordinal));
+        if (index < 0)
+            return false;
+
+        if (_tipsConfig.Data.Events[index].Text == newEvent.Text)
+            return false;
+
+        newEvent.CreatedUtc = _tipsConfig.Data.Events[index].CreatedUtc;
+        _tipsConfig.Data.Events[index] = newEvent;
+        _tipsConfig.SaveToJson();
+        _logger.Log($"Event updated in list: {newEvent.Text}");
+        return true;
     }
 
     private string BuildContent(string? extraMessage = null)
@@ -146,10 +179,10 @@ public class DashboardService
             _lastExtraMessageChangedUtc = DateTime.UtcNow;
         }
 
-        return _evaluator.BuildCouponStatusMessage(_tipsConfig, _currentExtraMessage, _tipsConfig.Data.Events);
+        return _dashboardBuilder.Build(_tipsConfig, _currentExtraMessage, _tipsConfig.Data.Events);
     }
 
-    public bool RefreshExtraMessageIfNeeded(StatusMessageService statusMessageService)
+    public bool RefreshExtraMessageIfNeeded(PlayerMessageService statusMessageService)
     {
         if (DateTime.UtcNow - _lastExtraMessageChangedUtc < ExtraMessageInterval)
             return false;

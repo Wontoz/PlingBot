@@ -1,4 +1,56 @@
 # Changelog
+
+## [2.3.0] - 2026-06-11
+
+### Commands
+- Added `!stats <n>` command to fetch and display live match statistics on demand
+  - Shows possession, shots, corners, fouls, cards, saves and passes per team
+  - Both the request message and the statistics block auto-delete after 1 minute
+
+### Match Statistics
+- Added `MatchStatistics` and `TeamStatistics` models to `Match`
+- Added `FetchMatchStatisticsAsync` to `FootballApiClient`
+
+### Announcements
+- Split `AnnouncementService` into focused sub-services: `GoalAnnouncementService`, `CardAnnouncementService`, `DiscordAnnouncementService`
+- Moved all announcement files to `Services/Announcements/` subfolder
+
+### New Services
+- `CouponPercentageService` — fetches and caches Svenska Spel betting percentages, displayed in the dashboard
+- `CouponEventSyncService` — synchronizes coupon events from external source
+- `ApiUsageTracker` — tracks and logs Football API usage
+- `AnnouncementEventKeys` — centralised constants for announcement event deduplication
+
+### New Models
+- `CouponEvent` — model representing a tracked match event in the coupon
+
+### Refactoring
+- Extracted `DashboardBuilder` from `CouponEvaluator` — formatting logic is now fully separated from evaluation logic
+- Renamed `StatusMessageService` → `PlayerMessageService`
+- Dashboard column alignment improvements for FT, HT, match minutes and extra time
+
+---
+
+## [2.2.0] - 2026-06-01
+
+### New Services
+- Added `DashboardService` for managing the live dashboard message (create, update, refresh on startup)
+- Added `StatusMessageService` for personalised flavor text and roast messages per player
+- Dashboard message now rotates its extra message on an interval during polling
+
+### Coupon Evaluation
+- Extracted `BuildCouponStatusMessage` into `CouponEvaluator` — dashboard formatting centralised in one place
+- Dashboard displays current symbol, score, match time and betting percentages per row
+
+### Refactoring
+- Major refactor of `AnnouncementService` — cleaner separation of announcement flow
+- Major refactor of `ScorePollerService` — improved polling structure and readability
+
+### Other
+- Added Topptipset helper script for William
+
+---
+
 ## [2.1.0] - 2026-04-16
 - Integrated TipsScraper to PlingBot, now the tips scraping app and the discord bot is contained within the same repository.
 - Disabled goal correction notifications as they were not working properly

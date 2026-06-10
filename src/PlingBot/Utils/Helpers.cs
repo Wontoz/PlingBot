@@ -1,5 +1,3 @@
-using System;
-using System.Text.Json;
 using PlingBot.Models;
 
 namespace PlingBot.Utils;
@@ -31,7 +29,6 @@ public static class Helpers
 
         return isGood ? "✅" : "❌";
     }
-    
     public static string BuildEventKey(MatchEvent ev)
     {
         return $"{ev.Type}|{ev.Detail}|{ev.Team}|{ev.Player}|{ev.Elapsed}|{ev.Extra}";
@@ -53,8 +50,17 @@ public static class Helpers
         if (match.Elapsed <= 0)
             return string.Empty;
 
-        string minute = match.Extra > 0 ? $"{match.Elapsed}+{match.Extra}" : $"{match.Elapsed}";
-        return $"({minute}')";
+        return $"({match.Elapsed}')";
+    }
+
+    public static string GetMinute(MatchEvent ev)
+    {
+        if (ev.Elapsed <= 0)
+            return string.Empty;
+
+        return ev.Extra > 0
+            ? $"({ev.Elapsed}+{ev.Extra}')"
+            : $"({ev.Elapsed}')";
     }
 
     public static int GetEventSortValue(MatchEvent ev)
