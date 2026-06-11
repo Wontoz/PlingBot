@@ -1,5 +1,21 @@
 # Changelog
 
+## [2.4.0] - 2026-06-11
+
+### Commands
+- Added `!events <n>` command to display all match events on demand
+  - Events grouped by period: HALVLEK 1, HALVLEK 2, FÖRLÄNGNING 1/2
+  - Running score updated after each goal, including own goals
+  - Substitution order shown in label (BYTE 1, BYTE 2, …)
+  - Current match score shown in the header
+  - Team resolved from API data; home/away determined via TeamId to avoid name mapping issues
+
+### Fixes
+- Dashboard match minute display now uses consistent apostrophe alignment for all minute values (1–90) via dynamic padding
+- `TipsScraper` aliasMap dictionary sorted alphabetically per league section
+
+---
+
 ## [2.3.0] - 2026-06-11
 
 ### Commands

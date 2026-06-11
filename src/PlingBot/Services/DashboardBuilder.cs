@@ -25,7 +25,7 @@ public class DashboardBuilder
         _evaluator = evaluator;
     }
 
-    public string Build(TipsConfig tipsConfig, string? extraMessage = null, IReadOnlyList<CouponEvent>? events = null)
+    public string Build(TipsConfig tipsConfig, string? playerMessage = null, IReadOnlyList<CouponEvent>? events = null)
     {
         IReadOnlyList<TipsMatch> tips = tipsConfig.TipsMatches;
 
@@ -39,7 +39,9 @@ public class DashboardBuilder
 
         if (game == "Europatipset") game = "VM-Tipset";
 
-        sb.AppendLine($"{game} {date} - {player}");
+        sb.AppendLine($"{game} {date} - {player} | !stats / !events <n> visar data för angiven match");
+        
+        //if(!string.IsNullOrWhiteSpace(playerMessage)) sb.AppendLine(playerMessage);
         sb.AppendLine();
 
         int matchColumnWidth = GetMatchColumnWidth(tips);
@@ -58,12 +60,6 @@ public class DashboardBuilder
             string percentages = FormatPercentages(tip);
 
             sb.AppendLine($"{tip.Number,2}. {matchText} {statusAndScore} | {one}{x}{two} | {pickText}{percentages}");
-        }
-
-        if (!string.IsNullOrWhiteSpace(extraMessage))
-        {
-            sb.AppendLine();
-            sb.AppendLine(extraMessage);
         }
 
         sb.AppendLine();
@@ -163,7 +159,7 @@ public class DashboardBuilder
             return null;
 
         if (string.IsNullOrWhiteSpace(extraText))
-            return $"{minute}'".PadLeft(StatusColumnWidth - 1).PadRight(StatusColumnWidth);
+            return $"{minute}'".PadLeft(3).PadRight(StatusColumnWidth);
 
         return $"{minute}+{extraText}'".PadLeft(StatusColumnWidth + 1);
     }

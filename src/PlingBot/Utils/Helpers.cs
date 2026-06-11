@@ -1,3 +1,4 @@
+using Discord;
 using PlingBot.Models;
 
 namespace PlingBot.Utils;
@@ -66,5 +67,18 @@ public static class Helpers
     public static int GetEventSortValue(MatchEvent ev)
     {
         return ev.Elapsed * 100 + ev.Extra;
+    }
+
+    public static void DeleteAfterDelay(TimeSpan delay, params IUserMessage[] messages)
+    {
+        _ = Task.Run(async () =>
+        {
+            await Task.Delay(delay);
+            foreach (var msg in messages)
+            {
+                try { await msg.DeleteAsync(); }
+                catch { }
+            }
+        });
     }
 }

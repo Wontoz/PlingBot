@@ -14,6 +14,8 @@ public record class TipsMatch
     public string Tip { get; set; } = "";
     public string Outcome { get; set; } = "";
     public int? FixtureId { get; set; }
+    public int? HomeTeamId { get; set; }
+    public int? AwayTeamId { get; set; }
     public bool IsFinished { get; set; }
 
     public int HomeScore { get; set; }

@@ -129,6 +129,8 @@ public class ScorePollerService
 
                 unresolvedTips.Remove(tip);
                 tip.FixtureId = match.Id;
+                tip.HomeTeamId ??= match.HomeTeamId;
+                tip.AwayTeamId ??= match.AwayTeamId;
                 tip.Match = match;
 
                 if (alreadyMapped)
@@ -168,6 +170,8 @@ public class ScorePollerService
             }
 
             UpdateTipScore(tip, current);
+            tip.HomeTeamId ??= current.HomeTeamId;
+            tip.AwayTeamId ??= current.AwayTeamId;
             tip.Match = current;
 
             _logger.Log($"Initial sync tip #{tip.Number}: {current.HomeGoals}-{current.AwayGoals} ({current.Status.Long})", ConsoleColor.DarkCyan);
@@ -266,6 +270,8 @@ public class ScorePollerService
 
         LogPolledMatch(tip, current);
 
+        tip.HomeTeamId ??= current.HomeTeamId;
+        tip.AwayTeamId ??= current.AwayTeamId;
         tip.Match = current;
 
         if (IsFinishedStatus(current.Status.Short))

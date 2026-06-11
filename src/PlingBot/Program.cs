@@ -61,6 +61,8 @@ class Program
         services.AddSingleton<CouponEventSyncService>();
         services.AddSingleton<CouponEvaluator>();
         services.AddSingleton<DashboardBuilder>();
+        services.AddSingleton<StatisticsBuilder>();
+        services.AddSingleton<EventsBuilder>();
         services.AddSingleton<MessageHandler>();
         services.AddSingleton<TestService>();
         services.AddSingleton<ScorePollerService>();
