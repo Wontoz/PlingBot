@@ -9,13 +9,13 @@ using PlingBot.Utils;
 public class CouponPercentageService
 {
     private static readonly TimeSpan DefaultRefreshInterval = TimeSpan.FromMinutes(5);
-    private static readonly TimeSpan FinalRefreshBeforeClose = TimeSpan.FromMinutes(2);
+    private static readonly TimeSpan FrequentRefreshInterval = TimeSpan.FromSeconds(30);
+    private static readonly TimeSpan FinalRefreshBeforeClose = TimeSpan.FromMinutes(5);
 
     private readonly TipsConfig _tipsConfig;
     private readonly BotOptions _options;
     private readonly Logger _logger;
     private DateTime? _lastRefreshUtc;
-    private bool _finalRefreshCompleted;
     private IPlaywright? _playwright;
     private IBrowser? _browser;
 
@@ -101,10 +101,7 @@ public class CouponPercentageService
         if (!ShouldRefreshNow(nowUtc))
             return;
 
-        bool refreshed = await RefreshAsync();
-
-        if (refreshed && IsFinalRefreshWindow(nowUtc))
-            _finalRefreshCompleted = true;
+        await RefreshAsync();
     }
 
     private bool ShouldRefreshNow(DateTime nowUtc)
@@ -117,7 +114,7 @@ public class CouponPercentageService
                 return false;
 
             if (IsFinalRefreshWindow(nowUtc))
-                return !_finalRefreshCompleted;
+                return !_lastRefreshUtc.HasValue || nowUtc - _lastRefreshUtc.Value >= FrequentRefreshInterval;
         }
 
         return !_lastRefreshUtc.HasValue || nowUtc - _lastRefreshUtc.Value >= DefaultRefreshInterval;

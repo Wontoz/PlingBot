@@ -74,16 +74,28 @@ class Program
         {
             var logger = sp.GetRequiredService<Logger>();
             var options = sp.GetRequiredService<BotOptions>();
-
             return new TipsConfig(logger, options.Game, options.CouponDate);
         });
 
-        services.AddSingleton(new BotOptions
+        services.AddSingleton<VersusConfig>(sp =>
+        {
+            var logger = sp.GetRequiredService<Logger>();
+            var options = sp.GetRequiredService<BotOptions>();
+            return new VersusConfig(logger, options);
+        });
+
+        services.AddSingleton<VersusDashboardBuilder>();
+
+        var botOptions = new BotOptions
         {
             Game = Environment.GetEnvironmentVariable("GAME") ?? "Stryktipset",
             TestMode = testMode,
-            CouponDate = GetCouponDateOverride()
-        });
+            CouponDate = GetCouponDateOverride(),
+            IsVersusMode = (Environment.GetEnvironmentVariable("MODE") ?? "")
+                .Equals("VERSUS", StringComparison.OrdinalIgnoreCase),
+        };
+
+        services.AddSingleton(botOptions);
 
         services.AddSingleton<BotHost>();
 

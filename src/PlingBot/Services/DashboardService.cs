@@ -10,6 +10,9 @@ public class DashboardService
 {
     private readonly TipsConfig _tipsConfig;
     private readonly DashboardBuilder _dashboardBuilder;
+    private readonly VersusDashboardBuilder _versusDashboardBuilder;
+    private readonly VersusConfig _versusConfig;
+    private readonly BotOptions _options;
     private readonly Logger _logger;
 
     private ulong? _channelId;
@@ -20,10 +23,19 @@ public class DashboardService
     private string? _currentExtraMessage;
     private DateTime _lastExtraMessageChangedUtc = DateTime.MinValue;
     private static readonly TimeSpan ExtraMessageInterval = TimeSpan.FromMinutes(10);
-    public DashboardService(TipsConfig tipsConfig, DashboardBuilder dashboardBuilder, Logger logger)
+    public DashboardService(
+        TipsConfig tipsConfig,
+        DashboardBuilder dashboardBuilder,
+        VersusDashboardBuilder versusDashboardBuilder,
+        VersusConfig versusConfig,
+        BotOptions options,
+        Logger logger)
     {
         _tipsConfig = tipsConfig;
         _dashboardBuilder = dashboardBuilder;
+        _versusDashboardBuilder = versusDashboardBuilder;
+        _versusConfig = versusConfig;
+        _options = options;
         _logger = logger;
     }
 
@@ -178,6 +190,9 @@ public class DashboardService
             _currentExtraMessage = extraMessage;
             _lastExtraMessageChangedUtc = DateTime.UtcNow;
         }
+
+        if (_options.IsVersusMode)
+            return _versusDashboardBuilder.Build(_tipsConfig, _versusConfig, _tipsConfig.Data.Events);
 
         return _dashboardBuilder.Build(_tipsConfig, _currentExtraMessage, _tipsConfig.Data.Events);
     }

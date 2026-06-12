@@ -1,5 +1,29 @@
 # Changelog
 
+## [2.5.0] - 2026-06-12
+
+### Versus Mode
+- Added `MODE=VERSUS` environment variable to run the bot in a multi-player comparison mode
+- New `VersusConfig` — loads `{game}_{date}_versus.json` containing other players' tips alongside the primary player's picks
+- New `VersusDashboardBuilder` — renders all players' tips side-by-side per match row with emoji result indicators
+- `DashboardService` branches on `BotOptions.IsVersusMode` to select the correct builder at runtime
+- Score line at the bottom shows correct count per player (`Antal rätt: William: 5 | Jonas: 4 | Fredrik: 6`)
+- Versus dashboard includes betting percentages at the end of each row (shared with normal mode)
+
+### Refactoring
+- Extracted `MatchDisplayFormatter` static helper class — shared formatting logic previously duplicated across builders
+  - `FormatSymbolBox`, `FormatMatchText`, `FormatStatusAndScore`, `GetMatchColumnWidth`, `GetFixtureStatus`, `GetScore`, `FormatPercentages`
+- `DashboardBuilder` reduced from ~260 to ~95 lines after extraction
+- `FormatPercentages` moved from `DashboardBuilder` to `MatchDisplayFormatter` so both builders share one implementation
+
+### Dashboard Alignment
+- Symbol boxes widened to 2 chars (`| 1  X  2  |` style) for better visual spacing
+- Versus player-column slot widths now scale dynamically to the longest player name
+- `prefixWidth` for the versus header row computed from actual `FormatSymbolBox` output length, preventing misalignment when symbol box width changes
+- Tip strings padded to 3 chars so `|` separators stay vertically aligned regardless of tip length (`1`, `X2`, `1X2`)
+
+---
+
 ## [2.4.0] - 2026-06-11
 
 ### Commands
