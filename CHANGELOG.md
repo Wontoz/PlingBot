@@ -7,7 +7,7 @@
 - New `VersusConfig` — loads `{game}_{date}_versus.json` containing other players' tips alongside the primary player's picks
 - New `VersusDashboardBuilder` — renders all players' tips side-by-side per match row with emoji result indicators
 - `DashboardService` branches on `BotOptions.IsVersusMode` to select the correct builder at runtime
-- Score line at the bottom shows correct count per player (`Antal rätt: William: 5 | Jonas: 4 | Fredrik: 6`)
+- Score line at the bottom shows correct count per player
 - Versus dashboard includes betting percentages at the end of each row (shared with normal mode)
 
 ### Refactoring
