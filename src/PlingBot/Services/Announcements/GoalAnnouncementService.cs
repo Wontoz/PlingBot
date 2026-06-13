@@ -1,6 +1,7 @@
 namespace PlingBot.Services;
 
 using Discord;
+using PlingBot.Config;
 using PlingBot.Models;
 using PlingBot.Utils;
 
@@ -8,6 +9,7 @@ public class GoalAnnouncementService
 {
     private readonly DiscordAnnouncementService _discord;
     private readonly DashboardService _dashboardService;
+    private readonly VersusConfig _versusConfig;
 
     private sealed record GoalEventInfo(
         MatchEvent Event,
@@ -21,10 +23,11 @@ public class GoalAnnouncementService
         string MessageWithoutPlayer,
         string Identity);
 
-    public GoalAnnouncementService(DiscordAnnouncementService discord, DashboardService dashboardService)
+    public GoalAnnouncementService(DiscordAnnouncementService discord, DashboardService dashboardService, VersusConfig versusConfig)
     {
         _discord = discord;
         _dashboardService = dashboardService;
+        _versusConfig = versusConfig;
     }
 
     public async Task<bool> TryHandleNewGoalEventsAsync(
@@ -211,7 +214,7 @@ public class GoalAnnouncementService
             .ToList();
     }
 
-    private static List<GoalEventInfo> GetCompatibleGoalEvents(
+    private List<GoalEventInfo> GetCompatibleGoalEvents(
         TipsMatch tip,
         Match match,
         IReadOnlyList<(MatchEvent Event, int Index)> scoringGoalEvents)
@@ -258,7 +261,7 @@ public class GoalAnnouncementService
             goal.AwayGoals <= tip.LastAwayGoals;
     }
 
-    private static GoalEventInfo BuildGoalEventInfo(
+    private GoalEventInfo BuildGoalEventInfo(
         TipsMatch tip,
         Match match,
         IReadOnlyList<(MatchEvent Event, int Index)> scoringGoalEvents,
@@ -342,7 +345,7 @@ public class GoalAnnouncementService
         return $"score|{fixtureId.Value}|{previousHomeGoals}-{previousAwayGoals}|{goal.HomeGoals}-{goal.AwayGoals}";
     }
 
-    private static string BuildGoalMessage(
+    private string BuildGoalMessage(
         TipsMatch tip,
         Match match,
         bool homeScored,
@@ -352,7 +355,7 @@ public class GoalAnnouncementService
         string? playerName = null,
         bool includePlayer = true)
     {
-        string symbol = Helpers.GetEventSymbol(tip, GetSymbol(homeGoals, awayGoals));
+        string symbol = BuildVersusSymbols(tip, GetSymbol(homeGoals, awayGoals));
         string score = Helpers.FormatScore(homeGoals, awayGoals, homeScored);
         string detail = "";
 
@@ -363,9 +366,26 @@ public class GoalAnnouncementService
 
         string player = includePlayer && !string.IsNullOrWhiteSpace(playerName ?? evt?.Player)
             ? $" - {playerName ?? evt?.Player}{detail}"
-            : "";
+            : detail;
         string minute = evt == null ? Helpers.GetMinute(match) : Helpers.GetMinute(evt);
         return $"⚽ {symbol} Mål! {tip.HomeTeam} {score} {tip.AwayTeam} {minute}{player}";
+    }
+
+    private string BuildVersusSymbols(TipsMatch tip, string matchSymbol)
+    {
+        string primary = Helpers.GetEventSymbol(tip, matchSymbol);
+
+        if (_versusConfig.Players.Count == 0)
+            return primary;
+
+        var others = _versusConfig.Players.Select(p =>
+        {
+            string? playerTip = p.GetTip(tip.Number);
+            if (string.IsNullOrWhiteSpace(playerTip)) return "❓";
+            return playerTip.Contains(matchSymbol) ? "✅" : "❌";
+        });
+
+        return primary + string.Concat(others);
     }
 
     private static string BuildGoalIdentity(TipsMatch tip, bool homeScored, int homeGoals, int awayGoals)

@@ -15,7 +15,7 @@ public class ScorePollerService
     private static readonly TimeSpan PollInterval = TimeSpan.FromSeconds(15);
     private static readonly TimeSpan FixtureDateCacheTtl = TimeSpan.FromMinutes(5);
     private const int FixtureLookupDaysForward = 7;
-    private const string ChannelEnvKey = "DISCORD_CHANNEL_ID_TEST"; // DISCORD_CHANNEL_ID_TEST FOR TEST
+    private const string ChannelEnvKey = "DISCORD_CHANNEL_ID_PROD"; // DISCORD_CHANNEL_ID_TEST FOR TEST
 
     private readonly FootballApiClient _api;
     private readonly AnnouncementService _announcer;
@@ -312,7 +312,7 @@ public class ScorePollerService
             tip.FixtureId.HasValue &&
             !tip.IsFinished &&
             tip.Match != null &&
-            tip.Match.Date <= now);
+            tip.Match.Date.ToUniversalTime() <= now);
     }
 
     private static bool ShouldProcessTip(TipsMatch tip)

@@ -1,7 +1,7 @@
 namespace PlingBot.Services;
 using Discord.WebSocket;
 using System;
-using System.Collections.Generic;
+using System.Linq;
 using PlingBot.Config;
 using PlingBot.Utils;
 
@@ -15,6 +15,8 @@ public class MessageHandler
     private readonly CouponEventSyncService _syncService;
     private readonly StatisticsBuilder _statsBuilder;
     private readonly EventsBuilder _eventsBuilder;
+    private readonly VersusConfig _versusConfig;
+    private readonly BotOptions _options;
     private readonly HashSet<ulong> _allowedUsers;
     private readonly ulong _williamId;
     private string _player = "";
@@ -27,7 +29,9 @@ public class MessageHandler
         PlayerMessageService statusMessageService,
         CouponEventSyncService syncService,
         StatisticsBuilder statsBuilder,
-        EventsBuilder eventsBuilder)
+        EventsBuilder eventsBuilder,
+        VersusConfig versusConfig,
+        BotOptions options)
     {
         _tipsConfig = tipsConfig;
         _evaluator = evaluator;
@@ -37,6 +41,8 @@ public class MessageHandler
         _syncService = syncService;
         _statsBuilder = statsBuilder;
         _eventsBuilder = eventsBuilder;
+        _versusConfig = versusConfig;
+        _options = options;
 
         _williamId = ulong.Parse(Environment.GetEnvironmentVariable("DISCORD_USER_ID_WILLIAM") ?? "0");
 
@@ -75,6 +81,34 @@ public class MessageHandler
                 await _eventsBuilder.HandleAsync(message, arg);
             break;
 
+            case "procent":
+                var parts = arg.Split(' ', StringSplitOptions.RemoveEmptyEntries);
+                if (parts.Length != 4 ||
+                    !int.TryParse(parts[0], out int matchNr) ||
+                    !int.TryParse(parts[1], out int p1) ||
+                    !int.TryParse(parts[2], out int pX) ||
+                    !int.TryParse(parts[3], out int p2))
+                {
+                    await message.Channel.SendMessageAsync("Syntax: `!procent <matchnr> <1%> <X%> <2%>` — t.ex. `!procent 5 45 30 25`");
+                    break;
+                }
+
+                var procentTip = _tipsConfig.TipsMatches.FirstOrDefault(t => t.Number == matchNr);
+                if (procentTip == null)
+                {
+                    await message.Channel.SendMessageAsync($"Hittade ingen match #{matchNr}.");
+                    break;
+                }
+
+                procentTip.Percentage1 = p1;
+                procentTip.PercentageX = pX;
+                procentTip.Percentage2 = p2;
+                procentTip.PercentagesUpdatedUtc = DateTime.UtcNow;
+                _tipsConfig.SaveToJson();
+
+                //await message.Channel.SendMessageAsync($"Uppdaterade procent för match #{matchNr} ({procentTip.HomeTeam} - {procentTip.AwayTeam}): 1={p1}% X={pX}% 2={p2}%");
+            break;
+
             case "hjälp":
             case "hjalp":
                 await message.Channel.SendMessageAsync("Följande kommandon är tillgängliga: !status !refresh !stats [matchnummer] !events [matchnummer]");
@@ -92,12 +126,22 @@ public class MessageHandler
             break;
 
             case "status":
-                var (correct, evaluated) = _evaluator.Evaluate(_tipsConfig.TipsMatches);
-                string suffix = _statusMessageService.Generate(_player);
+                if (_options.IsVersusMode)
+                {
+                    await message.Channel.SendMessageAsync(BuildVersusScoreLine());
+                    break;
+                }
+                else
+                {
+                    var (correct, evaluated) = _evaluator.Evaluate(_tipsConfig.TipsMatches);
+                    string suffix = _statusMessageService.Generate(_player);
 
-                await message.Channel.SendMessageAsync($"Just nu har vi {correct}/{evaluated} rätt!\n{suffix}");
-            break;
-
+                    string statusMsg = $"Just nu har vi {correct}/{evaluated} rätt!";
+                    statusMsg += $"\n{suffix}";
+                    await message.Channel.SendMessageAsync(statusMsg);
+                    break;
+                }     
+            
             case "sync":
                 if (message.Author.Id != _williamId)
                 {
@@ -126,4 +170,33 @@ public class MessageHandler
         }
     }
 
+    private string BuildVersusScoreLine()
+    {
+        if (!_options.IsVersusMode || _versusConfig.Players.Count == 0)
+            return "";
+
+        var tips = _tipsConfig.TipsMatches;
+        var parts = new List<string>();
+
+        string primaryName = _tipsConfig.Data.MetaData.Player;
+        int primaryCorrect = tips.Count(t =>
+        {
+            string? sym = CouponEvaluator.GetCurrentSymbol(t);
+            return sym != null && !string.IsNullOrWhiteSpace(t.Tip) && t.Tip.Contains(sym);
+        });
+        parts.Add($"{primaryName}: {primaryCorrect}");
+
+        foreach (var p in _versusConfig.Players)
+        {
+            int playerCorrect = tips.Count(t =>
+            {
+                string? sym = CouponEvaluator.GetCurrentSymbol(t);
+                string? playerTip = p.GetTip(t.Number);
+                return sym != null && !string.IsNullOrWhiteSpace(playerTip) && playerTip.Contains(sym);
+            });
+            parts.Add($"{p.Name}: {playerCorrect}");
+        }
+
+        return "Antal rätt: " + string.Join(" | ", parts);
+    }
 }

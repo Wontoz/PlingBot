@@ -1,5 +1,28 @@
 # Changelog
 
+## [2.5.1] - 2026-06-13
+
+### Versus Mode
+- Goal announcements now show one emoji per player in versus mode (e.g. `✅❌✅`) instead of a single shared emoji
+- `!status` in versus mode appends a score line: `Antal rätt: William: 8 | Jonas: 6 | Fredrik: 5`
+- Added `!procent <matchnr> <1%> <X%> <2%>` command to update betting percentages in-memory and persist to JSON without restarting the bot
+
+### Announcements
+- Own goals now always include `(Självmål)` in the event text, even when no scorer is known
+- Penalty suffix `(Straff)` similarly preserved when no scorer is known (same code path)
+
+### Dashboard
+- Event list now shows most recent event at the top instead of the bottom (both normal and versus dashboard)
+- Fixed: trimming now removes the oldest events when the list is too long, keeping the newest visible
+
+### Match Display
+- Fixed minute alignment: times without extra time (e.g. `45'`) now align with extra-time formats (e.g. `45+1'`) — both start one position from the left edge of the status column
+
+### Bug Fixes
+- `HasMatchesInPlay()` now converts match date to UTC before comparing with `DateTime.UtcNow`, preventing a timezone mismatch that could suppress the live data overlay
+
+---
+
 ## [2.5.0] - 2026-06-12
 
 ### Versus Mode

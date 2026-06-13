@@ -26,7 +26,7 @@ public class VersusDashboardBuilder
         var allPlayers = BuildPlayerList(primaryPlayer, primaryConfig, versusConfig);
 
         var sb = new StringBuilder();
-        sb.AppendLine($"{game} {date} | PIX-mästerskap omgång 1");
+        sb.AppendLine($"{game} {date} | Grand PIX!");
 
         int matchColumnWidth = GetMatchColumnWidth(tips, MinimumMatchColumnWidth, MaximumMatchColumnWidth);
         int nameAreaWidth = Math.Max(allPlayers.Max(p => p.Name.Length), 5);
@@ -66,22 +66,23 @@ public class VersusDashboardBuilder
 
         if (events is { Count: > 0 })
         {
-            var eventLines = events.Select(e => e.Text.Replace("**", "")).ToList();
+            var eventLines = events.Select(e => e.Text.Replace("**", "")).Reverse().ToList();
             int baseLen = sb.Length + "\n\nHändelser:\n".Length;
             int totalLen = eventLines.Sum(s => s.Length + 1);
-            int skip = 0;
-            while (skip < eventLines.Count && baseLen + totalLen > 1900)
+            int keep = eventLines.Count;
+            while (keep > 0 && baseLen + totalLen > 1900)
             {
-                totalLen -= eventLines[skip].Length + 1;
-                skip++;
+                keep--;
+                totalLen -= eventLines[keep].Length + 1;
             }
+            int skipped = eventLines.Count - keep;
 
             sb.AppendLine();
             sb.AppendLine("Händelser:");
-            foreach (var ev in eventLines.Skip(skip))
+            foreach (var ev in eventLines.Take(keep))
                 sb.AppendLine(ev);
-            if (skip > 0)
-                sb.AppendLine($"(+{skip} äldre händelser)");
+            if (skipped > 0)
+                sb.AppendLine($"(+{skipped} äldre händelser)");
         }
 
         return $"```{sb}```";

@@ -132,7 +132,7 @@ internal static class MatchDisplayFormatter
             return null;
 
         if (string.IsNullOrWhiteSpace(extraText))
-            return $"{minute}'".PadLeft(3).PadRight(StatusColumnWidth);
+            return $"{minute}'".PadLeft(4).PadRight(StatusColumnWidth);
 
         return $"{minute}+{extraText}'".PadLeft(StatusColumnWidth + 1);
     }
