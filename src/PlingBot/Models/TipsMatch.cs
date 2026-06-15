@@ -16,6 +16,7 @@ public record class TipsMatch
     public int? FixtureId { get; set; }
     public int? HomeTeamId { get; set; }
     public int? AwayTeamId { get; set; }
+    public DateTime? KickoffUtc { get; set; }
     public bool IsFinished { get; set; }
 
     public int HomeScore { get; set; }

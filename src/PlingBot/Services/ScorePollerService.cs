@@ -15,7 +15,7 @@ public class ScorePollerService
     private static readonly TimeSpan PollInterval = TimeSpan.FromSeconds(15);
     private static readonly TimeSpan FixtureDateCacheTtl = TimeSpan.FromMinutes(5);
     private const int FixtureLookupDaysForward = 7;
-    private const string ChannelEnvKey = "DISCORD_CHANNEL_ID_PROD"; // DISCORD_CHANNEL_ID_TEST FOR TEST
+    private const string ChannelEnvKey = "DISCORD_CHANNEL_ID_TEST"; // DISCORD_CHANNEL_ID_TEST FOR TEST
 
     private readonly FootballApiClient _api;
     private readonly AnnouncementService _announcer;
@@ -26,7 +26,9 @@ public class ScorePollerService
     private readonly DashboardService _dashboardService;
     private readonly PlayerMessageService _statusMessageService;
     private readonly CouponPercentageService _couponPercentageService;
+    private readonly TeamRepository _teamRepo;
     private readonly Dictionary<DateTime, (DateTime FetchedUtc, List<Match> Matches)> _fixtureDateCache = new();
+    private readonly HashSet<int> _loggedSkips = new();
 
     public ScorePollerService(
         FootballApiClient api,
@@ -37,7 +39,8 @@ public class ScorePollerService
         TestService testService,
         DashboardService dashboardService,
         PlayerMessageService statusMessageService,
-        CouponPercentageService couponPercentageService)
+        CouponPercentageService couponPercentageService,
+        TeamRepository teamRepo)
     {
         _api = api;
         _announcer = announcer;
@@ -48,6 +51,7 @@ public class ScorePollerService
         _dashboardService = dashboardService;
         _statusMessageService = statusMessageService;
         _couponPercentageService = couponPercentageService;
+        _teamRepo = teamRepo;
     }
 
     public async Task StartPollingAsync(DiscordSocketClient client)
@@ -105,6 +109,7 @@ public class ScorePollerService
     private async Task InitializeFixtureIdsAsync()
     {
         var unresolvedTips = _tipsConfig.TipsMatches.ToList();
+        var allFetchedMatches = new List<Match>();
         int mapped = 0;
         int loaded = 0;
 
@@ -114,15 +119,44 @@ public class ScorePollerService
         {
             var date = DateTime.UtcNow.Date.AddDays(i);
             var matchesForDate = await FetchMatchesByDateCachedAsync(date, forceRefresh: true);
+            allFetchedMatches.AddRange(matchesForDate);
 
             _logger.Log($"Fetched {matchesForDate.Count} fixtures for {date:yyyy-MM-dd}", ConsoleColor.DarkBlue);
 
             foreach (var tip in unresolvedTips.ToList())
             {
                 bool alreadyMapped = tip.FixtureId.HasValue;
-                var match = alreadyMapped
-                    ? matchesForDate.FirstOrDefault(m => m.Id == tip.FixtureId!.Value)
-                    : FindMatchForTip(matchesForDate, tip);
+                bool wasFuzzy = false;
+                Match? match;
+
+                if (alreadyMapped)
+                {
+                    match = matchesForDate.FirstOrDefault(m => m.Id == tip.FixtureId!.Value);
+                }
+                else
+                {
+                    match = FindMatchExact(matchesForDate, tip.HomeKey, tip.AwayKey);
+                    if (match == null)
+                    {
+                        match = FindMatchFuzzy(matchesForDate, tip.HomeKey, tip.AwayKey);
+                        wasFuzzy = match != null;
+                    }
+
+                    if (match == null)
+                    {
+                        var homeApi = _teamRepo.FindByName(tip.HomeTeam)?.ApiName;
+                        var awayApi = _teamRepo.FindByName(tip.AwayTeam)?.ApiName;
+                        if (homeApi != null && awayApi != null)
+                        {
+                            match = FindMatchExact(matchesForDate, homeApi, awayApi);
+                            if (match == null)
+                            {
+                                match = FindMatchFuzzy(matchesForDate, homeApi, awayApi);
+                                wasFuzzy = match != null;
+                            }
+                        }
+                    }
+                }
 
                 if (match == null)
                     continue;
@@ -131,7 +165,11 @@ public class ScorePollerService
                 tip.FixtureId = match.Id;
                 tip.HomeTeamId ??= match.HomeTeamId;
                 tip.AwayTeamId ??= match.AwayTeamId;
+                tip.KickoffUtc ??= match.Date.ToUniversalTime();
                 tip.Match = match;
+
+                _teamRepo.Upsert(tip.HomeTeam, match.HomeTeam, match.HomeTeamId);
+                _teamRepo.Upsert(tip.AwayTeam, match.AwayTeam, match.AwayTeamId);
 
                 if (alreadyMapped)
                 {
@@ -140,14 +178,23 @@ public class ScorePollerService
                 }
                 else
                 {
-                    _logger.Log($"Mapped tip #{tip.Number,-2} -> fixture {match.Id} ({match.HomeTeam} vs {match.AwayTeam}) {match.Date:yyyy-MM-dd HH:mm}", ConsoleColor.Green);
+                    string fuzzyTag = wasFuzzy ? " [fuzzy]" : "";
+                    _logger.Log($"Mapped tip #{tip.Number,-2} -> fixture {match.Id} ({match.HomeTeam} vs {match.AwayTeam}) {match.Date:yyyy-MM-dd HH:mm}{fuzzyTag}", ConsoleColor.Green);
                     mapped++;
                 }
             }
         }
 
         foreach (var tip in unresolvedTips.OrderBy(tip => tip.Number))
+        {
             _logger.Log($"Failed to map tip #{tip.Number,-2} ({tip.HomeKey} vs {tip.AwayKey})", ConsoleColor.DarkRed);
+            var candidates = allFetchedMatches
+                .Where(m => TeamMatchesFuzzy(m.HomeTeam, tip.HomeKey) || TeamMatchesFuzzy(m.AwayTeam, tip.AwayKey)
+                         || TeamMatchesFuzzy(m.HomeTeam, tip.AwayKey) || TeamMatchesFuzzy(m.AwayTeam, tip.HomeKey))
+                .Take(3);
+            foreach (var c in candidates)
+                _logger.Log($"  Kandidat: {c.HomeTeam} vs {c.AwayTeam} (fixture {c.Id})", ConsoleColor.Yellow);
+        }
 
         _tipsConfig.SaveToJson();
         _logger.Log($"Mapping complete: {mapped} mapped, {loaded} loaded, {unresolvedTips.Count} failed", ConsoleColor.Cyan);
@@ -172,6 +219,7 @@ public class ScorePollerService
             UpdateTipScore(tip, current);
             tip.HomeTeamId ??= current.HomeTeamId;
             tip.AwayTeamId ??= current.AwayTeamId;
+            tip.KickoffUtc ??= current.Date.ToUniversalTime();
             tip.Match = current;
 
             _logger.Log($"Initial sync tip #{tip.Number}: {current.HomeGoals}-{current.AwayGoals} ({current.Status.Long})", ConsoleColor.DarkCyan);
@@ -187,7 +235,9 @@ public class ScorePollerService
             return;
 
         var matches = await FetchMatchesForTipDatesAsync();
-        _logger.Log("-----------------------------------------------------------------------", ConsoleColor.DarkYellow);
+
+        if (HasMatchesInPlay())
+            _logger.Log("-----------------------------------------------------------------------", ConsoleColor.DarkYellow);
 
         foreach (var tip in _tipsConfig.TipsMatches)
             await ProcessTipAsync(channel, tip, matches);
@@ -264,14 +314,21 @@ public class ScorePollerService
 
         if (ShouldSkipStatus(current.Status.Short))
         {
-            _logger.Log($"Fixture {tip.FixtureId} in {current.Status.Short} - skipping", ConsoleColor.DarkYellow);
+            if (_loggedSkips.Add(tip.FixtureId!.Value))
+            {
+                string kickoff = tip.KickoffUtc?.ToString("dd-MM HH:mm") ?? "";
+                _logger.Log($"Match #{tip.Number,-2} {tip.HomeTeam} - {tip.AwayTeam}  {current.Status.Long}  {kickoff}", ConsoleColor.DarkYellow);
+            }
             return;
         }
+
+        _loggedSkips.Remove(tip.FixtureId!.Value);
 
         LogPolledMatch(tip, current);
 
         tip.HomeTeamId ??= current.HomeTeamId;
         tip.AwayTeamId ??= current.AwayTeamId;
+        tip.KickoffUtc ??= current.Date.ToUniversalTime();
         tip.Match = current;
 
         if (IsFinishedStatus(current.Status.Short))
@@ -311,8 +368,8 @@ public class ScorePollerService
         return _tipsConfig.TipsMatches.Any(tip =>
             tip.FixtureId.HasValue &&
             !tip.IsFinished &&
-            tip.Match != null &&
-            tip.Match.Date.ToUniversalTime() <= now);
+            tip.KickoffUtc.HasValue &&
+            tip.KickoffUtc.Value <= now);
     }
 
     private static bool ShouldProcessTip(TipsMatch tip)
@@ -320,10 +377,8 @@ public class ScorePollerService
         return tip.FixtureId.HasValue && !tip.IsFinished;
     }
 
-    private static bool ShouldSkipStatus(string status)
-    {
-        return status.Equals("ET", StringComparison.OrdinalIgnoreCase);
-    }
+    private static bool ShouldSkipStatus(string status) =>
+        status is "NS" or "TBD" or "HT" or "ET";
 
     private static bool IsFinishedStatus(string status)
     {
@@ -332,16 +387,31 @@ public class ScorePollerService
             status.Equals("PEN", StringComparison.OrdinalIgnoreCase);
     }
 
-    private static Match? FindMatchForTip(IEnumerable<Match> matches, TipsMatch tip)
+    private static Match? FindMatchExact(IEnumerable<Match> matches, string homeKey, string awayKey)
     {
         return matches.FirstOrDefault(m =>
-            TeamMatches(m.HomeTeam, tip.HomeKey) &&
-            TeamMatches(m.AwayTeam, tip.AwayKey));
+            TeamMatches(m.HomeTeam, homeKey) &&
+            TeamMatches(m.AwayTeam, awayKey));
+    }
+
+    private static Match? FindMatchFuzzy(IEnumerable<Match> matches, string homeKey, string awayKey)
+    {
+        return matches.FirstOrDefault(m =>
+            TeamMatchesFuzzy(m.HomeTeam, homeKey) &&
+            TeamMatchesFuzzy(m.AwayTeam, awayKey));
     }
 
     private static bool TeamMatches(string apiTeam, string tipTeam)
     {
         return string.Equals(NormalizeTeamName(apiTeam), NormalizeTeamName(tipTeam), StringComparison.OrdinalIgnoreCase);
+    }
+
+    private static bool TeamMatchesFuzzy(string apiTeam, string tipTeam)
+    {
+        var a = NormalizeTeamName(apiTeam);
+        var b = NormalizeTeamName(tipTeam);
+        return a.Contains(b, StringComparison.OrdinalIgnoreCase)
+            || b.Contains(a, StringComparison.OrdinalIgnoreCase);
     }
 
     private static string NormalizeTeamName(string value)
@@ -369,7 +439,7 @@ public class ScorePollerService
 
     private void LogPolledMatch(TipsMatch tip, Match current)
     {
-        _logger.Log($"Polling tip #{tip.Number,-2}: {tip.HomeTeam} - {tip.AwayTeam} {current.HomeGoals}-{current.AwayGoals} ({current.Status.Long}, {FormatMatchMinute(current)})", ConsoleColor.DarkYellow);
+        _logger.Log($"Match #{tip.Number,-2} {tip.HomeTeam} - {tip.AwayTeam} {current.HomeGoals}-{current.AwayGoals} ({current.Status.Long}, {FormatMatchMinute(current)})", ConsoleColor.DarkYellow);
     }
 
     private static string FormatMatchMinute(Match match)

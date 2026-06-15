@@ -1,10 +1,37 @@
 # Changelog
 
+## [2.5.2] - 2026-06-15
+
+### Team Registry (`teams.json`)
+- Added persistent team registry (`src/PlingBot/data/teams.json`) mapping Swedish display names to API names and team IDs
+- Populated with ~250 entries sourced from historical coupon data
+- `TeamRepository` loads the registry on startup and upserts entries whenever a fixture is mapped, keeping IDs up to date automatically
+- New `TeamIdFetcher` utility project (`scripts/fetch-team-ids.bat`) — searches the football API for missing team IDs, auto-fills exact matches and prompts interactively for ambiguous ones
+
+### Fixture Mapping
+- Mapping now falls back to `ApiName` from `TeamRepository` when `HomeKey`/`AwayKey` fails to match — fixes cases where TipsScraper stores the Swedish name (e.g. `"Saudiarabien"`) instead of the API name (`"Saudi Arabia"`)
+- `KickoffUtc` field added to `TipsMatch` — saved to JSON when a fixture is mapped so the kickoff time persists across restarts
+- `HasMatchesInPlay()` now uses the persisted `KickoffUtc` instead of the in-memory `Match.Date`
+
+### Polling
+- Matches in `NS`, `TBD` and `HT` status are now skipped during polling (no score changes possible), in addition to the existing `ET` skip
+- Skipped matches are only logged once per bot startup instead of on every poll tick
+- Skip log format cleaned up — team names no longer wrapped in parentheses, kickoff shown as `MM-dd HH:mm` (`Match #2  Saudiarabien - Uruguay  Not Started  06-15 22:00`)
+- Poll cycle separator is now suppressed when no matches have passed their scheduled kickoff, keeping the console silent until matches go live
+
+### Announcements
+- Red card announcements now show the event's own elapsed time instead of the match's current elapsed time, giving a more accurate minute
+
+### Commands
+- `!events` label column is now padded using emoji-aware display width so the team-name column stays aligned when labels contain emoji characters (e.g. `⚽MÅL` vs `🟨GULT KORT`)
+
+---
+
 ## [2.5.1] - 2026-06-13
 
 ### Versus Mode
 - Goal announcements now show one emoji per player in versus mode (e.g. `✅❌✅`) instead of a single shared emoji
-- `!status` in versus mode appends a score line: `Antal rätt: William: 8 | Jonas: 6 | Fredrik: 5`
+- `!status` in versus mode appends a score line per player: `Antal rätt: Spelare1: 8 | Spelare2: 6 | Spelare3: 5`
 - Added `!procent <matchnr> <1%> <X%> <2%>` command to update betting percentages in-memory and persist to JSON without restarting the bot
 
 ### Announcements

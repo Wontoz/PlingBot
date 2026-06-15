@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Globalization;
 using System.IO;
@@ -12,152 +12,6 @@ using Microsoft.Playwright;
 
 class Program
 {
-    private static readonly Dictionary<string, string> aliasMap = new(StringComparer.OrdinalIgnoreCase)
-    {
-        // England
-        {"Accrington", "Accrington ST"},
-        {"Burton", "Burton Albion"},
-        {"Cambridge", "Cambridge United"},
-        {"Exeter", "Exeter City"},
-        {"Fleetwood", "Fleetwood Town"},
-        {"Harrogate", "Harrogate Town"},
-        {"Hull", "Hull City"},
-        {"Mansfield", "Mansfield Town"},
-        {"Newport", "Newport County"},
-        {"Nottingham", "Nottingham Forest"},
-        {"Oxford", "Oxford United"},
-        {"Queens Park Rangers", "QPR"},
-        {"Salford", "Salford City"},
-        {"Sheffield U", "Sheffield Utd"},
-        {"Sheffield W", "Sheffield Wednesday"},
-        {"Stockport", "Stockport County"},
-        {"Stoke", "Stoke City"},
-        {"Swindon", "Swindon Town"},
-        {"West Bromwich", "West Brom"},
-        {"Wimbledon", "AFC Wimbledon"},
-        {"Wolverhampton", "Wolves"},
-
-        // Sverige
-        {"AFC Malmö", "AFC Malmo"},
-        {"AIK", "AIK Stockholm"},
-        {"Åtvidaberg", "Atvidabergs FF"},
-        {"Djurgården", "Djurgardens IF"},
-        {"Elfsborg", "IF Elfsborg"},
-        {"Gefle", "Gefle IF"},
-        {"Häcken", "BK Hacken"},
-        {"Hammarby", "Hammarby FF"},
-        {"Hammarby TFF", "Hammarby Talang"},
-        {"IFK Göteborg", "IFK Goteborg"},
-        {"IFK Norrköping", "IFK Norrkoping"},
-        {"Jönköpings Södra", "Jonkopings Sodra"},
-        {"Mjällby", "Mjallby AIF"},
-        {"Norrby", "Norrby IF"},
-        {"Öster", "Osters IF"},
-        {"Sölvesborgs GoIF", "Sölvesborg"},
-        {"Torn", "Torns"},
-        {"Värnamo", "IFK Varnamo"},
-        {"Västerås", "Vasteras SK FK"},
-
-        // Norge / Danmark
-        {"Bodö/Glimt", "Bodo/Glimt"},
-        {"Fredrikstad FK", "Fredrikstad"},
-        {"Midtjylland", "FC Midtjylland"},
-        {"Nordsjälland", "FC Nordsjaelland"},
-        {"Randers", "Randers FC"},
-
-        // Finland
-        {"IF Gnistan", "Gnistan"},
-        {"Inter Åbo", "Inter Turku"},
-        {"TPS", "Turku PS"},
-
-        // Spanien
-        {"Athletic Bilbao", "Athletic Club"},
-        {"Atlético Madrid", "Atletico Madrid"},
-        {"Celta de Vigo", "Celta Vigo"},
-        {"Granada", "Granada CF"},
-
-        // Tyskland
-        {"Paderborn", "SC Paderborn 07"},
-        {"Stuttgart", "VfB Stuttgart"},
-        {"Wolfsburg", "VfL Wolfsburg"},
-
-        // Italien
-        {"Roma", "AS Roma"},
-
-        // Belgien
-        {"Club Brügge", "Club Brugge KV"},
-        {"Mechelen", "KV Mechelen"},
-        {"Royale Union SG", "Union St. Gilloise"},
-        {"St. Truidense", "St. Truiden"},
-
-        // Skottland
-        {"Partick Thistle", "Partick"},
-        {"St. Mirren", "ST Mirren"},
-
-        // Portugal
-        {"Porto", "FC Porto"},
-
-        // Tjeckien
-        {"Slavia Prag", "Slavia Praha"},
-
-        // Cypern
-        {"Pafos FC", "Pafos"},
-
-        // Brasilien
-        {"Botafogo RJ", "Botafogo"},
-        {"Paranaense", "Atletico Paranaense"},
-
-        // Landslag
-        {"Albanien", "Albania"},
-        {"Algeriet", "Algeria"},
-        {"Argentina", "Argentina"},
-        {"Australien", "Australia"},
-        {"Belgien", "Belgium"},
-        {"Bosnien & Hercegovina", "Bosnia & Herzegovina"},
-        {"Brasilien", "Brazil"},
-        {"Danmark", "Denmark"},
-        {"DR Kongo", "Congo DR"},
-        {"Ecuador", "Ecuador"},
-        {"Egypten", "Egypt"},
-        {"El Salvador", "El Salvador"},
-        {"Elfenbenskusten", "Ivory Coast"},
-        {"Frankrike", "France"},
-        {"Grekland", "Greece"},
-        {"Irak", "Iraq"},
-        {"Israel", "Israel"},
-        {"Italien", "Italy"},
-        {"Japan", "Japan"},
-        {"Kanada", "Canada"},
-        {"Luxemburg", "Luxembourg"},
-        {"Marocko", "Morocco"},
-        {"Mexiko", "Mexico"},
-        {"Nederländerna", "Netherlands"},
-        {"Nigeria", "Nigeria"},
-        {"Nordmakedonien", "North Macedonia"},
-        {"Norge", "Norway"},
-        {"Österrike", "Austria"},
-        {"Paraguay", "Paraguay"},
-        {"Polen", "Poland"},
-        {"Rumänien", "Romania"},
-        {"Schweiz", "Switzerland"},
-        {"Senegal", "Senegal"},
-        {"Serbien", "Serbia"},
-        {"Skottland", "Scotland"},
-        {"Spanien", "Spain"},
-        {"Sverige", "Sweden"},
-        {"Sydafrika", "South Africa"},
-        {"Sydkorea", "South Korea"},
-        {"Tjeckien", "Czech Republic"},
-        {"Tunisien", "Tunisia"},
-        {"Turkiet", "Türkiye"},
-
-        // Damlag (Ändra manuellt)
-        {"Danmark D", "Denmark W"},
-        {"Italien D", "Italy W"},
-        {"Serbien D", "Serbia W"},
-        {"Sverige D", "Sweden W"},
-    };
-
     private static readonly HashSet<string> AllowedPlayers = new(StringComparer.OrdinalIgnoreCase)
     {
         "Fredrik", "Jonas", "William"
@@ -170,7 +24,8 @@ class Program
             string player = GetPlayerFromArgs(args);
             GameType selectedGame = GetGameFromArgs(args);
 
-            var coupon = await ScrapeCouponAsync(selectedGame);
+            var teamRegistry = LoadTeamRegistry(args);
+            var coupon = await ScrapeCouponAsync(selectedGame, teamRegistry);
             DateTime couponDate = GetCouponDate(coupon.StartTime);
 
             var result = new StryktipsetJson
@@ -213,6 +68,36 @@ class Program
         {
             Console.WriteLine("Error: " + ex.Message);
             Environment.ExitCode = 1;
+        }
+    }
+
+    private static Dictionary<string, (string ApiName, int? TeamId)> LoadTeamRegistry(string[] args)
+    {
+        try
+        {
+            string jsonDir = ResolvePlingBotJsonFolder(args);
+            string dataFile = Path.Combine(Path.GetDirectoryName(jsonDir)!, "data", "teams.json");
+            if (!File.Exists(dataFile))
+                return new Dictionary<string, (string, int?)>(StringComparer.OrdinalIgnoreCase);
+
+            using var doc = JsonDocument.Parse(File.ReadAllText(dataFile, Encoding.UTF8));
+            var result = new Dictionary<string, (string, int?)>(StringComparer.OrdinalIgnoreCase);
+            foreach (var entry in doc.RootElement.EnumerateArray())
+            {
+                string name = entry.GetProperty("Name").GetString() ?? "";
+                string api = entry.GetProperty("ApiName").GetString() ?? "";
+                int? teamId = entry.TryGetProperty("Id", out var tidElem) && tidElem.ValueKind != JsonValueKind.Null
+                    ? tidElem.GetInt32()
+                    : null;
+                result[name] = (api, teamId);
+            }
+            Console.WriteLine($"Team registry loaded: {result.Count} entries");
+            return result;
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Warning: could not load team registry: {ex.Message}");
+            return new Dictionary<string, (string, int?)>(StringComparer.OrdinalIgnoreCase);
         }
     }
 
@@ -298,7 +183,9 @@ class Program
         return input;
     }
 
-    private static async Task<CouponScrapeResult> ScrapeCouponAsync(GameType selectedGame)
+    private static async Task<CouponScrapeResult> ScrapeCouponAsync(
+        GameType selectedGame,
+        Dictionary<string, (string ApiName, int? TeamId)> teamRegistry)
     {
         using var playwright = await Playwright.CreateAsync();
         await using var browser = await playwright.Chromium.LaunchAsync(new BrowserTypeLaunchOptions
@@ -326,8 +213,13 @@ class Program
             string homeText = home != null ? (await home.InnerTextAsync()).Trim() : "";
             string awayText = away != null ? (await away.InnerTextAsync()).Trim() : "";
 
-            string homeKey = aliasMap.TryGetValue(homeText, out var aliasHome) ? aliasHome : homeText;
-            string awayKey = aliasMap.TryGetValue(awayText, out var aliasAway) ? aliasAway : awayText;
+            var (homeKey, homeTeamId) = teamRegistry.TryGetValue(homeText, out var hInfo)
+                ? (hInfo.ApiName, hInfo.TeamId)
+                : (homeText, (int?)null);
+            var (awayKey, awayTeamId) = teamRegistry.TryGetValue(awayText, out var aInfo)
+                ? (aInfo.ApiName, aInfo.TeamId)
+                : (awayText, (int?)null);
+
             var percentages = index <= percentageRows.Count
                 ? percentageRows[index - 1]
                 : new CouponPercentages();
@@ -342,6 +234,8 @@ class Program
                 Tip = "",
                 Outcome = "",
                 FixtureId = null,
+                HomeTeamId = homeTeamId,
+                AwayTeamId = awayTeamId,
                 IsFinished = false,
                 HomeScore = 0,
                 AwayScore = 0,
@@ -566,6 +460,8 @@ public class TipsMatchJson
     public string Tip { get; set; } = "";
     public string Outcome { get; set; } = "";
     public int? FixtureId { get; set; }
+    public int? HomeTeamId { get; set; }
+    public int? AwayTeamId { get; set; }
     public bool IsFinished { get; set; }
 
     public int HomeScore { get; set; }

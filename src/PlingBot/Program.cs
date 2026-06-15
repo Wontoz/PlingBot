@@ -52,6 +52,7 @@ class Program
         var services = new ServiceCollection();
 
         services.AddSingleton<Logger>();
+        services.AddSingleton<TeamRepository>();
         services.AddSingleton<ApiUsageTracker>();
         services.AddSingleton<FootballApiClient>();
         services.AddSingleton<DiscordAnnouncementService>();

@@ -86,7 +86,7 @@ internal static class MatchDisplayFormatter
             case "1H":
             case "2H":
             case "LIVE": return tip.Match.Elapsed > 0 ? FormatMatchMinute(tip.Match) : "";
-            case "HT":   return "    HT";
+            case "HT":   return "HT";
             case "SUSP":
             case "INT":
             case "ABD":  return "Avbruten";
@@ -96,7 +96,7 @@ internal static class MatchDisplayFormatter
             case "ET":
             case "BT":
             case "P":
-            default:     return "    FT";
+            default:     return "FT";
         }
     }
 

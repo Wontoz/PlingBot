@@ -98,7 +98,7 @@ public class EventsBuilder
             }
 
             string desc = GetDescription(ev) + scoreStr;
-            lines.Add($"{minute,6} {label,-13}  {hb.PadRight(teamW)}      {desc}");
+            lines.Add($"{minute,6} {PadLabel(label, 15)}  {hb.PadRight(teamW)}      {desc}");
         }
 
         var sb = new StringBuilder();
@@ -114,6 +114,21 @@ public class EventsBuilder
             sb.Append($"(+{skipped} händelser)");
 
         return $"{header}\n```\n{sb}```";
+    }
+
+    private static string PadLabel(string label, int width)
+    {
+        int extra = 0;
+        for (int i = 0; i < label.Length; i++)
+        {
+            if (label[i] is >= '☀' and <= '➿')
+            {
+                bool hasVariationSelector = i + 1 < label.Length && label[i + 1] == '️';
+                if (!hasVariationSelector)
+                    extra++;
+            }
+        }
+        return label.PadRight(width - extra);
     }
 
     private static string GetMatchScore(TipsMatch tip)
@@ -155,23 +170,23 @@ public class EventsBuilder
     private static string GetLabel(MatchEvent ev) =>
         (ev.Type?.ToLowerInvariant(), ev.Detail?.ToLowerInvariant()) switch
         {
-            ("goal",  "normal goal")        => "MÅL",
-            ("goal",  "own goal")           => "SJÄLVMÅL",
-            ("goal",  "penalty")            => "MÅL (STRAFF)",
-            ("goal",  "missed penalty")     => "MISSAD STRAFF",
-            ("card",  "yellow card")        => "GULT KORT",
-            ("card",  "second yellow card") => "ANDRA GULA",
-            ("card",  "red card")           => "RÖTT KORT",
+            ("goal",  "normal goal")        => "⚽MÅL",
+            ("goal",  "own goal")           => "⚽SJÄLVMÅL",
+            ("goal",  "penalty")            => "⚽MÅL (STRAFF)",
+            ("goal",  "missed penalty")     => "🚫MISSAD STRAFF",
+            ("card",  "yellow card")        => "🟨GULT KORT",
+            ("card",  "second yellow card") => "🟥ANDRA GULA",
+            ("card",  "red card")           => "🟥RÖTT KORT",
             ("subst", _)                    => GetSubstLabel(ev.Detail),
-            ("var",   "goal cancelled")     => "VAR BORTDÖMT",
-            ("var",   _)                    => "VAR",
+            ("var",   "goal cancelled")     => "⚠️VAR BORTDÖMT",
+            ("var",   _)                    => "⚠️VAR",
             _                               => ev.Type ?? "?"
         };
 
     private static string GetSubstLabel(string? detail)
     {
         int lastSpace = detail?.LastIndexOf(' ') ?? -1;
-        return lastSpace >= 0 ? $"BYTE {detail![(lastSpace + 1)..]}" : "BYTE";
+        return lastSpace >= 0 ? $"🔄BYTE {detail![(lastSpace + 1)..]}" : "BYTE";
     }
 
     private static string GetDescription(MatchEvent ev) =>

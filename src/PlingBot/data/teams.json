@@ -1,0 +1,1262 @@
+﻿[
+  {
+    "Name": "Accrington",
+    "ApiName": "Accrington ST",
+    "Id": 1360
+  },
+  {
+    "Name": "AFC Eskilstuna",
+    "ApiName": "AFC Eskilstuna",
+    "Id": 765
+  },
+  {
+    "Name": "AFC Malmö",
+    "ApiName": "AFC Malmo",
+    "Id": 27669
+  },
+  {
+    "Name": "AIK",
+    "ApiName": "AIK Stockholm",
+    "Id": 377
+  },
+  {
+    "Name": "Albanien",
+    "ApiName": "Albania",
+    "Id": 778
+  },
+  {
+    "Name": "Algeriet",
+    "ApiName": "Algeria",
+    "Id": 1532
+  },
+  {
+    "Name": "Almería",
+    "ApiName": "Almeria",
+    "Id": 723
+  },
+  {
+    "Name": "Anderlecht",
+    "ApiName": "Anderlecht",
+    "Id": 554
+  },
+  {
+    "Name": "Argentina",
+    "ApiName": "Argentina",
+    "Id": 26
+  },
+  {
+    "Name": "Arlanda",
+    "ApiName": "Arlanda",
+    "Id": 16597
+  },
+  {
+    "Name": "Arsenal",
+    "ApiName": "Arsenal",
+    "Id": 42
+  },
+  {
+    "Name": "Aston Villa",
+    "ApiName": "Aston Villa",
+    "Id": 66
+  },
+  {
+    "Name": "Athletic Bilbao",
+    "ApiName": "Athletic Club",
+    "Id": 531
+  },
+  {
+    "Name": "Atlético Madrid",
+    "ApiName": "Atletico Madrid",
+    "Id": 530
+  },
+  {
+    "Name": "Australien",
+    "ApiName": "Australia",
+    "Id": 20
+  },
+  {
+    "Name": "Barnet",
+    "ApiName": "Barnet",
+    "Id": 1369
+  },
+  {
+    "Name": "Barnsley",
+    "ApiName": "Barnsley",
+    "Id": 747
+  },
+  {
+    "Name": "Belgien",
+    "ApiName": "Belgium",
+    "Id": 1
+  },
+  {
+    "Name": "Birmingham",
+    "ApiName": "Birmingham",
+    "Id": 54
+  },
+  {
+    "Name": "Blackburn",
+    "ApiName": "Blackburn",
+    "Id": 67
+  },
+  {
+    "Name": "Blackpool",
+    "ApiName": "Blackpool",
+    "Id": 1356
+  },
+  {
+    "Name": "Bodö/Glimt",
+    "ApiName": "Bodo/Glimt",
+    "Id": 327
+  },
+  {
+    "Name": "Bohemians",
+    "ApiName": "Bohemians",
+    "Id": 3840
+  },
+  {
+    "Name": "Bolivia",
+    "ApiName": "Bolivia",
+    "Id": 2381
+  },
+  {
+    "Name": "Bolton",
+    "ApiName": "Bolton",
+    "Id": 68
+  },
+  {
+    "Name": "Bosnien & Hercegovina",
+    "ApiName": "Bosnia & Herzegovina",
+    "Id": 1113
+  },
+  {
+    "Name": "Botafogo RJ",
+    "ApiName": "Botafogo",
+    "Id": 120
+  },
+  {
+    "Name": "Bradford",
+    "ApiName": "Bradford",
+    "Id": 1343
+  },
+  {
+    "Name": "Brage",
+    "ApiName": "IK brage",
+    "Id": 2175
+  },
+  {
+    "Name": "Brann",
+    "ApiName": "Brann",
+    "Id": 319
+  },
+  {
+    "Name": "Brasilien",
+    "ApiName": "Brazil",
+    "Id": 6
+  },
+  {
+    "Name": "Brentford",
+    "ApiName": "Brentford",
+    "Id": 55
+  },
+  {
+    "Name": "Bristol City",
+    "ApiName": "Bristol City",
+    "Id": 56
+  },
+  {
+    "Name": "Burnley",
+    "ApiName": "Burnley",
+    "Id": 44
+  },
+  {
+    "Name": "Burton",
+    "ApiName": "Burton Albion",
+    "Id": 748
+  },
+  {
+    "Name": "Cambridge",
+    "ApiName": "Cambridge United",
+    "Id": 1370
+  },
+  {
+    "Name": "Cardiff",
+    "ApiName": "Cardiff",
+    "Id": 43
+  },
+  {
+    "Name": "Castellón",
+    "ApiName": "Castellón",
+    "Id": 5254
+  },
+  {
+    "Name": "Celta de Vigo",
+    "ApiName": "Celta Vigo",
+    "Id": 538
+  },
+  {
+    "Name": "Charlton",
+    "ApiName": "Charlton",
+    "Id": 1335
+  },
+  {
+    "Name": "Chelsea",
+    "ApiName": "Chelsea",
+    "Id": 49
+  },
+  {
+    "Name": "Chesterfield",
+    "ApiName": "Chesterfield",
+    "Id": 1345
+  },
+  {
+    "Name": "Chile",
+    "ApiName": "Chile",
+    "Id": 2383
+  },
+  {
+    "Name": "Club Brügge",
+    "ApiName": "Club Brugge KV",
+    "Id": 569
+  },
+  {
+    "Name": "Como",
+    "ApiName": "Como",
+    "Id": 895
+  },
+  {
+    "Name": "Coritiba",
+    "ApiName": "Coritiba",
+    "Id": 147
+  },
+  {
+    "Name": "Costa Rica",
+    "ApiName": "Costa Rica",
+    "Id": 29
+  },
+  {
+    "Name": "Coventry",
+    "ApiName": "Coventry",
+    "Id": 1346
+  },
+  {
+    "Name": "Cremonese",
+    "ApiName": "Cremonese",
+    "Id": 520
+  },
+  {
+    "Name": "Crystal Palace",
+    "ApiName": "Crystal Palace",
+    "Id": 52
+  },
+  {
+    "Name": "Danmark",
+    "ApiName": "Denmark",
+    "Id": 21
+  },
+  {
+    "Name": "Danmark D",
+    "ApiName": "Denmark W",
+    "Id": 1779
+  },
+  {
+    "Name": "Derby",
+    "ApiName": "Derby",
+    "Id": 69
+  },
+  {
+    "Name": "Derry City",
+    "ApiName": "Derry City",
+    "Id": 670
+  },
+  {
+    "Name": "Djurgården",
+    "ApiName": "Djurgardens IF",
+    "Id": 364
+  },
+  {
+    "Name": "Doncaster",
+    "ApiName": "Doncaster",
+    "Id": 1354
+  },
+  {
+    "Name": "DR Kongo",
+    "ApiName": "Congo DR",
+    "Id": 1508
+  },
+  {
+    "Name": "Ecuador",
+    "ApiName": "Ecuador",
+    "Id": 2382
+  },
+  {
+    "Name": "Egypten",
+    "ApiName": "Egypt",
+    "Id": 32
+  },
+  {
+    "Name": "El Salvador",
+    "ApiName": "El Salvador",
+    "Id": 5159
+  },
+  {
+    "Name": "Elche",
+    "ApiName": "Elche",
+    "Id": 797
+  },
+  {
+    "Name": "Elfenbenskusten",
+    "ApiName": "Ivory Coast",
+    "Id": 1501
+  },
+  {
+    "Name": "Elfsborg",
+    "ApiName": "IF Elfsborg",
+    "Id": 372
+  },
+  {
+    "Name": "England",
+    "ApiName": "England",
+    "Id": 10
+  },
+  {
+    "Name": "Eskilsminne",
+    "ApiName": "Eskilsminne",
+    "Id": 6663
+  },
+  {
+    "Name": "Everton",
+    "ApiName": "Everton",
+    "Id": 45
+  },
+  {
+    "Name": "Exeter",
+    "ApiName": "Exeter City",
+    "Id": 1364
+  },
+  {
+    "Name": "Falkenberg",
+    "ApiName": "Falkenbergs FF",
+    "Id": 812
+  },
+  {
+    "Name": "FC Aarau",
+    "ApiName": "FC Aarau",
+    "Id": 2177
+  },
+  {
+    "Name": "FF Jaro",
+    "ApiName": "FF Jaro",
+    "Id": 2075
+  },
+  {
+    "Name": "Flamengo",
+    "ApiName": "Flamengo",
+    "Id": 127
+  },
+  {
+    "Name": "Fleetwood",
+    "ApiName": "Fleetwood Town",
+    "Id": 1336
+  },
+  {
+    "Name": "Frankrike",
+    "ApiName": "France",
+    "Id": 2
+  },
+  {
+    "Name": "Fredrikstad FK",
+    "ApiName": "Fredrikstad",
+    "Id": 2149
+  },
+  {
+    "Name": "Fulham",
+    "ApiName": "Fulham",
+    "Id": 36
+  },
+  {
+    "Name": "Gefle",
+    "ApiName": "Gefle IF",
+    "Id": 813
+  },
+  {
+    "Name": "Gent",
+    "ApiName": "Gent",
+    "Id": 631
+  },
+  {
+    "Name": "Getafe",
+    "ApiName": "Getafe",
+    "Id": 546
+  },
+  {
+    "Name": "GIF Sundsvall",
+    "ApiName": "GIF Sundsvall",
+    "Id": 373
+  },
+  {
+    "Name": "Granada",
+    "ApiName": "Granada CF",
+    "Id": 715
+  },
+  {
+    "Name": "Grasshoppers",
+    "ApiName": "Grasshoppers",
+    "Id": 1013
+  },
+  {
+    "Name": "Grekland",
+    "ApiName": "Greece",
+    "Id": 1117
+  },
+  {
+    "Name": "Grimsby",
+    "ApiName": "Grimsby",
+    "Id": 1365
+  },
+  {
+    "Name": "Haiti",
+    "ApiName": "Haiti",
+    "Id": 2386
+  },
+  {
+    "Name": "Hammarby",
+    "ApiName": "Hammarby FF",
+    "Id": 363
+  },
+  {
+    "Name": "Hammarby TFF",
+    "ApiName": "Hammarby Talang",
+    "Id": 16596
+  },
+  {
+    "Name": "Harrogate",
+    "ApiName": "Harrogate Town",
+    "Id": 1842
+  },
+  {
+    "Name": "Heerenveen",
+    "ApiName": "Heerenveen",
+    "Id": 210
+  },
+  {
+    "Name": "HJK Helsingfors",
+    "ApiName": "HJK Helsingfors",
+    "Id": 649
+  },
+  {
+    "Name": "Huddersfield",
+    "ApiName": "Huddersfield",
+    "Id": 37
+  },
+  {
+    "Name": "Hull",
+    "ApiName": "Hull City",
+    "Id": 64
+  },
+  {
+    "Name": "Häcken",
+    "ApiName": "BK Hacken",
+    "Id": 367
+  },
+  {
+    "Name": "Hässleholms IF",
+    "ApiName": "Hässleholms IF",
+    "Id": 6676
+  },
+  {
+    "Name": "IF Eker Örebro",
+    "ApiName": "Eker Örebro",
+    "Id": 25570
+  },
+  {
+    "Name": "IF Gnistan",
+    "ApiName": "Gnistan",
+    "Id": 2082
+  },
+  {
+    "Name": "IF Karlstad",
+    "ApiName": "IF Karlstad",
+    "Id": 11659
+  },
+  {
+    "Name": "IFK Göteborg",
+    "ApiName": "IFK Goteborg",
+    "Id": 366
+  },
+  {
+    "Name": "IFK Norrköping",
+    "ApiName": "IFK Norrkoping",
+    "Id": 378
+  },
+  {
+    "Name": "Inter",
+    "ApiName": "Inter",
+    "Id": 505
+  },
+  {
+    "Name": "Inter Åbo",
+    "ApiName": "Inter Turku",
+    "Id": 1164
+  },
+  {
+    "Name": "Irak",
+    "ApiName": "Iraq",
+    "Id": 1567
+  },
+  {
+    "Name": "Iran",
+    "ApiName": "Iran",
+    "Id": 22
+  },
+  {
+    "Name": "Israel",
+    "ApiName": "Israel",
+    "Id": 1116
+  },
+  {
+    "Name": "Italien",
+    "ApiName": "Italy",
+    "Id": 768
+  },
+  {
+    "Name": "Italien D",
+    "ApiName": "Italy W",
+    "Id": 1748
+  },
+  {
+    "Name": "Japan",
+    "ApiName": "Japan",
+    "Id": 12
+  },
+  {
+    "Name": "Juventus",
+    "ApiName": "Juventus",
+    "Id": 496
+  },
+  {
+    "Name": "Järfälla",
+    "ApiName": "Järfälla",
+    "Id": 16598
+  },
+  {
+    "Name": "Jönköpings Södra",
+    "ApiName": "Jonkopings Sodra",
+    "Id": 764
+  },
+  {
+    "Name": "Kanada",
+    "ApiName": "Canada",
+    "Id": 5529
+  },
+  {
+    "Name": "Karlberg",
+    "ApiName": "Karlberg",
+    "Id": 6682
+  },
+  {
+    "Name": "Kristianstad",
+    "ApiName": "Kristianstad",
+    "Id": 11675
+  },
+  {
+    "Name": "KuPS",
+    "ApiName": "KuPS",
+    "Id": 1165
+  },
+  {
+    "Name": "Laholm",
+    "ApiName": "Laholm",
+    "Id": 12657
+  },
+  {
+    "Name": "Lahti",
+    "ApiName": "Lahti",
+    "Id": 1166
+  },
+  {
+    "Name": "Las Palmas",
+    "ApiName": "Las Palmas",
+    "Id": 534
+  },
+  {
+    "Name": "Lazio",
+    "ApiName": "Lazio",
+    "Id": 487
+  },
+  {
+    "Name": "Lecce",
+    "ApiName": "Lecce",
+    "Id": 867
+  },
+  {
+    "Name": "Leeds",
+    "ApiName": "Leeds",
+    "Id": 63
+  },
+  {
+    "Name": "Leicester",
+    "ApiName": "Leicester",
+    "Id": 46
+  },
+  {
+    "Name": "Leyton Orient",
+    "ApiName": "Leyton Orient",
+    "Id": 1373
+  },
+  {
+    "Name": "Lidköping",
+    "ApiName": "Lidköping",
+    "Id": 12573
+  },
+  {
+    "Name": "Lincoln",
+    "ApiName": "Lincoln",
+    "Id": 1379
+  },
+  {
+    "Name": "Liverpool",
+    "ApiName": "Liverpool",
+    "Id": 40
+  },
+  {
+    "Name": "Ljungskile",
+    "ApiName": "Ljungskile SK",
+    "Id": 2165
+  },
+  {
+    "Name": "Luton",
+    "ApiName": "Luton",
+    "Id": 1359
+  },
+  {
+    "Name": "Luxemburg",
+    "ApiName": "Luxembourg",
+    "Id": 1102
+  },
+  {
+    "Name": "Manchester City",
+    "ApiName": "Manchester City",
+    "Id": 50
+  },
+  {
+    "Name": "Manchester United",
+    "ApiName": "Manchester United",
+    "Id": 33
+  },
+  {
+    "Name": "Mansfield",
+    "ApiName": "Mansfield Town",
+    "Id": 1374
+  },
+  {
+    "Name": "Mariehamn",
+    "ApiName": "Mariehamn",
+    "Id": 587
+  },
+  {
+    "Name": "Marocko",
+    "ApiName": "Morocco",
+    "Id": 31
+  },
+  {
+    "Name": "Marseille",
+    "ApiName": "Marseille",
+    "Id": 81
+  },
+  {
+    "Name": "Mechelen",
+    "ApiName": "KV Mechelen",
+    "Id": 266
+  },
+  {
+    "Name": "Mexiko",
+    "ApiName": "Mexico",
+    "Id": 16
+  },
+  {
+    "Name": "Middlesbrough",
+    "ApiName": "Middlesbrough",
+    "Id": 70
+  },
+  {
+    "Name": "Midtjylland",
+    "ApiName": "FC Midtjylland",
+    "Id": 397
+  },
+  {
+    "Name": "Millwall",
+    "ApiName": "Millwall",
+    "Id": 58
+  },
+  {
+    "Name": "Mirassol",
+    "ApiName": "Mirassol",
+    "Id": 7848
+  },
+  {
+    "Name": "Mjällby",
+    "ApiName": "Mjallby AIF",
+    "Id": 2240
+  },
+  {
+    "Name": "Molde",
+    "ApiName": "Molde",
+    "Id": 329
+  },
+  {
+    "Name": "Málaga",
+    "ApiName": "Malaga",
+    "Id": 535
+  },
+  {
+    "Name": "Nederländerna",
+    "ApiName": "Netherlands",
+    "Id": 1118
+  },
+  {
+    "Name": "Newcastle",
+    "ApiName": "Newcastle",
+    "Id": 34
+  },
+  {
+    "Name": "Newport",
+    "ApiName": "Newport County",
+    "Id": 1367
+  },
+  {
+    "Name": "Nigeria",
+    "ApiName": "Nigeria",
+    "Id": 19
+  },
+  {
+    "Name": "Nordic United",
+    "ApiName": "United Nordic",
+    "Id": 16601
+  },
+  {
+    "Name": "Nordmakedonien",
+    "ApiName": "FYR Macedonia",
+    "Id": 1105
+  },
+  {
+    "Name": "Nordsjälland",
+    "ApiName": "FC Nordsjaelland",
+    "Id": 398
+  },
+  {
+    "Name": "Norge",
+    "ApiName": "Norway",
+    "Id": 1090
+  },
+  {
+    "Name": "Norrby",
+    "ApiName": "Norrby IF",
+    "Id": 2173
+  },
+  {
+    "Name": "Norwich",
+    "ApiName": "Norwich",
+    "Id": 71
+  },
+  {
+    "Name": "Nottingham",
+    "ApiName": "Nottingham Forest",
+    "Id": 65
+  },
+  {
+    "Name": "Nya Zeeland",
+    "ApiName": "New Zealand",
+    "Id": 4673
+  },
+  {
+    "Name": "Oddevold",
+    "ApiName": "Oddevold",
+    "Id": 11674
+  },
+  {
+    "Name": "Oxford",
+    "ApiName": "Oxford United",
+    "Id": 1338
+  },
+  {
+    "Name": "Paderborn",
+    "ApiName": "SC Paderborn 07",
+    "Id": 185
+  },
+  {
+    "Name": "Pafos FC",
+    "ApiName": "Pafos",
+    "Id": 3403
+  },
+  {
+    "Name": "Panama",
+    "ApiName": "Panama",
+    "Id": 11
+  },
+  {
+    "Name": "Paraguay",
+    "ApiName": "Paraguay",
+    "Id": 2380
+  },
+  {
+    "Name": "Paranaense",
+    "ApiName": "Atletico Paranaense",
+    "Id": 134
+  },
+  {
+    "Name": "Paris Saint-Germain",
+    "ApiName": "Paris Saint Germain",
+    "Id": 85
+  },
+  {
+    "Name": "Partick Thistle",
+    "ApiName": "Partick",
+    "Id": 901
+  },
+  {
+    "Name": "Peterborough",
+    "ApiName": "Peterborough",
+    "Id": 1350
+  },
+  {
+    "Name": "Plymouth",
+    "ApiName": "Plymouth",
+    "Id": 1357
+  },
+  {
+    "Name": "Polen",
+    "ApiName": "Poland",
+    "Id": 24
+  },
+  {
+    "Name": "Port Vale",
+    "ApiName": "Port Vale",
+    "Id": 1351
+  },
+  {
+    "Name": "Porto",
+    "ApiName": "FC Porto",
+    "Id": 212
+  },
+  {
+    "Name": "Portsmouth",
+    "ApiName": "Portsmouth",
+    "Id": 1355
+  },
+  {
+    "Name": "Portugal",
+    "ApiName": "Portugal",
+    "Id": 27
+  },
+  {
+    "Name": "Preston",
+    "ApiName": "Preston",
+    "Id": 59
+  },
+  {
+    "Name": "Qatar",
+    "ApiName": "Qatar",
+    "Id": 1569
+  },
+  {
+    "Name": "Queens Park Rangers",
+    "ApiName": "QPR",
+    "Id": 72
+  },
+  {
+    "Name": "Randers",
+    "ApiName": "Randers FC",
+    "Id": 401
+  },
+  {
+    "Name": "Rayo Vallecano",
+    "ApiName": "Rayo Vallecano",
+    "Id": 728
+  },
+  {
+    "Name": "Reading",
+    "ApiName": "Reading",
+    "Id": 53
+  },
+  {
+    "Name": "Real Betis",
+    "ApiName": "Real Betis",
+    "Id": 543
+  },
+  {
+    "Name": "Real Sociedad",
+    "ApiName": "Real Sociedad",
+    "Id": 548
+  },
+  {
+    "Name": "Rennes",
+    "ApiName": "Rennes",
+    "Id": 94
+  },
+  {
+    "Name": "Roma",
+    "ApiName": "AS Roma",
+    "Id": 497
+  },
+  {
+    "Name": "Royale Union SG",
+    "ApiName": "Union St. Gilloise",
+    "Id": 1393
+  },
+  {
+    "Name": "Rumänien",
+    "ApiName": "Romania",
+    "Id": 774
+  },
+  {
+    "Name": "Räppe",
+    "ApiName": "Räppe",
+    "Id": 12617
+  },
+  {
+    "Name": "Salford",
+    "ApiName": "Salford City",
+    "Id": 1844
+  },
+  {
+    "Name": "Sandefjord",
+    "ApiName": "Sandefjord",
+    "Id": 332
+  },
+  {
+    "Name": "Sandviken",
+    "ApiName": "Sandviken",
+    "Id": 6697
+  },
+  {
+    "Name": "Saudiarabien",
+    "ApiName": "Saudi Arabia",
+    "Id": 23
+  },
+  {
+    "Name": "Schweiz",
+    "ApiName": "Switzerland",
+    "Id": 15
+  },
+  {
+    "Name": "Senegal",
+    "ApiName": "Senegal",
+    "Id": 13
+  },
+  {
+    "Name": "Serbien",
+    "ApiName": "Serbia",
+    "Id": 14
+  },
+  {
+    "Name": "Serbien D",
+    "ApiName": "Serbia W",
+    "Id": 1773
+  },
+  {
+    "Name": "Sevilla",
+    "ApiName": "Sevilla",
+    "Id": 536
+  },
+  {
+    "Name": "Shamrock Rovers",
+    "ApiName": "Shamrock Rovers",
+    "Id": 652
+  },
+  {
+    "Name": "Sheffield U",
+    "ApiName": "Sheffield Utd",
+    "Id": 62
+  },
+  {
+    "Name": "Sheffield W",
+    "ApiName": "Sheffield Wednesday",
+    "Id": 74
+  },
+  {
+    "Name": "Shelbourne",
+    "ApiName": "Shelbourne",
+    "Id": 3854
+  },
+  {
+    "Name": "SJK",
+    "ApiName": "SJK",
+    "Id": 689
+  },
+  {
+    "Name": "Skottland",
+    "ApiName": "Scotland",
+    "Id": 1108
+  },
+  {
+    "Name": "Skövde AIK",
+    "ApiName": "Skövde AIK",
+    "Id": 6698
+  },
+  {
+    "Name": "Slavia Prag",
+    "ApiName": "Slavia Praha",
+    "Id": 560
+  },
+  {
+    "Name": "Sollentuna",
+    "ApiName": "Sollentuna",
+    "Id": 6699
+  },
+  {
+    "Name": "Southampton",
+    "ApiName": "Southampton",
+    "Id": 41
+  },
+  {
+    "Name": "Spanien",
+    "ApiName": "Spain",
+    "Id": 9
+  },
+  {
+    "Name": "St. Mirren",
+    "ApiName": "ST Mirren",
+    "Id": 251
+  },
+  {
+    "Name": "St. Truidense",
+    "ApiName": "St. Truiden",
+    "Id": 735
+  },
+  {
+    "Name": "Stockholm Internazionale",
+    "ApiName": "Stockholm Internazionale",
+    "Id": 12585
+  },
+  {
+    "Name": "Stockport",
+    "ApiName": "Stockport County",
+    "Id": 4686
+  },
+  {
+    "Name": "Stocksund",
+    "ApiName": "Stocksund",
+    "Id": 6700
+  },
+  {
+    "Name": "Stoke",
+    "ApiName": "Stoke City",
+    "Id": 75
+  },
+  {
+    "Name": "Stuttgart",
+    "ApiName": "VfB Stuttgart",
+    "Id": 172
+  },
+  {
+    "Name": "Sunderland",
+    "ApiName": "Sunderland",
+    "Id": 746
+  },
+  {
+    "Name": "Sverige",
+    "ApiName": "Sweden",
+    "Id": 5
+  },
+  {
+    "Name": "Sverige D",
+    "ApiName": "Sweden W",
+    "Id": 1739
+  },
+  {
+    "Name": "Swansea",
+    "ApiName": "Swansea",
+    "Id": 76
+  },
+  {
+    "Name": "Swindon",
+    "ApiName": "Swindon Town",
+    "Id": 1353
+  },
+  {
+    "Name": "Sydafrika",
+    "ApiName": "South Africa",
+    "Id": 1531
+  },
+  {
+    "Name": "Sydkorea",
+    "ApiName": "South Korea",
+    "Id": 17
+  },
+  {
+    "Name": "Sölvesborgs GoIF",
+    "ApiName": "Sölvesborg",
+    "Id": 12660
+  },
+  {
+    "Name": "Tjeckien",
+    "ApiName": "Czech Republic",
+    "Id": 770
+  },
+  {
+    "Name": "Torn",
+    "ApiName": "Torns",
+    "Id": 6701
+  },
+  {
+    "Name": "Tottenham",
+    "ApiName": "Tottenham",
+    "Id": 47
+  },
+  {
+    "Name": "TPS",
+    "ApiName": "Turku PS",
+    "Id": 1168
+  },
+  {
+    "Name": "Tranmere",
+    "ApiName": "Tranmere",
+    "Id": 1381
+  },
+  {
+    "Name": "Trollhättan",
+    "ApiName": "Trollhättan",
+    "Id": 6702
+  },
+  {
+    "Name": "Tunisien",
+    "ApiName": "Tunisia",
+    "Id": 28
+  },
+  {
+    "Name": "Turkiet",
+    "ApiName": "Türkiye",
+    "Id": 777
+  },
+  {
+    "Name": "Tyskland",
+    "ApiName": "Germany",
+    "Id": 25
+  },
+  {
+  "Name": "Uruguay",
+  "ApiName": "Uruguay",
+  "Id": 7
+  },
+  {
+    "Name": "USA",
+    "ApiName": "USA",
+    "Id": 2384
+  },
+  {
+    "Name": "Utrecht",
+    "ApiName": "Utrecht",
+    "Id": 207
+  },
+  {
+    "Name": "Valencia",
+    "ApiName": "Valencia",
+    "Id": 532
+  },
+  {
+    "Name": "Varberg",
+    "ApiName": "Varbergs BoIS FC",
+    "Id": 2171
+  },
+  {
+    "Name": "Venezuela",
+    "ApiName": "Venezuela",
+    "Id": 2379
+  },
+  {
+    "Name": "Villarreal",
+    "ApiName": "Villarreal",
+    "Id": 533
+  },
+  {
+    "Name": "VPS",
+    "ApiName": "VPS",
+    "Id": 650
+  },
+  {
+    "Name": "Värnamo",
+    "ApiName": "IFK Varnamo",
+    "Id": 2163
+  },
+  {
+    "Name": "Västerås",
+    "ApiName": "Vasteras SK FK",
+    "Id": 2241
+  },
+  {
+    "Name": "Wales",
+    "ApiName": "Wales",
+    "Id": 767
+  },
+  {
+    "Name": "Watford",
+    "ApiName": "Watford",
+    "Id": 38
+  },
+  {
+    "Name": "West Bromwich",
+    "ApiName": "West Brom",
+    "Id": 60
+  },
+  {
+    "Name": "West Ham",
+    "ApiName": "West Ham",
+    "Id": 48
+  },
+  {
+    "Name": "Wigan",
+    "ApiName": "Wigan",
+    "Id": 61
+  },
+  {
+    "Name": "Wimbledon",
+    "ApiName": "AFC Wimbledon",
+    "Id": 1333
+  },
+  {
+    "Name": "Wolfsburg",
+    "ApiName": "VfL Wolfsburg",
+    "Id": 161
+  },
+  {
+    "Name": "Wolverhampton",
+    "ApiName": "Wolves",
+    "Id": 39
+  },
+  {
+    "Name": "Wrexham",
+    "ApiName": "Wrexham",
+    "Id": 1837
+  },
+  {
+    "Name": "Wycombe",
+    "ApiName": "Wycombe",
+    "Id": 1358
+  },
+  {
+    "Name": "Åtvidaberg",
+    "ApiName": "Atvidabergs FF",
+    "Id": 2162
+  },
+  {
+    "Name": "Örebro",
+    "ApiName": "Orebro SK",
+    "Id": 365
+  },
+  {
+    "Name": "Öster",
+    "ApiName": "Osters IF",
+    "Id": 2174
+  },
+  {
+    "Name": "Österrike",
+    "ApiName": "Austria",
+    "Id": 775
+  },
+  {
+    "Name": "Östersund",
+    "ApiName": "Ostersunds FK",
+    "Id": 376
+  }
+]

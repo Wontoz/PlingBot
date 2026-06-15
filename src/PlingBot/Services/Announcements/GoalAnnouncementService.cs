@@ -95,12 +95,15 @@ public class GoalAnnouncementService
     {
         bool announced = false;
 
-        foreach (var ev in matchEvents
+        var varEvents = matchEvents
             .Where(ev => string.Equals(ev.Type, "Var", StringComparison.OrdinalIgnoreCase) &&
                 string.Equals(ev.Detail, "Goal cancelled", StringComparison.OrdinalIgnoreCase))
-            .OrderBy(Helpers.GetEventSortValue))
+            .OrderBy(Helpers.GetEventSortValue)
+            .ToList();
+
+        foreach (var (ev, index) in varEvents.Select((ev, i) => (ev, i)))
         {
-            string key = AnnouncementEventKeys.BuildStoredEventKey("var", match.Id, ev);
+            string key = AnnouncementEventKeys.BuildVarKey(match.Id, index);
 
             if (tip.AnnouncedEventKeys.Contains(key))
                 continue;

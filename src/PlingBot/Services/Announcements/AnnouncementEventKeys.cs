@@ -23,6 +23,16 @@ internal static class AnnouncementEventKeys
         return category + "|" + matchId + "|" + Helpers.BuildEventKey(ev);
     }
 
+    public static string BuildCardKey(int matchId, int eventIndex)
+    {
+        return $"card|{matchId}|{eventIndex}";
+    }
+
+    public static string BuildVarKey(int matchId, int eventIndex)
+    {
+        return $"var|{matchId}|{eventIndex}";
+    }
+
     public static string BuildGoalKey(int matchId, int eventIndex)
     {
         return $"goal|{matchId}|{eventIndex}";

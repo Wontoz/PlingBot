@@ -32,17 +32,20 @@ public class CardAnnouncementService
 
         bool announced = false;
 
-        foreach (var ev in matchEvents
+        var redCardEvents = matchEvents
             .Where(IsRedCardEvent)
-            .OrderBy(Helpers.GetEventSortValue))
+            .OrderBy(Helpers.GetEventSortValue)
+            .ToList();
+
+        foreach (var (ev, index) in redCardEvents.Select((ev, i) => (ev, i)))
         {
-            string key = AnnouncementEventKeys.BuildStoredEventKey("card", match.Id, ev);
+            string key = AnnouncementEventKeys.BuildCardKey(match.Id, index);
 
             if (tip.AnnouncedEventKeys.Contains(key))
                 continue;
 
             bool isHome = AnnouncementEventKeys.IsHomeEvent(match, ev);
-            await AnnounceRedCardAsync(channel, tip, match, isHome, ev);
+            await AnnounceRedCardAsync(channel, tip, match, isHome, ev, key);
             tip.AnnouncedEventKeys.Add(key);
             announced = true;
         }
@@ -50,7 +53,7 @@ public class CardAnnouncementService
         return announced;
     }
 
-    private async Task AnnounceRedCardAsync(IMessageChannel channel, TipsMatch tip, Match match, bool isHome, MatchEvent? evt)
+    private async Task AnnounceRedCardAsync(IMessageChannel channel, TipsMatch tip, Match match, bool isHome, MatchEvent? evt, string key)
     {
         string team = isHome ? tip.HomeTeam : tip.AwayTeam;
         string symbol = isHome
@@ -58,11 +61,11 @@ public class CardAnnouncementService
             : Helpers.GetEventSymbol(tip, match.Symbol, match.AwayTeam, isHomeEvent: false, isBadEvent: true);
 
         string player = string.IsNullOrEmpty(evt?.Player) ? "Okänd spelare" : evt.Player;
-        string message = $"🟥 {symbol} Rött kort! {team} - {player} {Helpers.GetMinute(match)}";
+        string message = $"🟥 {symbol} Rött kort! {team} - {player} {(evt != null ? Helpers.GetMinute(evt) : Helpers.GetMinute(match))}";
 
         await _discord.AnnounceAsync(channel, message, ConsoleColor.DarkRed, "Red card announced", couponEvent: new CouponEvent
         {
-            Key = AnnouncementEventKeys.BuildStoredEventKey("card", match.Id, evt ?? new MatchEvent()),
+            Key = key,
             Type = "Card",
             FixtureId = match.Id,
             Detail = evt?.Detail,
