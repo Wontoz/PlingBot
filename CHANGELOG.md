@@ -31,8 +31,8 @@
 
 ### Versus Mode
 - Goal announcements now show one emoji per player in versus mode (e.g. `✅❌✅`) instead of a single shared emoji
-- `!status` in versus mode appends a score line per player: `Antal rätt: Spelare1: 8 | Spelare2: 6 | Spelare3: 5`
-- Added `!procent <matchnr> <1%> <X%> <2%>` command to update betting percentages in-memory and persist to JSON without restarting the bot
+- `!status` in versus mode now shows eachs coupons score
+- Added fallback command `!procent <matchnr> <1%> <X%> <2%>` command to update betting percentages in-memory and persist to JSON without restarting the bot
 
 ### Announcements
 - Own goals now always include `(Självmål)` in the event text, even when no scorer is known
