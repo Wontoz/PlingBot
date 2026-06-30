@@ -65,11 +65,11 @@ class Program
         services.AddSingleton<StatisticsBuilder>();
         services.AddSingleton<EventsBuilder>();
         services.AddSingleton<MessageHandler>();
-        services.AddSingleton<TestService>();
         services.AddSingleton<ScorePollerService>();
         services.AddSingleton<DashboardService>();
         services.AddSingleton<PlayerMessageService>();
         services.AddSingleton<CouponPercentageService>();
+        services.AddSingleton<PayoutScraperService>();
 
         services.AddSingleton<TipsConfig>(sp =>
         {

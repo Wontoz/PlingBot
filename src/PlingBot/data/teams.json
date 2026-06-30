@@ -220,6 +220,11 @@
     "Id": 569
   },
   {
+    "Name": "Colombia",
+    "ApiName": "Colombia",
+    "Id": 8
+  },
+  {
     "Name": "Como",
     "ApiName": "Como",
     "Id": 895
@@ -283,6 +288,11 @@
     "Name": "DR Kongo",
     "ApiName": "Congo DR",
     "Id": 1508
+  },
+  {
+    "Name": "Drogheda",
+    "ApiName": "Drogheda United",
+    "Id": 3850
   },
   {
     "Name": "Ecuador",
@@ -390,6 +400,11 @@
     "Id": 546
   },
   {
+    "Name": "Ghana",
+    "ApiName": "Ghana",
+    "Id": 1504
+  },
+  {
     "Name": "GIF Sundsvall",
     "ApiName": "GIF Sundsvall",
     "Id": 373
@@ -453,6 +468,11 @@
     "Name": "Hull",
     "ApiName": "Hull City",
     "Id": 64
+  },
+  {
+    "Name": "Husqvarna",
+    "ApiName": "Husqvarna",
+    "Id": 6675
   },
   {
     "Name": "Häcken",
@@ -530,6 +550,11 @@
     "Id": 12
   },
   {
+    "Name": "Jordanien",
+    "ApiName": "Jordan",
+    "Id": 1548
+  },
+  {
     "Name": "Juventus",
     "ApiName": "Juventus",
     "Id": 496
@@ -550,6 +575,11 @@
     "Id": 5529
   },
   {
+    "Name": "Kap Verde",
+    "ApiName": "Cape Verde Islands",
+    "Id": 1533
+  },
+  {
     "Name": "Karlberg",
     "ApiName": "Karlberg",
     "Id": 6682
@@ -558,6 +588,11 @@
     "Name": "Kristianstad",
     "ApiName": "Kristianstad",
     "Id": 11675
+  },
+  {
+    "Name": "Kroatien",
+    "ApiName": "Croatia",
+    "Id": 3
   },
   {
     "Name": "KuPS",
@@ -623,6 +658,11 @@
     "Name": "Ljungskile",
     "ApiName": "Ljungskile SK",
     "Id": 2165
+  },
+  {
+    "Name": "Lund",
+    "ApiName": "Lund",
+    "Id": 6687
   },
   {
     "Name": "Luton",
@@ -900,6 +940,11 @@
     "Id": 497
   },
   {
+    "Name": "Rosengård",
+    "ApiName": "Rosengård",
+    "Id": 6694
+  },
+  {
     "Name": "Royale Union SG",
     "ApiName": "Union St. Gilloise",
     "Id": 1393
@@ -1020,6 +1065,11 @@
     "Id": 251
   },
   {
+    "Name": "St. Patricks",
+    "ApiName": "St Patrick's Athl.",
+    "Id": 3843
+  },
+  {
     "Name": "St. Truidense",
     "ApiName": "St. Truiden",
     "Id": 735
@@ -1091,7 +1141,7 @@
   },
   {
     "Name": "Tjeckien",
-    "ApiName": "Czech Republic",
+    "ApiName": "Czechia",
     "Id": 770
   },
   {
@@ -1135,9 +1185,9 @@
     "Id": 25
   },
   {
-  "Name": "Uruguay",
-  "ApiName": "Uruguay",
-  "Id": 7
+    "Name": "Uruguay",
+    "ApiName": "Uruguay",
+    "Id": 7
   },
   {
     "Name": "USA",
@@ -1148,6 +1198,11 @@
     "Name": "Utrecht",
     "ApiName": "Utrecht",
     "Id": 207
+  },
+  {
+    "Name": "Uzbekistan",
+    "ApiName": "Uzbekistan",
+    "Id": 1568
   },
   {
     "Name": "Valencia",

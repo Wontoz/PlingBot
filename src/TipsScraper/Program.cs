@@ -21,8 +21,15 @@ class Program
     {
         try
         {
-            string player = GetPlayerFromArgs(args);
             GameType selectedGame = GetGameFromArgs(args);
+
+            if (args.Contains("--payouts-only"))
+            {
+                await UpdatePayoutsOnlyAsync(selectedGame, args);
+                return;
+            }
+
+            string player = GetPlayerFromArgs(args);
 
             var teamRegistry = LoadTeamRegistry(args);
             var coupon = await ScrapeCouponAsync(selectedGame, teamRegistry);
@@ -36,7 +43,8 @@ class Program
                     Date = couponDate.ToString("yyyy-MM-dd"),
                     TotalCorrect = 0,
                     Game = selectedGame.DisplayName,
-                    StartTime = coupon.StartTime
+                    StartTime = coupon.StartTime,
+                    DataLastUpdatedUtc = coupon.Tips.Any(t => t.Percentage1.HasValue) ? DateTime.UtcNow : null,
                 },
                 TipsData = coupon.Tips,
                 Events = new List<CouponEventJson>()
@@ -183,6 +191,87 @@ class Program
         return input;
     }
 
+    private static async Task UpdatePayoutsOnlyAsync(GameType game, string[] args)
+    {
+        string date = GetArgValue(args, "--date") ?? GetStockholmNow().ToString("yyyy-MM-dd");
+        string jsonDir = ResolvePlingBotJsonFolder(args);
+        string fileName = $"{game.FilePrefix}_{date}.json";
+        string filePath = Path.Combine(jsonDir, fileName);
+
+        if (!File.Exists(filePath))
+            throw new FileNotFoundException($"JSON file not found: {filePath}. Use --date yyyy-MM-dd to specify a date.");
+
+        Console.WriteLine($"Updating payouts in: {filePath}");
+
+        var payouts = await ScrapePayoutsAsync(game, date);
+        if (payouts.Count == 0)
+        {
+            Console.WriteLine("No payout data found — page may not have results yet.");
+            return;
+        }
+
+        string rawJson = await File.ReadAllTextAsync(filePath, Encoding.UTF8);
+        var node = System.Text.Json.Nodes.JsonNode.Parse(rawJson)!;
+
+        var payoutsArray = new System.Text.Json.Nodes.JsonArray();
+        foreach (var p in payouts)
+        {
+            var rowNode = new System.Text.Json.Nodes.JsonObject
+            {
+                ["Correct"] = p.Correct,
+                ["Amount"]  = p.Amount,
+                ["Rows"]    = p.Rows
+            };
+            payoutsArray.Add(rowNode);
+        }
+        node["MetaData"]!["Payouts"] = payoutsArray;
+
+        var writeOptions = new JsonSerializerOptions
+        {
+            WriteIndented = true,
+            Encoder = JavaScriptEncoder.UnsafeRelaxedJsonEscaping
+        };
+        await File.WriteAllTextAsync(filePath, node.ToJsonString(writeOptions), Encoding.UTF8);
+        Console.WriteLine($"Payouts saved: {payouts.Count} row(s)");
+        foreach (var p in payouts)
+            Console.WriteLine($"  {p.Correct} rätt — {p.Amount} ({p.Rows})");
+    }
+
+    private static async Task<List<PayoutRowJson>> ScrapePayoutsAsync(GameType game, string date)
+    {
+        using var playwright = await Playwright.CreateAsync();
+        await using var browser = await playwright.Chromium.LaunchAsync(new BrowserTypeLaunchOptions { Headless = true });
+        var page = await browser.NewPageAsync();
+
+        string url = $"https://spela.svenskaspel.se/{game.FilePrefix}/resultat/{date}/statistik";
+        Console.WriteLine($"Scraping: {url}");
+
+        try
+        {
+            await page.GotoAsync(url);
+            await page.WaitForSelectorAsync(".pg_windiv--result", new PageWaitForSelectorOptions { Timeout = 15000 });
+
+            var rows = await page.EvaluateAsync<string[][]>("""
+                () => Array.from(document.querySelectorAll('.pg_windiv--result li[role="row"]'))
+                    .map(row => [
+                        row.querySelector('.pg_windiv_grid__correct_amounts')?.textContent?.trim() ?? '',
+                        row.querySelector('.pg_windiv_grid__win_commission')?.textContent?.trim() ?? '',
+                        row.querySelector('.pg_windiv_grid__correct_rows')?.textContent?.trim() ?? ''
+                    ])
+                """);
+
+            return rows
+                .Where(r => r.Length == 3 && !string.IsNullOrEmpty(r[0]))
+                .Select(r => new PayoutRowJson { Correct = r[0], Amount = r[1], Rows = r[2] })
+                .ToList();
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Warning: could not scrape payouts: {ex.Message}");
+            return [];
+        }
+    }
+
     private static async Task<CouponScrapeResult> ScrapeCouponAsync(
         GameType selectedGame,
         Dictionary<string, (string ApiName, int? TeamId)> teamRegistry)
@@ -244,7 +333,6 @@ class Program
                 Percentage1 = percentages.One,
                 PercentageX = percentages.X,
                 Percentage2 = percentages.Two,
-                PercentagesUpdatedUtc = percentages.HasAllValues ? DateTime.UtcNow : null,
                 LastUpdatedUtc = null,
                 LastRedCardCheckUtc = null,
                 AnnouncedEventKeys = new HashSet<string>(),
@@ -448,6 +536,15 @@ public class MetaData
     public int TotalCorrect { get; set; }
     public string Game { get; set; } = "";
     public DateTime? StartTime { get; set; }
+    public DateTime? DataLastUpdatedUtc { get; set; }
+    public List<PayoutRowJson> Payouts { get; set; } = new();
+}
+
+public class PayoutRowJson
+{
+    public string Correct { get; set; } = "";
+    public string Amount { get; set; } = "";
+    public string Rows { get; set; } = "";
 }
 
 public class TipsMatchJson
@@ -473,7 +570,6 @@ public class TipsMatchJson
     public int? Percentage1 { get; set; }
     public int? PercentageX { get; set; }
     public int? Percentage2 { get; set; }
-    public DateTime? PercentagesUpdatedUtc { get; set; }
 
     public DateTime? LastUpdatedUtc { get; set; }
     public DateTime? LastRedCardCheckUtc { get; set; }

@@ -1,0 +1,871 @@
+let leagueMap = {};
+let latestMatches = [];
+let latestEvents = [];
+let latestFixtureMap = {};
+let latestHasStarted = true;
+let activeTab = 'live';
+let selectedMatchNumber = null;
+
+// ── Data fetching ─────────────────────────────────────────────────────────────
+
+async function refresh() {
+  try {
+    const res = await fetch('/api/coupon');
+    if (!res.ok) throw new Error(res.status);
+    const data = await res.json();
+    renderAll(data);
+    document.getElementById('error').style.display = 'none';
+  } catch {
+    document.getElementById('error').style.display = 'block';
+  }
+}
+
+// ── Top-level render ──────────────────────────────────────────────────────────
+
+function renderAll(data) {
+  const meta    = data.MetaData;
+  const matches = data.TipsData   || [];
+  const events  = data.Events     || [];
+  leagueMap = meta.LeagueMap || {};
+
+  const finished = matches.filter(m => m.IsFinished);
+  const correct  = matches.filter(isCorrect);
+
+  document.getElementById('game-title').textContent = `${meta.Game} — ${meta.Date}`;
+
+  const fixtureMap  = buildFixtureMap(matches);
+  const hasStarted  = !meta.StartTime || new Date(meta.StartTime) <= new Date();
+
+  latestMatches    = matches;
+  latestEvents     = events;
+  latestFixtureMap = fixtureMap;
+  latestHasStarted = hasStarted;
+
+  renderMatchesList();
+  document.getElementById('matches').classList.add('matches-compact');
+  document.getElementById('stats-grid').innerHTML = renderStats(matches, events, meta.Payouts || []);
+
+  const statsPanel = document.querySelector('.stats-panel');
+  if (statsPanel) statsPanel.style.display = hasStarted ? '' : 'none';
+
+  renderTabs();
+  renderActiveTabContent();
+
+  document.getElementById('poll-time').textContent =
+    'Uppdaterad ' + new Date().toLocaleTimeString('sv-SE', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+
+  const dataTimeEl = document.getElementById('data-time');
+  if (!hasStarted && meta.DataLastUpdatedUtc) {
+    const t = new Date(meta.DataLastUpdatedUtc).toLocaleTimeString('sv-SE', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+    dataTimeEl.textContent = ` · Data: ${t}`;
+  } else {
+    dataTimeEl.textContent = '';
+  }
+}
+
+// ── Panel tabs (Live / per-match Statistik / Händelser) ────────────────────────
+
+function filterLiveEvents(events) {
+  return events.filter(e =>
+    e.Type === 'Goal' ||
+    e.Type === 'CancelledGoal' ||
+    (e.Type === 'Card' && e.Detail !== 'Yellow Card'));
+}
+
+function hasMatchStats(tip) {
+  return !!tip?.Statistics;
+}
+
+function hasMatchEvents(tip) {
+  return !!tip && latestEvents.some(e => e.FixtureId === tip.FixtureId);
+}
+
+function hasMatchLineups(tip) {
+  return !!tip?.HomeLineup && !!tip?.AwayLineup;
+}
+
+const MATCH_TAB_CHECKS = {
+  'match-stats':   hasMatchStats,
+  'match-events':  hasMatchEvents,
+  'match-lineup':  hasMatchLineups,
+};
+
+// Picks the tab to land on for a given match: prefers Statistik, falls back to
+// Händelser, falls back to Laguppställning, falls back to Live if none exist yet.
+function pickMatchTab(tip) {
+  for (const tab of ['match-stats', 'match-events', 'match-lineup'])
+    if (MATCH_TAB_CHECKS[tab](tip)) return tab;
+  return 'live';
+}
+
+function renderTabs() {
+  const liveLabel  = latestHasStarted ? 'Live' : 'Inför omgången';
+  const liveEvents = filterLiveEvents(latestEvents);
+  const badge      = latestHasStarted && liveEvents.length ? `<span class="panel-badge">${liveEvents.length}</span>` : '';
+
+  let html = `<button class="panel-tab ${activeTab === 'live' ? 'active' : ''}" data-tab="live">${liveLabel}${badge}</button>`;
+
+  if (selectedMatchNumber != null) {
+    const tip = latestMatches.find(m => m.Number === selectedMatchNumber);
+
+    if (hasMatchStats(tip))
+      html += `<button class="panel-tab ${activeTab === 'match-stats' ? 'active' : ''}" data-tab="match-stats">Statistik</button>`;
+    if (hasMatchEvents(tip))
+      html += `<button class="panel-tab ${activeTab === 'match-events' ? 'active' : ''}" data-tab="match-events">Händelser</button>`;
+    if (hasMatchLineups(tip))
+      html += `<button class="panel-tab ${activeTab === 'match-lineup' ? 'active' : ''}" data-tab="match-lineup">Laguppställning</button>`;
+    html += `<button class="panel-tab-close" data-tab="close" title="Stäng">✕</button>`;
+  }
+
+  document.getElementById('panel-tabs').innerHTML = html;
+}
+
+function renderActiveTabContent() {
+  const container = document.getElementById('events-list');
+  container.classList.toggle('events-list-scroll', activeTab === 'live');
+
+  if (activeTab === 'live') {
+    container.innerHTML = latestHasStarted
+      ? renderEventsList(filterLiveEvents(latestEvents), latestFixtureMap)
+      : renderPreMatch(latestMatches);
+    return;
+  }
+
+  const tip = latestMatches.find(m => m.Number === selectedMatchNumber);
+  if (!tip) {
+    activeTab = 'live';
+    selectedMatchNumber = null;
+    renderTabs();
+    renderActiveTabContent();
+    return;
+  }
+
+  if (activeTab === 'match-events') {
+    const matchEvents = latestEvents.filter(e => e.FixtureId === tip.FixtureId);
+    container.innerHTML = renderMatchEventsList(matchEvents, latestFixtureMap);
+  } else if (activeTab === 'match-stats') {
+    container.innerHTML = renderMatchStatsTable(tip);
+  } else if (activeTab === 'match-lineup') {
+    container.innerHTML = renderMatchLineupList(tip);
+  }
+}
+
+function renderMatchesList() {
+  document.getElementById('matches').innerHTML = latestMatches.map(renderMatch).join('');
+}
+
+function selectMatch(num) {
+  selectedMatchNumber = num;
+  const wasOnMatchTab = activeTab !== 'live';
+
+  // Clicking a row makes the Statistik/Händelser tabs appear, but doesn't auto-switch
+  // to them — unless we're already viewing a match tab, in which case follow the click,
+  // landing on whichever tab actually has data for the new match (falls back to Live
+  // if it has none of them).
+  if (wasOnMatchTab) {
+    const tip = latestMatches.find(m => m.Number === num);
+    if (!MATCH_TAB_CHECKS[activeTab](tip)) activeTab = pickMatchTab(tip);
+  }
+
+  renderTabs();
+  renderMatchesList();
+  // Always re-render — even when the fallback above lands back on Live, the panel still
+  // needs to swap away from the previous match's stale content right now, not wait for
+  // the next 5s poll tick.
+  if (wasOnMatchTab || activeTab !== 'live') renderActiveTabContent();
+}
+
+// ── Match row ─────────────────────────────────────────────────────────────────
+
+function renderMatch(m) {
+  const status = getStatus(m);
+  const result = getResult(m);
+
+  const rowClass = result === 'correct'      ? 'row-correct'
+    : result === 'wrong'                     ? 'row-wrong'
+    : status === 'live'                      ? 'row-live'
+    : status === 'notstarted'                ? 'row-notstarted'
+    : '';
+
+  const selectedClass = m.Number === selectedMatchNumber ? 'row-selected' : '';
+
+  const logo = (id, name) => id
+    ? `<img class="team-logo" src="https://media.api-sports.io/football/teams/${id}.png" alt="${name}" loading="lazy" onerror="this.style.visibility='hidden'">`
+    : `<span class="team-logo-placeholder"></span>`;
+
+  const league = m.FixtureId != null ? (leagueMap[m.FixtureId] ?? null) : null;
+  const leagueRow = league
+    ? `<div class="match-league"><span class="league-name">${league.Name}</span>${league.Flag ? `<img class="league-flag" src="${league.Flag}" alt="">` : ''}${league.VenueName ? `<span class="league-venue"> · ${league.VenueName}</span>` : ''}</div>`
+    : '';
+
+  return `
+    <div class="match-row ${rowClass} ${selectedClass}" data-num="${m.Number}">
+      <div class="match-num">${m.Number}</div>
+      <div class="match-info-col">
+        <div class="match-teams">
+          <div class="team-row">${logo(m.HomeTeamId, m.HomeTeam)}<span class="team-name">${m.HomeTeam}</span></div>
+          <span class="team-sep">–</span>
+          <div class="team-row team-row-away"><span class="team-name">${m.AwayTeam}</span>${logo(m.AwayTeamId, m.AwayTeam)}</div>
+        </div>
+        ${leagueRow}
+      </div>
+      ${renderResultIcon(result)}
+      ${renderMatchStatus(m, status)}
+      ${renderScoreBadge(m, status, result)}
+      ${renderTipButtons(m)}
+    </div>`;
+}
+
+// ── Match sub-components ──────────────────────────────────────────────────────
+
+function renderResultIcon(result) {
+  return `<div class="result-icon"></div>`;
+}
+
+function renderMatchStatus(m, status) {
+  if (m.StatusShort === 'HT')
+    return `<div class="match-status s-live"><span class="live-min">HT</span></div>`;
+  if (status === 'live') {
+    const min = m.Extra > 0 ? `${m.Elapsed}+${m.Extra}'` : m.Elapsed > 0 ? `${m.Elapsed}'` : 'LIVE';
+    return `<div class="match-status s-live"><span class="live-dot"></span><span class="live-min">${min}</span></div>`;
+  }
+  if (status === 'finished')
+    return `<div class="match-status">FT</div>`;
+  const { day, time } = formatKickoff(m.KickoffUtc);
+  return `<div class="match-status">${day} ${time}</div>`;
+}
+
+function renderScoreBadge(m, status, result) {
+  if (status === 'notstarted')
+    return `<div class="score-badge empty"></div>`;
+
+  let cls;
+  if (result === 'correct') {
+    cls = 'correct';
+  } else if (result === 'wrong') {
+    cls = 'wrong';
+  } else if (status === 'live') {
+    const liveOutcome = m.HomeScore > m.AwayScore ? '1' : m.HomeScore < m.AwayScore ? '2' : 'X';
+    const tips = m.Tip ? m.Tip.split('') : [];
+    cls = tips.includes(liveOutcome) ? 'correct' : 'wrong';
+  } else {
+    cls = '';
+  }
+  return `<div class="score-badge ${cls}">${m.HomeScore}–${m.AwayScore}</div>`;
+}
+
+function renderTipButtons(m) {
+  const tips = m.Tip ? m.Tip.split('') : [];
+  const pcts = [m.Percentage1, m.PercentageX, m.Percentage2];
+  const hasPct = pcts.some(p => p != null);
+
+  const status = getStatus(m);
+  const liveOutcome = status === 'live'
+    ? (m.HomeScore > m.AwayScore ? '1' : m.HomeScore < m.AwayScore ? '2' : 'X')
+    : null;
+  const currentOutcome = m.Outcome || liveOutcome;
+
+  const btns = ['1', 'X', '2'].map((opt) => {
+    const isTip     = tips.includes(opt);
+    const isOutcome = currentOutcome && currentOutcome === opt;
+    const cls = [isTip ? 'is-tip' : '', isOutcome ? 'is-outcome' : ''].filter(Boolean).join(' ');
+    return `<div class="tip-btn ${cls}">${opt}</div>`;
+  }).join('');
+
+  const pctsRow = hasPct
+    ? `<div class="tip-pcts-row">${pcts.map(p => `<div class="tip-pct">${p != null ? p + '%' : ''}</div>`).join('')}</div>`
+    : '';
+
+  const odds = [m.Odds1, m.OddsX, m.Odds2];
+  const hasOdds = odds.some(o => o != null);
+  const oddsRow = hasOdds
+    ? `<div class="tip-pcts-row tip-odds-row">${odds.map(o => `<div class="tip-pct tip-odds">${o != null ? parseFloat(o).toFixed(2).replace('.', ',') : ''}</div>`).join('')}</div>`
+    : '';
+
+  return `<div class="tip-btns">${oddsRow}<div class="tip-btns-row">${btns}</div>${pctsRow}</div>`;
+}
+
+// ── Events feed ───────────────────────────────────────────────────────────────
+
+function classifyGoalEvent(e, match) {
+  if (!match || !e.Score) return '';
+  const parts = e.Score.split(/\s*-\s*/);
+  if (parts.length !== 2) return '';
+  const newHome = parseInt(parts[0], 10);
+  const newAway = parseInt(parts[1], 10);
+  if (isNaN(newHome) || isNaN(newAway)) return '';
+
+  const isOwnGoal = e.Detail === 'Own Goal';
+  const scorerIsHome = e.TeamId ? e.TeamId === match.HomeTeamId : e.Team === match.HomeTeam;
+  const homeScored = isOwnGoal ? !scorerIsHome : scorerIsHome;
+
+  const prevHome = homeScored ? newHome - 1 : newHome;
+  const prevAway = homeScored ? newAway : newAway - 1;
+
+  const outcome = (h, a) => h > a ? '1' : h < a ? '2' : 'X';
+  const prevOutcome = outcome(prevHome, prevAway);
+  const newOutcome  = outcome(newHome, newAway);
+  const tip = match.Tip || '';
+
+  const newGood = tip.includes(newOutcome);
+  const scorerHelps = (homeScored  && tip.includes('1')) ||
+                      (!homeScored && tip.includes('2')) ||
+                      (tip.includes('X') && ((homeScored  && prevOutcome === '2') ||
+                                             (!homeScored && prevOutcome === '1')));
+
+  if ( newGood &&  scorerHelps) return 'ev-good';
+  if ( newGood && !scorerHelps) return 'ev-warn';
+  if (!newGood &&  scorerHelps) return 'ev-aim';
+  return 'ev-bad';
+}
+
+function renderEventsList(events, fixtureMap) {
+  if (!events.length)
+    return `<div class="events-empty">Inga händelser ännu</div>`;
+
+  const sorted = events.slice().sort((a, b) => new Date(b.CreatedUtc) - new Date(a.CreatedUtc));
+  return sorted.map(e => renderEvent(e, fixtureMap)).join('');
+}
+
+function getEventPeriod(e) {
+  if (e.Elapsed <= 45)  return 'Första halvlek';
+  if (e.Elapsed <= 90)  return 'Andra halvlek';
+  if (e.Elapsed <= 105) return 'Förlängning 1';
+  return 'Förlängning 2';
+}
+
+function renderMatchEventsList(events, fixtureMap) {
+  if (!events.length)
+    return `<div class="events-empty">Inga händelser ännu</div>`;
+
+  const sorted = events.slice().sort((a, b) => new Date(b.CreatedUtc) - new Date(a.CreatedUtc));
+
+  let html = '';
+  let currentPeriod = null;
+  for (const e of sorted) {
+    const period = getEventPeriod(e);
+    if (period !== currentPeriod) {
+      html += `<div class="events-period">${period}</div>`;
+      currentPeriod = period;
+    }
+    html += renderEvent(e, fixtureMap);
+  }
+  return html;
+}
+
+function renderEvent(e, fixtureMap) {
+  const match   = fixtureMap[e.FixtureId];
+  const matchNum = match ? `#${match.Number}` : '';
+
+  const typeClass = e.Type === 'Goal' ? 'ev-goal'
+    : e.Type === 'Card'               ? 'ev-card'
+    : e.Type === 'Substitution'       ? 'ev-subst'
+    : 'ev-var';
+
+  const beneficial = e.Type === 'Goal' && match
+    ? classifyGoalEvent(e, match)
+    : e.Text?.includes('✅') ? 'ev-good' : e.Text?.includes('❌') ? 'ev-bad' : '';
+
+  const icon    = eventIcon(e);
+  const minute  = e.Extra > 0 ? `${e.Elapsed}+${e.Extra}'` : `${e.Elapsed}'`;
+  const score   = e.Score ? e.Score.replace(/\s*-\s*/, '–') : '';
+
+  let mainText, subText;
+
+  if (e.Type === 'Goal') {
+    const detail = e.Detail === 'Own Goal' ? ' (Självmål)' : e.Detail === 'Penalty' ? ' (Straff)' : '';
+    mainText = (e.Player ? e.Player : e.Team ? `Mål för ${e.Team}!` : 'Okänd') + detail;
+    let scoreLine;
+    if (match && e.Score) {
+      const parts = e.Score.split(/\s*-\s*/);
+      if (parts.length === 2) {
+        const isOwnGoal = e.Detail === 'Own Goal';
+        const scorerIsHome = e.TeamId ? e.TeamId === match.HomeTeamId : e.Team === match.HomeTeam;
+        const homeGotPoint = isOwnGoal ? !scorerIsHome : scorerIsHome;
+        const h = homeGotPoint ? `<span class="goal-new">${parts[0]}</span>` : parts[0];
+        const a = homeGotPoint ? parts[1] : `<span class="goal-new">${parts[1]}</span>`;
+        scoreLine = `${match.HomeTeam} ${h}–${a} ${match.AwayTeam}`;
+      } else {
+        scoreLine = `${match.HomeTeam} ${score} ${match.AwayTeam}`;
+      }
+    } else {
+      scoreLine = match ? `${match.HomeTeam} ${score} ${match.AwayTeam}` : score;
+    }
+    subText = e.Assist ? `${scoreLine} · Assist: ${e.Assist}` : scoreLine;
+  } else if (e.Type === 'CancelledGoal') {
+    mainText = 'Mål bortdömt!';
+    if (match && e.Score) {
+      const parts = e.Score.split(/\s*-\s*/);
+      if (parts.length === 2) {
+        const isHome = e.TeamId ? e.TeamId === match.HomeTeamId : e.Team === match.HomeTeam;
+        const h = isHome ? `<strong>${parts[0]}</strong>` : parts[0];
+        const a = isHome ? parts[1] : `<strong>${parts[1]}</strong>`;
+        const player = e.Player ? ` · ${e.Player}` : '';
+        subText = `${match.HomeTeam} ${h}–${a} ${match.AwayTeam}${player}`;
+      } else {
+        subText = match ? `${match.HomeTeam} ${score} ${match.AwayTeam}` : score;
+      }
+    } else {
+      subText = e.Team || '';
+    }
+  } else if (e.Type === 'Substitution') {
+    mainText = `Byte: ${e.Team || ''}`;
+    subText  = `UT: ${e.Player || '?'} · IN: ${e.Assist || '?'}`;
+  } else {
+    mainText = e.Player ? e.Player : 'Okänd';
+    subText  = e.Comments ? `${e.Team || ''} · ${e.Comments}` : (e.Team || '');
+  }
+
+  return `
+    <div class="event-row ${typeClass} ${beneficial}">
+      <div class="event-icon">${icon}</div>
+      <div class="event-body">
+        <div class="event-main">${mainText}<span class="event-time">${minute}</span></div>
+        <div class="event-sub">${subText}</div>
+      </div>
+      <div class="event-match">${matchNum}</div>
+    </div>`;
+}
+
+// ── Per-match statistik ──────────────────────────────────────────────────────
+
+function statBarPercents(hv, av) {
+  const h = parseFloat(String(hv ?? '0').replace('%', '')) || 0;
+  const a = parseFloat(String(av ?? '0').replace('%', '')) || 0;
+  const total = h + a;
+  if (total <= 0) return [0, 0];
+  return [(h / total) * 100, (a / total) * 100];
+}
+
+// API doesn't always supply "Passes %" directly (it's sometimes null even when accurate/total
+// are present) — compute it ourselves from the raw counts in that case.
+function passAccuracy(team) {
+  if (team.PassesPercent != null) return team.PassesPercent;
+  const total = parseFloat(team.TotalPasses);
+  const accurate = parseFloat(team.PassesAccurate);
+  if (!total || isNaN(accurate)) return null;
+  return `${Math.round((accurate / total) * 100)}%`;
+}
+
+function passFraction(team) {
+  if (team.PassesAccurate == null || team.TotalPasses == null) return null;
+  return `(${team.PassesAccurate}/${team.TotalPasses})`;
+}
+
+function renderMatchStatsTable(tip) {
+  const stats = tip.Statistics;
+  if (!stats || !stats.Home || !stats.Away)
+    return `<div class="events-empty">Ingen statistik tillgänglig för match #${tip.Number} ännu</div>`;
+
+  const h = stats.Home, a = stats.Away;
+
+  const topRows = [
+    ['Bollinnehav', h.BallPossession, a.BallPossession, false, false],
+  ];
+
+  // Skott/på mål/utanför stay grouped with no divider between them;
+  // blockerade keeps its border to close the group.
+  const shotRows = [
+    ['Skott', h.TotalShots, a.TotalShots, false, true],
+    ['på mål', h.ShotsOnGoal, a.ShotsOnGoal, true, true],
+    ['utanför', h.ShotsOffGoal, a.ShotsOffGoal, true, true],
+    ['blockerade', h.BlockedShots, a.BlockedShots, true, false],
+  ];
+
+  const otherRows = [
+    ['Hörnor', h.CornerKicks, a.CornerKicks, false, false],
+    ['Frisparkar', h.Fouls, a.Fouls, false, false],
+    ['Passningar', passAccuracy(h), passAccuracy(a), false, false, passFraction(h), passFraction(a)],
+    ['Gula kort', h.YellowCards, a.YellowCards, false, false],
+    ['Röda kort', h.RedCards, a.RedCards, false, false],
+    ['Räddningar', h.GoalkeeperSaves, a.GoalkeeperSaves, false, false],
+  ];
+
+  const hasData = ([, hv, av]) => hv != null || av != null;
+  const visibleTop   = topRows.filter(hasData);
+  const visibleShot  = shotRows.filter(hasData);
+  const visibleOther = otherRows.filter(hasData);
+
+  if (!visibleTop.length && !visibleShot.length && !visibleOther.length)
+    return `<div class="events-empty">Ingen statistik tillgänglig för match #${tip.Number} ännu</div>`;
+
+  const renderRow = ([label, hv, av, sub, noBorder, hvSub, avSub]) => {
+    const [hPct, aPct] = statBarPercents(hv, av);
+    const hCls = hPct > aPct ? 'stats-bar-fill-majority' : 'stats-bar-fill-minority';
+    const aCls = aPct > hPct ? 'stats-bar-fill-majority' : 'stats-bar-fill-minority';
+    const hVal = hvSub
+      ? `<span class="stats-val-main">${hv ?? '-'}</span><span class="stats-val-sub">${hvSub}</span>`
+      : (hv ?? '-');
+    const aVal = avSub
+      ? `<span class="stats-val-main">${av ?? '-'}</span><span class="stats-val-sub">${avSub}</span>`
+      : (av ?? '-');
+    return `
+      <div class="stats-row ${sub ? 'stats-subrow' : ''}">
+        <span class="stats-val ${hvSub ? 'stats-val-stacked' : ''}">${hVal}</span>
+        <span class="stats-label">${label}</span>
+        <span class="stats-val ${avSub ? 'stats-val-stacked' : ''}">${aVal}</span>
+      </div>
+      <div class="stats-bar ${sub ? 'stats-bar-sub' : ''} ${noBorder ? 'stats-bar-noborder' : ''}">
+        <div class="stats-bar-track stats-bar-track-home"><div class="stats-bar-fill ${hCls}" style="width:${hPct}%"></div></div>
+        <div class="stats-bar-track stats-bar-track-away"><div class="stats-bar-fill ${aCls}" style="width:${aPct}%"></div></div>
+      </div>`;
+  };
+
+  return `
+    <div class="match-stats-table">
+      <div class="stats-row stats-header">
+        <span class="stats-val">${tip.HomeTeam}</span>
+        <span class="stats-label"></span>
+        <span class="stats-val">${tip.AwayTeam}</span>
+      </div>
+      ${visibleTop.map(renderRow).join('')}
+      ${visibleShot.length  ? `<div class="stats-section-header">Skott</div>${visibleShot.map(renderRow).join('')}`   : ''}
+      ${visibleOther.length ? `<div class="stats-section-header">Övrigt</div>${visibleOther.map(renderRow).join('')}` : ''}
+    </div>`;
+}
+
+// ── Per-match laguppställning ────────────────────────────────────────────────
+
+function renderLineupRow(homePlayer, awayPlayer) {
+  const posTag = p => p?.Position ? `<span class="lineup-pos">${p.Position}</span>` : '';
+  const home = homePlayer
+    ? `<span class="lineup-num">${homePlayer.Number ?? ''}</span>${posTag(homePlayer)}<span class="lineup-name">${homePlayer.Name}</span>`
+    : '';
+  const away = awayPlayer
+    ? `<span class="lineup-name">${awayPlayer.Name}</span>${posTag(awayPlayer)}<span class="lineup-num">${awayPlayer.Number ?? ''}</span>`
+    : '';
+  return `
+    <div class="lineup-row">
+      <div class="lineup-side lineup-side-home">${home}</div>
+      <div class="lineup-side lineup-side-away">${away}</div>
+    </div>`;
+}
+
+function renderMatchLineupList(tip) {
+  const home = tip.HomeLineup, away = tip.AwayLineup;
+  if (!home || !away)
+    return `<div class="events-empty">Ingen laguppställning tillgänglig för match #${tip.Number} ännu</div>`;
+
+  const formationRow = (home.Formation || away.Formation)
+    ? `<div class="lineup-formations">
+        <span>${home.Formation || ''}</span>
+        <span class="lineup-formations-label">Formation</span>
+        <span>${away.Formation || ''}</span>
+      </div>`
+    : '';
+
+  const coachInfo = (coach, isAway) => {
+    if (!coach?.CoachName) return '';
+    const photo = coach.CoachPhoto
+      ? `<img class="lineup-coach-photo" src="${coach.CoachPhoto}" alt="" loading="lazy" onerror="this.style.display='none'">`
+      : '';
+    return isAway ? `${coach.CoachName}${photo}` : `${photo}${coach.CoachName}`;
+  };
+
+  const coachRow = (home.CoachName || away.CoachName)
+    ? `<div class="lineup-formations lineup-coaches">
+        <span>${coachInfo(home, false)}</span>
+        <span class="lineup-formations-label">Tränare</span>
+        <span>${coachInfo(away, true)}</span>
+      </div>`
+    : '';
+
+  const startCount = Math.max(home.StartXI.length, away.StartXI.length);
+  const startRows = [];
+  for (let i = 0; i < startCount; i++)
+    startRows.push(renderLineupRow(home.StartXI[i], away.StartXI[i]));
+
+  const subCount = Math.max(home.Substitutes.length, away.Substitutes.length);
+  const subRows = [];
+  for (let i = 0; i < subCount; i++)
+    subRows.push(renderLineupRow(home.Substitutes[i], away.Substitutes[i]));
+
+  return `
+    <div class="match-stats-table">
+      <div class="stats-row stats-header">
+        <span class="stats-val">${tip.HomeTeam}</span>
+        <span class="stats-label"></span>
+        <span class="stats-val">${tip.AwayTeam}</span>
+      </div>
+      ${formationRow}
+      ${coachRow}
+      <div class="stats-section-header">Startelva</div>
+      ${startRows.join('')}
+      ${subRows.length ? `<div class="stats-section-header">Avbytare</div>${subRows.join('')}` : ''}
+    </div>`;
+}
+
+function renderPreMatch(matches) {
+  const bets  = calcValueBets(matches);
+  const best  = bets.slice(0, 10);
+  const worst = bets.filter(v => v.value < 0).slice(-10).reverse();
+
+  const favs = [];
+  const opts = [
+    { oddsKey: 'Odds1', pctKey: 'Percentage1', teamFn: m => m.HomeTeam },
+    { oddsKey: 'OddsX', pctKey: 'PercentageX', teamFn: () => 'Oavgjort' },
+    { oddsKey: 'Odds2', pctKey: 'Percentage2', teamFn: m => m.AwayTeam },
+  ];
+  for (const m of matches) {
+    for (const o of opts) {
+      const odds = m[o.oddsKey];
+      const pct  = m[o.pctKey];
+      if (odds != null) {
+        favs.push({ num: m.Number, team: o.teamFn(m), odds: parseFloat(odds), pct });
+      }
+    }
+  }
+  favs.sort((a, b) => a.odds - b.odds);
+  const topFavs = favs.slice(0, 3);
+
+  const renderSection = (title, rows, renderRow, tooltip = '') => {
+    if (!rows.length) return '';
+    const tip = tooltip ? ` title="${tooltip}"` : '';
+    return `<div class="value-section"><div class="value-title"${tip}>${title}</div>${rows.map(renderRow).join('')}</div>`;
+  };
+
+  const valueRow = (v, positive) => `
+    <div class="value-row">
+      <span class="value-num">#${v.num}</span>
+      <span class="value-team">${v.team}</span>
+      <span class="value-pct ${positive ? 'green' : 'red'}">${v.value}%</span>
+    </div>`;
+
+  const favRow = f => `
+    <div class="value-row">
+      <span class="value-num">#${f.num}</span>
+      <span class="value-team">${f.team}</span>
+      <span class="value-pct">${f.odds.toFixed(2).replace('.', ',')}${f.pct != null ? ` · ${f.pct}%` : ''}</span>
+    </div>`;
+
+  return renderSection('Största favoriter', topFavs, favRow)
+    + `<div class="pre-match-value-row">`
+    + renderSection('Bästa streckvärde', best, v => valueRow(v, true), 'Tecknen med bäst streckvärde baserat på streckprocent kontra odds')
+    + renderSection('Sämsta streckvärde', worst, v => valueRow(v, false), 'Tecknen med sämst streckvärde baserat på streckprocent kontra odds')
+    + `</div>`;
+}
+
+// ── Stats panel ───────────────────────────────────────────────────────────────
+
+function renderStats(matches, events, payouts) {
+  const correct = matches.filter(isCorrect).length;
+  const goals   = events.filter(e => e.Type === 'Goal').length;
+
+  const rightCell   = { value: `${correct}/${matches.length}`, label: 'Rätt', colorClass: correct > 0 ? 'green' : '' };
+  const secondCell  = payouts.length > 0
+    ? { value: payouts[0].Amount, label: `${payouts[0].Correct} rätt`, colorClass: 'green' }
+    : { value: goals, label: 'Mål', colorClass: 'blue' };
+
+  const topRow = [rightCell, secondCell].map(s => `
+    <div class="stat-cell">
+      <div class="stat-value ${s.colorClass}">${s.value}</div>
+      <div class="stat-label">${s.label}</div>
+    </div>`).join('');
+
+  const payoutSection = payouts.length > 1 ? renderPayoutSection(payouts) : '';
+
+  const bestMoves = calcBestMoves(matches).slice(0, 3);
+  const traps     = calcTraps(matches).slice(0, 3);
+  const surprises = calcSurprises(matches).slice(0, 3);
+
+  return `
+    <div class="stats-top-row">${topRow}</div>
+    ${payoutSection}
+    <div class="pre-match-value-row">
+      ${renderValueSection('Våra bästa drag', bestMoves, true)}
+      ${renderValueSection('Fällor', traps, false)}
+    </div>
+    ${renderValueSection('Största överraskningarna', surprises, null)}`;
+}
+
+function renderPayoutSection(payouts) {
+  const rows = payouts.slice(0, 4).map(p => `
+    <div class="value-row payout-row">
+      <span class="value-label">${p.Correct} rätt</span>
+      ${p.Rows ? `<span class="value-rows">${p.Rows}</span>` : ''}
+      <span class="value-pct green">${p.Amount}</span>
+    </div>`).join('');
+  return `<div class="value-section"><div class="value-title">Utdelning</div>${rows}</div>`;
+}
+
+function calcValueBets(matches) {
+  const result = [];
+  const opts = [
+    { pctKey: 'Percentage1', oddsKey: 'Odds1', teamFn: m => m.HomeTeam },
+    { pctKey: 'PercentageX', oddsKey: 'OddsX', teamFn: () => 'Oavgjort' },
+    { pctKey: 'Percentage2', oddsKey: 'Odds2', teamFn: m => m.AwayTeam },
+  ];
+  for (const m of matches) {
+    const o1 = parseFloat(m.Odds1), oX = parseFloat(m.OddsX), o2 = parseFloat(m.Odds2);
+    const total = (o1 > 0 ? 1/o1 : 0) + (oX > 0 ? 1/oX : 0) + (o2 > 0 ? 1/o2 : 0);
+    for (const o of opts) {
+      const pct  = m[o.pctKey];
+      const odds = parseFloat(m[o.oddsKey]);
+      if (pct != null && odds > 0 && total > 0) {
+        const fairPct = (1 / odds) / total * 100;
+        const value = Math.round(fairPct - pct);
+        result.push({ num: m.Number, team: o.teamFn(m), value });
+      }
+    }
+  }
+  return result.sort((a, b) => b.value - a.value);
+}
+
+function renderValueSection(title, items, positive) {
+  if (!items.length) return '';
+  const cls = positive === null ? 'amber' : positive ? 'green' : 'red';
+  const rows = items.map(v => `
+    <div class="value-row">
+      <span class="value-num">#${v.num}</span>
+      <span class="value-team">${v.team}</span>
+      <span class="value-pct ${cls}">${v.value}%</span>
+    </div>`).join('');
+  return `<div class="value-section"><div class="value-title">${title}</div>${rows}</div>`;
+}
+
+// ── Live insights (post-kickoff) ────────────────────────────────────────────
+
+function getOutcomeSymbol(m) {
+  if (m.IsFinished && m.Outcome) return m.Outcome;
+  return m.HomeScore > m.AwayScore ? '1' : m.HomeScore < m.AwayScore ? '2' : 'X';
+}
+
+function outcomeOptions(m) {
+  return [
+    { sym: '1', pct: m.Percentage1, team: m.HomeTeam },
+    { sym: 'X', pct: m.PercentageX, team: 'Oavgjort' },
+    { sym: '2', pct: m.Percentage2, team: m.AwayTeam },
+  ];
+}
+
+// Matches where we're currently correct with the least-backed sign — our best differentiators.
+function calcBestMoves(matches) {
+  const result = [];
+  for (const m of matches) {
+    if (getStatus(m) === 'notstarted' || !m.Tip) continue;
+    const outcome = getOutcomeSymbol(m);
+    if (!m.Tip.includes(outcome)) continue;
+    const opt = outcomeOptions(m).find(o => o.sym === outcome);
+    if (!opt || opt.pct == null) continue;
+    result.push({ num: m.Number, team: opt.team, value: opt.pct });
+  }
+  return result.sort((a, b) => a.value - b.value);
+}
+
+// Matches where we backed the crowd favorite and it still failed.
+function calcTraps(matches) {
+  const result = [];
+  for (const m of matches) {
+    if (getStatus(m) === 'notstarted' || !m.Tip) continue;
+    const outcome = getOutcomeSymbol(m);
+    const opts = outcomeOptions(m).filter(o => o.pct != null);
+    if (!opts.length) continue;
+    const favorite = opts.reduce((a, b) => b.pct > a.pct ? b : a);
+    if (!m.Tip.includes(favorite.sym) || favorite.sym === outcome) continue;
+    result.push({ num: m.Number, team: favorite.team, value: favorite.pct });
+  }
+  return result.sort((a, b) => b.value - a.value);
+}
+
+// Matches where the actual outcome was the least-backed sign, regardless of our tip.
+function calcSurprises(matches) {
+  const result = [];
+  for (const m of matches) {
+    if (getStatus(m) === 'notstarted') continue;
+    const outcome = getOutcomeSymbol(m);
+    const opt = outcomeOptions(m).find(o => o.sym === outcome);
+    if (!opt || opt.pct == null) continue;
+    result.push({ num: m.Number, team: opt.team, value: opt.pct });
+  }
+  return result.sort((a, b) => a.value - b.value);
+}
+
+// ── Helpers ───────────────────────────────────────────────────────────────────
+
+function isCorrect(m) {
+  if (m.IsFinished) return m.Outcome && m.Tip && m.Tip.includes(m.Outcome);
+  const lo = m.HomeScore > m.AwayScore ? '1' : m.HomeScore < m.AwayScore ? '2' : 'X';
+  return m.Tip && m.Tip.includes(lo);
+}
+
+function buildFixtureMap(matches) {
+  return Object.fromEntries(matches.map(m => [m.FixtureId, m]));
+}
+
+function getStatus(m) {
+  if (m.IsFinished) return 'finished';
+  if (!m.KickoffUtc) return 'notstarted';
+  if (new Date(m.KickoffUtc) > new Date()) return 'notstarted';
+  return 'live';
+}
+
+function getResult(m) {
+  if (!m.IsFinished || !m.Outcome || !m.Tip) return 'pending';
+  return m.Tip.includes(m.Outcome) ? 'correct' : 'wrong';
+}
+
+function formatKickoff(utc) {
+  if (!utc) return { day: '', time: '–' };
+
+  const d   = new Date(utc);
+  const now = new Date();
+
+  const kickoffDay = new Date(d.getFullYear(), d.getMonth(), d.getDate());
+  const todayDay   = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+  const diffDays   = Math.round((kickoffDay - todayDay) / 86400000);
+
+  let day;
+  if      (diffDays === 0) day = 'Idag';
+  else if (diffDays === 1) day = 'Imorgon';
+  else {
+    day = d.toLocaleDateString('sv-SE', { weekday: 'long' });
+    day = day.charAt(0).toUpperCase() + day.slice(1);
+  }
+
+  const time = d.toLocaleTimeString('sv-SE', { hour: '2-digit', minute: '2-digit' });
+  return { day, time };
+}
+
+function eventIcon(e) {
+  const ico = (id, w, h) =>
+    `<svg class="ev-icon" width="${w}" height="${h}" aria-hidden="true"><use href="#${id}"/></svg>`;
+  if (e.Type === 'Goal') {
+    if (e.Detail === 'Own Goal') return ico('icon-ball-og', 16, 16);
+    if (e.Detail === 'Penalty')  return ico('icon-penalty',  16, 16);
+    return ico('icon-ball', 16, 16);
+  }
+  if (e.Type === 'Card') {
+    if (e.Detail === 'Yellow Card')     return ico('icon-yc',  10, 13);
+    if (e.Detail === 'Yellow Red Card') return ico('icon-yrc', 14, 13);
+    return ico('icon-rc', 10, 13);
+  }
+  if (e.Type === 'CancelledGoal') return ico('icon-var', 24, 17);
+  if (e.Type === 'Substitution') return ico('icon-subst', 14, 14);
+  return '';
+}
+
+// ── Bootstrap ─────────────────────────────────────────────────────────────────
+
+document.getElementById('matches').addEventListener('click', e => {
+  const row = e.target.closest('.match-row');
+  if (!row) return;
+  const num = parseInt(row.dataset.num, 10);
+  if (!isNaN(num)) selectMatch(num);
+});
+
+document.getElementById('panel-tabs').addEventListener('click', e => {
+  const btn = e.target.closest('[data-tab]');
+  if (!btn) return;
+  if (btn.dataset.tab === 'close') {
+    selectedMatchNumber = null;
+    activeTab = 'live';
+    renderMatchesList();
+  } else {
+    activeTab = btn.dataset.tab;
+  }
+  renderTabs();
+  renderActiveTabContent();
+});
+
+refresh();
+setInterval(refresh, 5000);

@@ -97,7 +97,8 @@ public class GoalAnnouncementService
 
         var varEvents = matchEvents
             .Where(ev => string.Equals(ev.Type, "Var", StringComparison.OrdinalIgnoreCase) &&
-                string.Equals(ev.Detail, "Goal cancelled", StringComparison.OrdinalIgnoreCase))
+                (string.Equals(ev.Detail, "Goal cancelled", StringComparison.OrdinalIgnoreCase) ||
+                 (ev.Detail != null && ev.Detail.StartsWith("Goal Disallowed", StringComparison.OrdinalIgnoreCase))))
             .OrderBy(Helpers.GetEventSortValue)
             .ToList();
 
@@ -358,7 +359,7 @@ public class GoalAnnouncementService
         string? playerName = null,
         bool includePlayer = true)
     {
-        string symbol = BuildVersusSymbols(tip, GetSymbol(homeGoals, awayGoals));
+        string symbol = BuildVersusSymbols(tip, homeScored, homeGoals, awayGoals);
         string score = Helpers.FormatScore(homeGoals, awayGoals, homeScored);
         string detail = "";
 
@@ -374,9 +375,9 @@ public class GoalAnnouncementService
         return $"⚽ {symbol} Mål! {tip.HomeTeam} {score} {tip.AwayTeam} {minute}{player}";
     }
 
-    private string BuildVersusSymbols(TipsMatch tip, string matchSymbol)
+    private string BuildVersusSymbols(TipsMatch tip, bool homeScored, int homeGoals, int awayGoals)
     {
-        string primary = Helpers.GetEventSymbol(tip, matchSymbol);
+        string primary = Helpers.ClassifyGoalBenefit(tip.Tip, homeScored, homeGoals, awayGoals);
 
         if (_versusConfig.Players.Count == 0)
             return primary;
@@ -385,7 +386,7 @@ public class GoalAnnouncementService
         {
             string? playerTip = p.GetTip(tip.Number);
             if (string.IsNullOrWhiteSpace(playerTip)) return "❓";
-            return playerTip.Contains(matchSymbol) ? "✅" : "❌";
+            return Helpers.ClassifyGoalBenefit(playerTip, homeScored, homeGoals, awayGoals);
         });
 
         return primary + string.Concat(others);

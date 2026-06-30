@@ -1,5 +1,55 @@
 # Changelog
 
+## [3.0.0] - 2026-06-30
+
+### New match detail view in the web dashboard
+- Click any match row to open a match-specific view with up to three tabs: **Statistik**, **Händelser** and **Laguppställning**
+- A tab only appears if there's actually data to show for that match
+- **Statistik**: possession, shots (total/on target/off target/blocked), corners, fouls, pass accuracy, cards and saves — each row has a visual comparison bar between the two teams, with the leading team shown in red and the other in white
+- **Händelser**: every goal, card, substitution and VAR event for the match, grouped under "First half" / "Second half"
+- **Laguppställning**: starting lineup and substitutes for both teams side by side (with shirt number and position), formations (e.g. 4-3-3), and coaches including photo
+- Clicking a row only switches the detail view if you're already looking at another match's tab — otherwise you stay on the Live feed and just see the tabs become available
+- The selected match row gets a light blue background so it's clear which match you're looking at
+
+### Cleaner event feed
+- Goals, cards, penalties, VAR overturns and substitutions now have custom-drawn icons instead of emoji
+- The "Live" feed now only shows goals, red cards and overturned goals — substitutions and regular yellow cards instead show up in the new match detail view's Händelser tab, keeping the main feed less noisy
+- The VAR icon is now clearer to read (it used to be shrunk inside an oversized invisible box)
+
+### New stats panel during a live round
+- "Best/worst value" (only relevant before the coupon is submitted) is now replaced once the round is live or finished with three more relevant views:
+  - **Våra bästa drag** ("our best moves") — matches where we're currently right with a pick most others didn't make
+  - **Fällor** ("traps") — matches where we (and most others) trusted the favorite and got it wrong
+  - **Största överraskningarna** ("biggest surprises") — the most unexpected results in the round
+- The value-bet view is unchanged in the pre-round preview
+
+### Layout and appearance fixes
+- Shorter rounds (e.g. Topptipset's 8 matches) now use the same compact, polished layout as longer ones (Stryktipset) — they previously looked off with odds/percentages in the wrong order
+- Various spacing, alignment and color polish across the statistics and lineup views
+- On mobile, only the Live feed scrolls in its own box — Statistik/Händelser/Laguppställning instead take up the full page height so nothing gets cut off
+
+### Bot finds the right coupon automatically
+- On startup, the bot now searches backwards through dates for the most recent coupon that actually exists, instead of blindly creating an empty one for today if nothing is found
+- Catching up on missed data (after the bot was offline) now also fetches match statistics and lineups, not just goals and cards
+- Fixed a bug where matches that had already been caught up on once would never get a chance to fetch newer kinds of data after a bot update
+
+### More reliable football API usage
+- The bot now learns the account's actual rate limit automatically instead of guessing, and stays safely under it
+- If the daily quota is running low, the bot automatically slows down its requests instead of risking getting blocked
+- Fewer unnecessary requests overall thanks to smarter caching of data that's already been fetched
+
+### Payouts (kr per correct pick) are fetched more reliably
+- The bot now also tries to fetch the payout when a match finishes, not just when a goal is scored — payouts are often posted a while after the last match's final whistle, not right after the last goal
+- Longer, smarter retry window, plus an extra check on startup in case the bot is started after the whole round has already finished
+
+### Other bug fixes
+- Certain VAR-overturned goal texts (e.g. "Goal Disallowed - Foul") weren't being announced — fixed
+- Second-yellow red cards weren't always caught correctly during a live match — fixed
+- Half-time (HT) status sometimes wasn't saved correctly if the match had already passed half-time when the bot started
+- Removed unused test code that was no longer needed
+
+---
+
 ## [2.5.2] - 2026-06-15
 
 ### Team Registry (`teams.json`)

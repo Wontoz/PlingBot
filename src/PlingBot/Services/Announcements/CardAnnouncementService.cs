@@ -6,10 +6,7 @@ using PlingBot.Utils;
 
 public class CardAnnouncementService
 {
-    private static readonly TimeSpan EventCheckInterval = TimeSpan.FromMinutes(2);
-
     private readonly DiscordAnnouncementService _discord;
-    private readonly Dictionary<int, DateTime> _lastRedCardChecks = new();
 
     public CardAnnouncementService(DiscordAnnouncementService discord)
     {
@@ -20,16 +17,8 @@ public class CardAnnouncementService
         IMessageChannel channel,
         TipsMatch tip,
         Match match,
-        IReadOnlyList<MatchEvent> matchEvents,
-        bool forceCheck = false)
+        IReadOnlyList<MatchEvent> matchEvents)
     {
-        bool shouldCheck = !_lastRedCardChecks.TryGetValue(match.Id, out var lastCheck) ||
-            DateTime.UtcNow - lastCheck >= EventCheckInterval;
-        if (!shouldCheck && !forceCheck)
-            return false;
-
-        _lastRedCardChecks[match.Id] = DateTime.UtcNow;
-
         bool announced = false;
 
         var redCardEvents = matchEvents
@@ -77,6 +66,7 @@ public class CardAnnouncementService
             Text = message,
             PlayerId = evt?.PlayerId,
             Player = evt?.Player,
+            Comments = evt?.Comments,
             CreatedUtc = DateTime.UtcNow
         });
     }
@@ -84,6 +74,6 @@ public class CardAnnouncementService
     private static bool IsRedCardEvent(MatchEvent ev)
     {
         return string.Equals(ev.Detail, "Red Card", StringComparison.OrdinalIgnoreCase) ||
-            string.Equals(ev.Detail, "Second Yellow Card", StringComparison.OrdinalIgnoreCase);
+            string.Equals(ev.Detail, "Yellow Red Card", StringComparison.OrdinalIgnoreCase);
     }
 }

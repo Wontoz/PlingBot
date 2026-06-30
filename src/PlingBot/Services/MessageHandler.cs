@@ -60,6 +60,12 @@ public class MessageHandler
     public async Task HandleMessageAsync(SocketMessage message)
     {
         if (message.Author.IsBot) return;
+
+        string channelEnvKey = $"DISCORD_CHANNEL_ID_{(Environment.GetEnvironmentVariable("CHANNEL_MODE") ?? "TEST").ToUpper()}";
+        if (!ulong.TryParse(Environment.GetEnvironmentVariable(channelEnvKey), out var allowedChannelId)
+            || message.Channel.Id != allowedChannelId)
+            return;
+
         if (!_allowedUsers.Contains(message.Author.Id))
         {
             await message.Channel.SendMessageAsync("He");
@@ -103,7 +109,7 @@ public class MessageHandler
                 procentTip.Percentage1 = p1;
                 procentTip.PercentageX = pX;
                 procentTip.Percentage2 = p2;
-                procentTip.PercentagesUpdatedUtc = DateTime.UtcNow;
+                _tipsConfig.Data.MetaData.DataLastUpdatedUtc = DateTime.UtcNow;
                 _tipsConfig.SaveToJson();
 
                 //await message.Channel.SendMessageAsync($"Uppdaterade procent för match #{matchNr} ({procentTip.HomeTeam} - {procentTip.AwayTeam}): 1={p1}% X={pX}% 2={p2}%");

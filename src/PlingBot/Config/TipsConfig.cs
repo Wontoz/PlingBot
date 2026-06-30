@@ -16,6 +16,20 @@ public class TipsDataWrapper
     public List<CouponEvent> Events { get; set; } = [];
 }
 
+public class PayoutRow
+{
+    public string Correct { get; set; } = "";
+    public string Amount { get; set; } = "";
+    public string Rows { get; set; } = "";
+}
+
+public class LeagueInfo
+{
+    public string Name { get; set; } = "";
+    public string? Flag { get; set; }
+    public string? VenueName { get; set; }
+}
+
 public class MetaData
 {
     public string Player { get; set; } = string.Empty;
@@ -23,6 +37,9 @@ public class MetaData
     public string Game { get; set; } = string.Empty;
     public int TotalCorrect { get; set; }
     public DateTime? StartTime { get; set; }
+    public DateTime? DataLastUpdatedUtc { get; set; }
+    public List<PayoutRow> Payouts { get; set; } = [];
+    public Dictionary<int, LeagueInfo> LeagueMap { get; set; } = [];
 }
 
 public class TipsConfig
@@ -34,21 +51,41 @@ public class TipsConfig
 
     private readonly string _jsonFileName;
 
+    private const int MaxLookbackDays = 30;
+
     public TipsConfig(Logger logger, string game, DateOnly? couponDate = null)
     {
         _logger = logger;
 
         string filePrefix = GetFilePrefix(game);
-        DateOnly selectedDate = couponDate ?? DateOnly.FromDateTime(DateTime.Today);
+        string jsonDir = ResolveJsonDirectory();
+        Directory.CreateDirectory(jsonDir);
+
+        DateOnly selectedDate = couponDate ?? ResolveLatestExistingDate(jsonDir, filePrefix);
         _jsonFileName = $"{filePrefix}_{selectedDate:yyyy-MM-dd}.json";
         _logger.Log($"Using game: {game}", ConsoleColor.Cyan);
         _logger.Log($"Using coupon date: {selectedDate:yyyy-MM-dd}", ConsoleColor.Cyan);
 
-        string jsonDir = ResolveJsonDirectory();
-        Directory.CreateDirectory(jsonDir);
-
         _jsonPath = Path.Combine(jsonDir, _jsonFileName);
         LoadFromJson();
+    }
+
+    // Walks backwards day-by-day from today looking for the most recent coupon JSON
+    // for this game mode, so the bot doesn't spin up an empty coupon for today when
+    // the latest scraped coupon is actually a few days old.
+    private static DateOnly ResolveLatestExistingDate(string jsonDir, string filePrefix)
+    {
+        DateOnly today = DateOnly.FromDateTime(DateTime.Today);
+
+        for (int i = 0; i <= MaxLookbackDays; i++)
+        {
+            DateOnly candidate = today.AddDays(-i);
+            string candidatePath = Path.Combine(jsonDir, $"{filePrefix}_{candidate:yyyy-MM-dd}.json");
+            if (File.Exists(candidatePath))
+                return candidate;
+        }
+
+        return today;
     }
 
     private static string GetFilePrefix(string game)
@@ -125,8 +162,6 @@ public class TipsConfig
 
         var json = JsonSerializer.Serialize(Data, options);
         File.WriteAllText(_jsonPath, json, Encoding.UTF8);
-
-        _logger.Log($"Saved {_jsonFileName}", ConsoleColor.Cyan);
     }
 
     public List<TipsMatch> TipsMatches => Data.TipsData;

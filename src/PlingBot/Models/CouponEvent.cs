@@ -20,6 +20,7 @@ public class CouponEvent
     public string? Player { get; set; }
     public int? AssistId { get; set; }
     public string? Assist { get; set; }
+    public string? Comments { get; set; }
     public DateTime CreatedUtc { get; set; } = DateTime.UtcNow;
 }
 
@@ -59,6 +60,7 @@ public class CouponEventJsonConverter : JsonConverter<CouponEvent>
             Player = GetNullableString(root, nameof(CouponEvent.Player)),
             AssistId = GetNullableInt(root, nameof(CouponEvent.AssistId)),
             Assist = GetNullableString(root, nameof(CouponEvent.Assist)),
+            Comments = GetNullableString(root, nameof(CouponEvent.Comments)),
             CreatedUtc = GetDateTime(root, nameof(CouponEvent.CreatedUtc))
         };
     }
@@ -80,6 +82,7 @@ public class CouponEventJsonConverter : JsonConverter<CouponEvent>
         WriteNullableString(writer, nameof(CouponEvent.Player), value.Player);
         WriteNullableNumber(writer, nameof(CouponEvent.AssistId), value.AssistId);
         WriteNullableString(writer, nameof(CouponEvent.Assist), value.Assist);
+        WriteNullableString(writer, nameof(CouponEvent.Comments), value.Comments);
         writer.WriteString(nameof(CouponEvent.CreatedUtc), value.CreatedUtc);
         writer.WriteEndObject();
     }

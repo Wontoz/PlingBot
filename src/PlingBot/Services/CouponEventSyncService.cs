@@ -43,7 +43,7 @@ public class CouponEventSyncService
             if (await _goals.TryHandleNewGoalEventsAsync(channel, tip, match, matchEvents))
                 eventsSynced++;
 
-            if (await _cards.AnnounceRedCardsAsync(channel, tip, match, matchEvents, forceCheck: true))
+            if (await _cards.AnnounceRedCardsAsync(channel, tip, match, matchEvents))
                 eventsSynced++;
         }
 

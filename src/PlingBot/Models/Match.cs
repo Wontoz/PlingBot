@@ -8,6 +8,9 @@ public record Match
     public  required string AwayTeam { get; init; }
     public int? HomeTeamId { get; init; }
     public int? AwayTeamId { get; init; }
+    public string? LeagueName { get; init; }
+    public string? LeagueFlag { get; init; }
+    public string? VenueName { get; init; }
     public int HomeGoals { get; init; }
     public int AwayGoals { get; init; }
     public int Elapsed { get; init; }
@@ -55,4 +58,22 @@ public record TeamStatistics
     public string? TotalPasses { get; init; }
     public string? PassesAccurate { get; init; }
     public string? PassesPercent { get; init; }
+}
+
+public record TeamLineup
+{
+    public string TeamName { get; init; } = "";
+    public string? Formation { get; init; }
+    public string? CoachName { get; init; }
+    public string? CoachPhoto { get; init; }
+    public List<LineupPlayer> StartXI { get; init; } = [];
+    public List<LineupPlayer> Substitutes { get; init; } = [];
+}
+
+public record LineupPlayer
+{
+    public int Id { get; init; }
+    public string Name { get; init; } = "";
+    public int? Number { get; init; }
+    public string? Position { get; init; }
 }

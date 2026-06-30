@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html lang="sv">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>PlingBot</title>
+  <link rel="stylesheet" href="style.css?v=5.52">
+  <link rel="icon" type="image/x-icon" href="/favicon.ico">
+</head>
+<body>
+  <!-- SVG sprite — icons referenced via <use href="#..."> in app.js -->
+  <svg xmlns="http://www.w3.org/2000/svg" style="display:none" aria-hidden="true">
+    <!-- Football: circle r=9.2, central pentagon + 5 outer patches -->
+    <symbol id="icon-ball" viewBox="0 0 20 20">
+      <circle cx="10" cy="10" r="9.2" fill="white" stroke="#1a1a1a" stroke-width="0.8"/>
+      <polygon points="10,5.5 13.2,7.9 12.0,11.7 8.0,11.7 6.8,7.9" fill="#1a1a1a"/>
+      <polygon points="12.7,3.5 14.7,2.2 16.5,4.8 15.0,7.0 13.0,6.3" fill="#1a1a1a"/>
+      <polygon points="15.0,9.8 17.2,8.5 18.5,11.2 17.0,13.8 14.5,12.8" fill="#1a1a1a"/>
+      <polygon points="12.0,13.8 12.8,16.5 10,18.7 7.2,16.5 8.0,13.8" fill="#1a1a1a"/>
+      <polygon points="5.0,9.8 2.8,8.5 1.5,11.2 3.0,13.8 5.5,12.8" fill="#1a1a1a"/>
+      <polygon points="7.3,3.5 5.3,2.2 3.5,4.8 5.0,7.0 7.0,6.3" fill="#1a1a1a"/>
+    </symbol>
+    <!-- Own-goal ball: same geometry, red patches -->
+    <symbol id="icon-ball-og" viewBox="0 0 20 20">
+      <circle cx="10" cy="10" r="9.2" fill="white" stroke="#b91c1c" stroke-width="0.8"/>
+      <polygon points="10,5.5 13.2,7.9 12.0,11.7 8.0,11.7 6.8,7.9" fill="#b91c1c"/>
+      <polygon points="12.7,3.5 14.7,2.2 16.5,4.8 15.0,7.0 13.0,6.3" fill="#b91c1c"/>
+      <polygon points="15.0,9.8 17.2,8.5 18.5,11.2 17.0,13.8 14.5,12.8" fill="#b91c1c"/>
+      <polygon points="12.0,13.8 12.8,16.5 10,18.7 7.2,16.5 8.0,13.8" fill="#b91c1c"/>
+      <polygon points="5.0,9.8 2.8,8.5 1.5,11.2 3.0,13.8 5.5,12.8" fill="#b91c1c"/>
+      <polygon points="7.3,3.5 5.3,2.2 3.5,4.8 5.0,7.0 7.0,6.3" fill="#b91c1c"/>
+    </symbol>
+    <!-- Yellow card -->
+    <symbol id="icon-yc" viewBox="0 0 10 13">
+      <rect width="10" height="13" rx="1.5" fill="#f5c518"/>
+    </symbol>
+    <!-- Red card -->
+    <symbol id="icon-rc" viewBox="0 0 10 13">
+      <rect width="10" height="13" rx="1.5" fill="#e52b20"/>
+    </symbol>
+    <!-- Yellow-red card: yellow behind, red in front -->
+    <symbol id="icon-yrc" viewBox="0 0 14 13">
+      <rect x="0" y="1" width="10" height="12" rx="1.5" fill="#f5c518"/>
+      <rect x="4" y="0" width="10" height="12" rx="1.5" fill="#e52b20"/>
+    </symbol>
+    <!-- Penalty goal (Flashscore) -->
+    <symbol id="icon-penalty" viewBox="0 0 20 20">
+      <path fill-rule="evenodd" fill="currentColor" d="M19.972 0.014H0v10.736h1.366V1.38h17.24v9.371h1.366V0.012M9.988 3.235a7.517 7.517 0 1 0 0 15.032 7.517 7.517 0 0 0 0 -15.032m4.629 3.47 -0.725 2.331 -0.854 0.257 -2.381 -1.73V6.698l2.075 -1.45a6.138 6.138 0 0 1 1.883 1.457m-4.63 -2.103q0.6 0.003 1.17 0.112L9.986 5.531l-1.169 -0.817a6.207 6.207 0 0 1 1.169 -0.112m-2.745 0.649 2.075 1.45v0.863l-2.381 1.73 -0.852 -0.257 -0.725 -2.33A6.138 6.138 0 0 1 7.241 5.249m-2.834 2.914 0.34 1.092 -0.823 0.463q0.141 -0.821 0.483 -1.555m1.455 7.15h0.791l0.255 0.763a6.207 6.207 0 0 1 -1.046 -0.763m0.997 -1.341H4.748a6.138 6.138 0 0 1 -0.885 -2.68l1.766 -0.992 0.928 0.28 0.906 2.788Zm4.574 2.757a6.138 6.138 0 0 1 -2.891 0l-0.637 -1.905 0.715 -0.717h2.737l0.714 0.717Zm-0.11 -3.926h-2.672l-0.825 -2.541 2.161 -1.57 2.161 1.57Zm1.743 3.272 0.255 -0.763h0.791a6.207 6.207 0 0 1 -1.046 0.763m2.16 -2.103h-2.11l-0.603 -0.603 0.908 -2.79 0.925 -0.279 1.768 0.992a6.138 6.138 0 0 1 -0.886 2.68m0.823 -4.252 -0.823 -0.463 0.34 -1.091c0.225 0.488 0.39 1.008 0.483 1.554"/>
+    </symbol>
+    <!-- VAR (Flashscore) -->
+    <symbol id="icon-var" viewBox="0 3 20 14">
+      <path fill-rule="evenodd" fill="currentColor" d="m16.96 15.13 1.67-1.67V6.44l-1.67-1.67H3.04L1.37 6.44v7.02l1.67 1.67h13.92ZM2.47 3.4h15.06L20 5.87v8.16l-2.47 2.47H2.47L0 14.03V5.87L2.47 3.4Zm8.5 6.4c.1 0 .2-.09.2-.2V8.27c0-.12-.1-.2-.2-.2h-2.5c-.1 0-.2.08-.2.2V9.6c0 .1.1.19.2.19h2.5Zm.04-2.7c.1 0 .2.04.27.11l.73.74c.08.08.12.17.12.27v4.43c0 .02-.02.04-.04.04h-.88c-.03 0-.04-.02-.04-.04v-1.7c0-.1-.1-.19-.2-.19h-2.5c-.1 0-.2.08-.2.2v1.69c0 .02-.01.04-.04.04h-.88c-.03 0-.04-.02-.04-.04V8.22c0-.1.04-.2.11-.27l.74-.74a.38.38 0 0 1 .27-.11h2.58Zm-6.08 4.6 1.03-4.57c0-.02.02-.03.04-.03h1.04l-1.31 5.56c-.01.02-.02.03-.04.03H3.57c-.02 0-.03-.02-.04-.03L2.22 7.1h1.03c.02 0 .03.01.04.03l1.05 4.56c0 .02.01.03.03.03h.52c.01 0 .03 0 .04-.03Zm11.84-2.48a.2.2 0 0 1-.19.2h-2.5a.2.2 0 0 1-.2-.2v-.96c0-.12.08-.2.2-.2h2.5c.1 0 .2.08.2.2v.96Zm-.14-2.12h-3.67c-.03 0-.04.01-.04.04v5.5c0 .03.01.05.04.05h.88c.03 0 .04-.02.04-.04v-2.09c0-.1.07-.18.18-.19h1.23l1.33 2.32h1.11l-1.33-2.32h.23c.1 0 .2-.04.27-.1l.72-.74a.36.36 0 0 0 .12-.28V8.22c0-.1-.04-.2-.12-.27l-.72-.74a.38.38 0 0 0-.27-.11Z"/>
+    </symbol>
+    <!-- Substitution: red arrow out (left), green arrow in (right) -->
+    <symbol id="icon-subst" viewBox="0 0 16 16">
+      <path fill="#e5252a" d="M3.3 2h1.4v6H7L4 12 1 8h2.3z"/>
+      <path fill="#22c55e" d="M11.3 14h1.4V8H15l-3-4-3 4h2.3z"/>
+    </symbol>
+  </svg>
+
+  <div id="app">
+
+    <header>
+      <div class="header-left">
+        <span id="game-title">Laddar...</span>
+      </div>
+    </header>
+
+    <div class="main-layout">
+
+      <!-- Left: coupon -->
+      <section class="coupon-panel">
+        <div class="coupon-table">
+          <div id="matches"></div>
+        </div>
+      </section>
+
+      <!-- Right: events + stats -->
+      <aside class="side-panel">
+
+        <div class="panel-card events-panel">
+          <div class="panel-tabs" id="panel-tabs"></div>
+          <div id="events-list" class="events-list"></div>
+        </div>
+
+        <div class="panel-card stats-panel">
+          <div class="panel-title">Spelstatistik</div>
+          <div id="stats-grid" class="stats-grid"></div>
+        </div>
+
+      </aside>
+
+    </div>
+
+    <div id="error" style="display:none">Kunde inte hämta data. Försöker igen...</div>
+    <div id="updated"><span id="poll-time"></span><span id="data-time"></span></div>
+
+  </div>
+  <script src="app.js?v=86"></script>
+</body>
+</html>

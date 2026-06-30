@@ -1,5 +1,5 @@
 @echo off
-cd /d %~dp0\..
+cd /d "%~dp0..\.."
 
 set PLAYER=%1
 set GAME=%2
