@@ -1,6 +1,6 @@
 # Changelog
 
-## [3.0.0] - 2026-06-30
+## [3.0.0] - 2026-06-30 - The Web App Update
 
 ### New match detail view in the web dashboard
 - Click any match row to open a match-specific view with up to three tabs: **Statistik**, **Händelser** and **Laguppställning**
