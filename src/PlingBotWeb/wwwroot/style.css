@@ -155,7 +155,7 @@ header {
 
 .match-league {
   position: absolute;
-  top: calc(50% + 12px);
+  top: calc(50% + 15px);
   left: 0;
   right: 0;
   display: flex;
@@ -163,8 +163,7 @@ header {
   gap: 3px;
   font-size: 0.58rem;
   color: var(--muted);
-  overflow: hidden;
-  padding-left: 20px;
+  padding-left: 7px;
 }
 
 @media (max-width: 892px) {
@@ -179,9 +178,15 @@ header {
   flex-shrink: 0;
 }
 
+.league-logo {
+  width: 11px;
+  height: 11px;
+  object-fit: contain;
+  flex-shrink: 0;
+}
+
 .league-name {
   white-space: nowrap;
-  overflow: hidden;
   text-overflow: ellipsis;
 }
 
@@ -234,6 +239,7 @@ header {
   display: flex;
   align-items: center;
   justify-content: flex-end;
+  width:auto;
   padding-right: 10px;
   font-size: 0.88rem;
   font-weight: 700;
@@ -242,6 +248,7 @@ header {
 }
 .row-notstarted .match-status {
   grid-column: span 2;
+
 }
 .row-notstarted .score-badge {
   display: none;
@@ -427,6 +434,7 @@ header {
   border-bottom: 1px solid var(--border);
   overflow-x: auto;
 }
+.tab-short { display: none; }
 
 .panel-tab {
   appearance: none;
@@ -498,10 +506,11 @@ header {
 .event-row:last-child { border-bottom: none; }
 .event-row:hover      { background: var(--surface-alt); }
 
-.event-row.ev-goal  { border-left-color: var(--green); }
-.event-row.ev-card  { border-left-color: var(--red); }
-.event-row.ev-var   { border-left-color: var(--amber); }
-.event-row.ev-subst { border-left-color: var(--muted); }
+.event-row.ev-goal   { border-left-color: var(--green); }
+.event-row.ev-card   { border-left-color: var(--red); }
+.event-row.ev-var    { border-left-color: var(--amber); }
+.event-row.ev-subst  { border-left-color: var(--muted); }
+.event-row.ev-injury { border-left-color: #f5a623; }
 .event-row.ev-good { border-left-color: var(--green); }
 .event-row.ev-warn { border-left-color: var(--lime); }
 .event-row.ev-aim  { border-left-color: var(--rose); }
@@ -598,6 +607,15 @@ header {
   color: var(--muted);
   text-align: center;
   background: var(--surface-alt);
+}
+
+.stats-section-header.lineup-subs-toggle {
+  cursor: pointer;
+  user-select: none;
+}
+
+.stats-section-header.lineup-subs-toggle:hover {
+  color: var(--text);
 }
 
 /* ── Per-match laguppställning ───────────────────────────────────────────── */
@@ -950,6 +968,7 @@ header {
   #matches.matches-compact .match-teams             { font-size: 0.9rem; }
   #matches.matches-compact .team-logo               { width: 16px; height: 16px; }
   #matches.matches-compact .team-logo-placeholder   { width: 16px; height: 16px; }
+
 }
 
 /* ── Large (≥1300px) ────────────────────────────────────────────────────── */
@@ -1012,8 +1031,6 @@ header {
   .team-logo-placeholder { width: 14px; height: 14px; }
 
   .match-status { font-size: 0.6rem; }
-  .status-day   { font-size: 0.55rem; }
-  .status-time  { font-size: 0.62rem; }
 
   .score-badge  { font-size: 0.68rem; min-width: 32px; padding: 1px 4px; }
 
@@ -1026,6 +1043,11 @@ header {
   .side-panel   { width: 100%; flex-shrink: 1; overflow: visible; height: auto; }
   .events-panel { flex: none; }
   .events-list  { height: auto; overflow-y: visible; }
+
+  /* ── Flikar: förkortade labels, ingen horisontalscroll ── */
+  .panel-tabs   { overflow-x: hidden; }
+  .tab-full     { display: none; }
+  .tab-short    { display: inline; }
 
   /* Only the Live feed gets its own scroll box on mobile — Statistik/Händelser stay
      full-height so the page itself scrolls and nothing gets clipped. */

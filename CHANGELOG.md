@@ -1,5 +1,32 @@
 # Changelog
 
+## [3.1.0] - 2026-07-02
+
+### Extra Time-buggfixar
+- Botten annonserar inte längre mål eller händelser som inträffade under förlängning eller straffläggning — BT (Before Penalties) och P (Penalties) behandlas nu som inaktiva perioder, precis som ET
+- Matcher som avgjordes via förlängning (AET) eller straffar (PEN) visar nu rätt ställning från 90 minuter — tidigare sparades slutresultatet efter förlängningen
+- Händelser-fliken visar inte längre händelser med elapsed > 90 minuter
+- Backfill (ikappkörning vid botomstart) filtrerar nu också bort förlängningstid-händelser
+
+### Händelser-fliken
+- Händelser sorteras nu på elapsed-tid (senaste överst) — tidigare kunde backfillade matcher visa händelser i fel ordning eftersom alla backfillade poster fick samma tidsstämpel
+- Målhändelser visar nu det svenska lagnamnet från kupongen istället för engelska API-namnet ("Spain" → "Spanien")
+
+### Frånvaro-sektionen flyttad
+- Skaderapporter visas nu i Laguppställning-fliken under avbytarsektionen, inte i Händelser
+- Laguppställning-fliken öppnas nu även när det ännu inte finns någon laguppställning, om skaderapporter finns tillgängliga
+
+### Gult-kort-dubblettfix
+- När API:et rapporterar ett gult kort utan spelarnamn ("Okänd") och sedan fyller i namnet i en senare poll slås de nu korrekt ihop till en enda händelse — tidigare kunde elapsed-minuten ha förskjutits en hel minut mellan svaren, vilket skapade ett dubblettevent
+
+### Matchstatistik vid omstart
+- Passnings- och matchstatistik (bollinnehav, passningar, skott m.m.) hämtas nu och sparas vid botstart även för redan avslutade matcher — tidigare saknades statistiken efter en omstart
+
+### Mobilanpassade flikar
+- Fliketiketterna förkortas på skärmar ≤820px (Stats, Händelser, Lag) så att alla flikar ryms utan horisontalscroll
+
+---
+
 ## [3.0.0] - 2026-06-30 - The Web App Update
 
 ### New match detail view in the web dashboard

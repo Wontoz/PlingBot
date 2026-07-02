@@ -5,6 +5,7 @@ let latestFixtureMap = {};
 let latestHasStarted = true;
 let activeTab = 'live';
 let selectedMatchNumber = null;
+let lineupSubsExpanded = false;
 
 // ── Data fetching ─────────────────────────────────────────────────────────────
 
@@ -42,7 +43,9 @@ function renderAll(data) {
   latestHasStarted = hasStarted;
 
   renderMatchesList();
-  document.getElementById('matches').classList.add('matches-compact');
+  const matchesEl = document.getElementById('matches');
+  matchesEl.classList.add('matches-compact');
+  matchesEl.classList.toggle('matches-few', matches.length <= 8);
   document.getElementById('stats-grid').innerHTML = renderStats(matches, events, meta.Payouts || []);
 
   const statsPanel = document.querySelector('.stats-panel');
@@ -73,7 +76,11 @@ function filterLiveEvents(events) {
 }
 
 function hasMatchStats(tip) {
-  return !!tip?.Statistics;
+  const s = tip?.Statistics;
+  if (!s) return false;
+  const h = s.Home, a = s.Away;
+  return (h && Object.entries(h).some(([k, v]) => k !== 'TeamName' && v != null)) ||
+         (a && Object.entries(a).some(([k, v]) => k !== 'TeamName' && v != null));
 }
 
 function hasMatchEvents(tip) {
@@ -81,7 +88,10 @@ function hasMatchEvents(tip) {
 }
 
 function hasMatchLineups(tip) {
-  return !!tip?.HomeLineup && !!tip?.AwayLineup;
+  if (!tip) return false;
+  const hasLineup = !!tip.HomeLineup && !!tip.AwayLineup;
+  const hasInjuries = latestEvents.some(e => e.FixtureId === tip.FixtureId && e.Type === 'Injury');
+  return hasLineup || hasInjuries;
 }
 
 const MATCH_TAB_CHECKS = {
@@ -109,11 +119,11 @@ function renderTabs() {
     const tip = latestMatches.find(m => m.Number === selectedMatchNumber);
 
     if (hasMatchStats(tip))
-      html += `<button class="panel-tab ${activeTab === 'match-stats' ? 'active' : ''}" data-tab="match-stats">Statistik</button>`;
+      html += `<button class="panel-tab ${activeTab === 'match-stats' ? 'active' : ''}" data-tab="match-stats"><span class="tab-full">Statistik</span><span class="tab-short">Stats</span></button>`;
     if (hasMatchEvents(tip))
       html += `<button class="panel-tab ${activeTab === 'match-events' ? 'active' : ''}" data-tab="match-events">Händelser</button>`;
     if (hasMatchLineups(tip))
-      html += `<button class="panel-tab ${activeTab === 'match-lineup' ? 'active' : ''}" data-tab="match-lineup">Laguppställning</button>`;
+      html += `<button class="panel-tab ${activeTab === 'match-lineup' ? 'active' : ''}" data-tab="match-lineup"><span class="tab-full">Laguppställning</span><span class="tab-short">Lag</span></button>`;
     html += `<button class="panel-tab-close" data-tab="close" title="Stäng">✕</button>`;
   }
 
@@ -154,7 +164,13 @@ function renderMatchesList() {
   document.getElementById('matches').innerHTML = latestMatches.map(renderMatch).join('');
 }
 
+function toggleLineupSubs() {
+  lineupSubsExpanded = !lineupSubsExpanded;
+  renderActiveTabContent();
+}
+
 function selectMatch(num) {
+  if (selectedMatchNumber !== num) lineupSubsExpanded = false;
   selectedMatchNumber = num;
   const wasOnMatchTab = activeTab !== 'live';
 
@@ -177,6 +193,25 @@ function selectMatch(num) {
 
 // ── Match row ─────────────────────────────────────────────────────────────────
 
+function dedupeLeagueRound(leagueName, leagueRound) {
+  if (!leagueName || !leagueRound) return leagueRound || '';
+
+  const separator = ' - ';
+  const lastSepIndex = leagueName.lastIndexOf(separator);
+  const lastNameSegment = lastSepIndex >= 0 ? leagueName.slice(lastSepIndex + separator.length) : leagueName;
+
+  if (leagueRound.toLowerCase() === lastNameSegment.toLowerCase())
+    return '';
+
+  const prefix = lastNameSegment + separator;
+  const deduped = leagueRound.toLowerCase().startsWith(prefix.toLowerCase())
+    ? leagueRound.slice(prefix.length)
+    : leagueRound;
+
+  // A round left as a bare number (e.g. "15") reads oddly on its own — spell it out.
+  return /^\d+$/.test(deduped) ? `Omgång ${deduped}` : deduped;
+}
+
 function renderMatch(m) {
   const status = getStatus(m);
   const result = getResult(m);
@@ -193,9 +228,17 @@ function renderMatch(m) {
     ? `<img class="team-logo" src="https://media.api-sports.io/football/teams/${id}.png" alt="${name}" loading="lazy" onerror="this.style.visibility='hidden'">`
     : `<span class="team-logo-placeholder"></span>`;
 
+  // Some leagues (mainly lower Swedish divisions) repeat the region name in both the league
+  // name and the round, e.g. Name "Ettan - Södra" + Round "Södra - 15" would otherwise display
+  // as "Ettan - Södra - Södra - 15". Strip the overlapping lead-in from Round when it matches
+  // the last " - "-delimited segment of Name — "World Cup" + "Round of 32" has no overlap and
+  // passes through unchanged. Display-only: the raw API values in leagueMap are left untouched.
+
   const league = m.FixtureId != null ? (leagueMap[m.FixtureId] ?? null) : null;
+  const round = league ? dedupeLeagueRound(league.Name, league.Round) : '';
+  const leagueName = league ? `${league.Name}${round ? ` - ${round}` : ''}` : '';
   const leagueRow = league
-    ? `<div class="match-league"><span class="league-name">${league.Name}</span>${league.Flag ? `<img class="league-flag" src="${league.Flag}" alt="">` : ''}${league.VenueName ? `<span class="league-venue"> · ${league.VenueName}</span>` : ''}</div>`
+    ? `<div class="match-league">${league.Logo ? `<img class="league-logo" src="${league.Logo}" alt="">` : ''}<span class="league-name">${leagueName}</span>${league.Flag ? `<img class="league-flag" src="${league.Flag}" alt="">` : ''}${league.VenueName ? `<span class="league-venue"> · ${league.VenueName}</span>` : ''}</div>`
     : '';
 
   return `
@@ -225,6 +268,10 @@ function renderResultIcon(result) {
 function renderMatchStatus(m, status) {
   if (m.StatusShort === 'HT')
     return `<div class="match-status s-live"><span class="live-min">HT</span></div>`;
+  // Coupon only counts the 90-minute result — extra time/penalties display as FT here too,
+  // mirroring the Discord dashboard (MatchDisplayFormatter.GetStatusDisplay).
+  if (m.StatusShort === 'ET' || m.StatusShort === 'BT' || m.StatusShort === 'P')
+    return `<div class="match-status">FT</div>`;
   if (status === 'live') {
     const min = m.Extra > 0 ? `${m.Elapsed}+${m.Extra}'` : m.Elapsed > 0 ? `${m.Elapsed}'` : 'LIVE';
     return `<div class="match-status s-live"><span class="live-dot"></span><span class="live-min">${min}</span></div>`;
@@ -338,7 +385,13 @@ function renderMatchEventsList(events, fixtureMap) {
   if (!events.length)
     return `<div class="events-empty">Inga händelser ännu</div>`;
 
-  const sorted = events.slice().sort((a, b) => new Date(b.CreatedUtc) - new Date(a.CreatedUtc));
+  const matchEvents = events.filter(e => e.Type !== 'Injury');
+  const sorted      = matchEvents.slice().sort((a, b) => {
+    const ta = a.Elapsed * 100 + a.Extra;
+    const tb = b.Elapsed * 100 + b.Extra;
+    if (tb !== ta) return tb - ta;
+    return new Date(b.CreatedUtc) - new Date(a.CreatedUtc);
+  });
 
   let html = '';
   let currentPeriod = null;
@@ -350,16 +403,18 @@ function renderMatchEventsList(events, fixtureMap) {
     }
     html += renderEvent(e, fixtureMap);
   }
-  return html;
+
+  return html || `<div class="events-empty">Inga händelser ännu</div>`;
 }
 
 function renderEvent(e, fixtureMap) {
   const match   = fixtureMap[e.FixtureId];
   const matchNum = match ? `#${match.Number}` : '';
 
-  const typeClass = e.Type === 'Goal' ? 'ev-goal'
-    : e.Type === 'Card'               ? 'ev-card'
-    : e.Type === 'Substitution'       ? 'ev-subst'
+  const typeClass = e.Type === 'Goal'         ? 'ev-goal'
+    : e.Type === 'Card'                       ? 'ev-card'
+    : e.Type === 'Substitution'               ? 'ev-subst'
+    : e.Type === 'Injury'                     ? 'ev-injury'
     : 'ev-var';
 
   const beneficial = e.Type === 'Goal' && match
@@ -368,6 +423,7 @@ function renderEvent(e, fixtureMap) {
 
   const icon    = eventIcon(e);
   const minute  = e.Extra > 0 ? `${e.Elapsed}+${e.Extra}'` : `${e.Elapsed}'`;
+  const minuteHtml = e.Type === 'Injury' ? '' : `<span class="event-time">${minute}</span>`;
   const score   = e.Score ? e.Score.replace(/\s*-\s*/, '–') : '';
 
   let mainText, subText;
@@ -411,6 +467,10 @@ function renderEvent(e, fixtureMap) {
   } else if (e.Type === 'Substitution') {
     mainText = `Byte: ${e.Team || ''}`;
     subText  = `UT: ${e.Player || '?'} · IN: ${e.Assist || '?'}`;
+  } else if (e.Type === 'Injury') {
+    const label = e.Detail === 'Missing Fixture' ? 'Missar matchen' : 'Tveksam';
+    mainText = `${label}: ${e.Player || 'Okänd spelare'}`;
+    subText  = e.Comments ? `${e.Team || ''} · ${e.Comments}` : (e.Team || '');
   } else {
     mainText = e.Player ? e.Player : 'Okänd';
     subText  = e.Comments ? `${e.Team || ''} · ${e.Comments}` : (e.Team || '');
@@ -420,7 +480,7 @@ function renderEvent(e, fixtureMap) {
     <div class="event-row ${typeClass} ${beneficial}">
       <div class="event-icon">${icon}</div>
       <div class="event-body">
-        <div class="event-main">${mainText}<span class="event-time">${minute}</span></div>
+        <div class="event-main">${mainText}${minuteHtml}</div>
         <div class="event-sub">${subText}</div>
       </div>
       <div class="event-match">${matchNum}</div>
@@ -475,6 +535,7 @@ function renderMatchStatsTable(tip) {
   const otherRows = [
     ['Hörnor', h.CornerKicks, a.CornerKicks, false, false],
     ['Frisparkar', h.Fouls, a.Fouls, false, false],
+    ['Offside', h.Offsides, a.Offsides, false, false],
     ['Passningar', passAccuracy(h), passAccuracy(a), false, false, passFraction(h), passFraction(a)],
     ['Gula kort', h.YellowCards, a.YellowCards, false, false],
     ['Röda kort', h.RedCards, a.RedCards, false, false],
@@ -543,8 +604,15 @@ function renderLineupRow(homePlayer, awayPlayer) {
 
 function renderMatchLineupList(tip) {
   const home = tip.HomeLineup, away = tip.AwayLineup;
-  if (!home || !away)
-    return `<div class="events-empty">Ingen laguppställning tillgänglig för match #${tip.Number} ännu</div>`;
+  const injuries = latestEvents.filter(e => e.FixtureId === tip.FixtureId && e.Type === 'Injury');
+
+  if (!home || !away) {
+    if (!injuries.length)
+      return `<div class="events-empty">Ingen laguppställning tillgänglig för match #${tip.Number} ännu</div>`;
+    let html = `<div class="stats-section-header">Frånvaro</div>`;
+    for (const e of injuries) html += renderEvent(e, latestFixtureMap);
+    return html;
+  }
 
   const formationRow = (home.Formation || away.Formation)
     ? `<div class="lineup-formations">
@@ -575,10 +643,15 @@ function renderMatchLineupList(tip) {
   for (let i = 0; i < startCount; i++)
     startRows.push(renderLineupRow(home.StartXI[i], away.StartXI[i]));
 
-  const subCount = Math.max(home.Substitutes.length, away.Substitutes.length);
+  const posOrder = { G: 0, D: 1, M: 2, F: 3 };
+  const sortByPos = p => posOrder[p?.Position ?? ''] ?? 9;
+  const sortedHomeSubs = [...home.Substitutes].sort((a, b) => sortByPos(a) - sortByPos(b));
+  const sortedAwaySubs = [...away.Substitutes].sort((a, b) => sortByPos(a) - sortByPos(b));
+
+  const subCount = Math.max(sortedHomeSubs.length, sortedAwaySubs.length);
   const subRows = [];
   for (let i = 0; i < subCount; i++)
-    subRows.push(renderLineupRow(home.Substitutes[i], away.Substitutes[i]));
+    subRows.push(renderLineupRow(sortedHomeSubs[i], sortedAwaySubs[i]));
 
   return `
     <div class="match-stats-table">
@@ -591,7 +664,12 @@ function renderMatchLineupList(tip) {
       ${coachRow}
       <div class="stats-section-header">Startelva</div>
       ${startRows.join('')}
-      ${subRows.length ? `<div class="stats-section-header">Avbytare</div>${subRows.join('')}` : ''}
+      ${subRows.length ? `
+        <div class="stats-section-header lineup-subs-toggle" onclick="toggleLineupSubs()">
+          ${lineupSubsExpanded ? 'Avbytare' : 'Avbytare (klicka för att visa)'}
+        </div>
+        ${lineupSubsExpanded ? subRows.join('') : ''}` : ''}
+      ${injuries.length ? `<div class="stats-section-header">Frånvaro</div>${injuries.map(e => renderEvent(e, latestFixtureMap)).join('')}` : ''}
     </div>`;
 }
 
@@ -840,7 +918,8 @@ function eventIcon(e) {
     return ico('icon-rc', 10, 13);
   }
   if (e.Type === 'CancelledGoal') return ico('icon-var', 24, 17);
-  if (e.Type === 'Substitution') return ico('icon-subst', 14, 14);
+  if (e.Type === 'Substitution')  return ico('icon-subst', 14, 14);
+  if (e.Type === 'Injury')        return ico('icon-injury', 22, 14);
   return '';
 }
 

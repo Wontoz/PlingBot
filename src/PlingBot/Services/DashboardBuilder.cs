@@ -64,7 +64,10 @@ public class DashboardBuilder
 
         if (events is { Count: > 0 })
         {
-            var eventLines = events.Select(e => e.Text.Replace("**", "")).Reverse().ToList();
+            var eventLines = events
+                .Where(e => e.Type is "Goal" or "CancelledGoal" ||
+                            (e.Type == "Card" && !string.Equals(e.Detail, "Yellow Card", StringComparison.OrdinalIgnoreCase)))
+                .Select(e => e.Text.Replace("**", "")).Reverse().ToList();
             int baseLen = sb.Length + "\n\nHändelser:\n".Length;
             int totalLen = eventLines.Sum(s => s.Length + 1);
             int keep = eventLines.Count;

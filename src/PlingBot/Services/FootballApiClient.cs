@@ -9,6 +9,22 @@ using System.Threading.Tasks;
 using PlingBot.Models;
 using PlingBot.Utils;
 
+public record FixtureBatchResult(
+    Match Match,
+    List<MatchEvent> Events,
+    MatchStatistics? Statistics,
+    TeamLineup? HomeLineup,
+    TeamLineup? AwayLineup);
+
+public record InjuryInfo(
+    int FixtureId,
+    int PlayerId,
+    string PlayerName,
+    string PlayerType,
+    string? Reason,
+    int TeamId,
+    string TeamName);
+
 public class FootballApiClient
 {
     private readonly HttpClient _http;
@@ -123,18 +139,62 @@ public class FootballApiClient
         return (match, events);
     }
 
-    public async Task<List<Match>> FetchAllLiveMatchesAsync()
+    // Fetches all coupon fixtures in one call, returning match data, events, statistics and
+    // lineups together. Replaces the old live-overlay + per-fixture events/stats pattern:
+    // instead of ?live=all + N×?statistics + N×?events we pay for exactly 1 call per tick.
+    public async Task<List<FixtureBatchResult>> FetchCouponFixturesBatchAsync(List<int> ids)
     {
-        string json = await GetApiJsonAsync("fixtures?live=all", "fixtures/live");
-        using var doc = JsonDocument.Parse(json);
-
-        if (TryLogApiErrors(doc.RootElement, "fixtures/live"))
+        if (ids.Count == 0)
             return [];
 
-        return doc.RootElement.GetProperty("response")
-            .EnumerateArray()
-            .Select(CreateMatchFromJson)
-            .ToList();
+        string idsParam = string.Join("-", ids);
+        string json = await GetApiJsonAsync($"fixtures?ids={idsParam}", "fixtures/batch");
+        using var doc = JsonDocument.Parse(json);
+
+        if (TryLogApiErrors(doc.RootElement, "fixtures/batch"))
+            return [];
+
+        var results = new List<FixtureBatchResult>();
+        foreach (var item in doc.RootElement.GetProperty("response").EnumerateArray())
+        {
+            var match = CreateMatchFromJson(item);
+
+            var events = item.TryGetProperty("events", out var eventsElem) && eventsElem.ValueKind == JsonValueKind.Array
+                ? eventsElem.EnumerateArray()
+                    .Select(e => MapToMatchEvent(e, match.Id))
+                    .Where(e => e != null)
+                    .Cast<MatchEvent>()
+                    .ToList()
+                : new List<MatchEvent>();
+
+            MatchStatistics? stats = null;
+            if (item.TryGetProperty("statistics", out var statsElem) && statsElem.ValueKind == JsonValueKind.Array)
+            {
+                var statsItems = statsElem.EnumerateArray().ToList();
+                if (statsItems.Count >= 2)
+                    stats = new MatchStatistics
+                    {
+                        Home = ParseTeamStatistics(statsItems[0]),
+                        Away = ParseTeamStatistics(statsItems[1])
+                    };
+            }
+
+            TeamLineup? homeLineup = null;
+            TeamLineup? awayLineup = null;
+            if (item.TryGetProperty("lineups", out var lineupsElem) && lineupsElem.ValueKind == JsonValueKind.Array)
+            {
+                var lineupItems = lineupsElem.EnumerateArray().Select(ParseTeamLineup).ToList();
+                if (lineupItems.Count >= 2)
+                {
+                    homeLineup = lineupItems[0];
+                    awayLineup = lineupItems[1];
+                }
+            }
+
+            results.Add(new FixtureBatchResult(match, events, stats, homeLineup, awayLineup));
+        }
+
+        return results;
     }
 
     public async Task<List<MatchEvent>> FetchMatchEventsByTypeAsync(int matchId, string type)
@@ -403,6 +463,41 @@ public class FootballApiClient
         }
     }
 
+    public async Task<List<InjuryInfo>> FetchInjuriesAsync(List<int> fixtureIds)
+    {
+        if (fixtureIds.Count == 0) return [];
+
+        string idsParam = string.Join("-", fixtureIds);
+        string json = await GetApiJsonAsync($"injuries?ids={idsParam}", "injuries/batch");
+        using var doc = JsonDocument.Parse(json);
+
+        if (TryLogApiErrors(doc.RootElement, "injuries/batch"))
+            return [];
+
+        var result = new List<InjuryInfo>();
+        foreach (var item in doc.RootElement.GetProperty("response").EnumerateArray())
+        {
+            if (!item.TryGetProperty("player",  out var playerElem) ||
+                !item.TryGetProperty("team",    out var teamElem)   ||
+                !item.TryGetProperty("fixture", out var fixtureElem))
+                continue;
+
+            int fixtureId = fixtureElem.TryGetProperty("id",   out var fid)   ? fid.GetInt32()          : 0;
+            int playerId  = playerElem.TryGetProperty("id",    out var pid)   ? pid.GetInt32()          : 0;
+            string name   = playerElem.TryGetProperty("name",  out var pname) ? pname.GetString() ?? "" : "";
+            string type   = playerElem.TryGetProperty("type",  out var ptype) ? ptype.GetString() ?? "" : "";
+            string? reason = playerElem.TryGetProperty("reason", out var pr) && pr.ValueKind != JsonValueKind.Null
+                ? pr.GetString() : null;
+            int teamId    = teamElem.TryGetProperty("id",   out var tid)   ? tid.GetInt32()          : 0;
+            string team   = teamElem.TryGetProperty("name", out var tname) ? tname.GetString() ?? "" : "";
+
+            if (fixtureId > 0 && playerId > 0)
+                result.Add(new InjuryInfo(fixtureId, playerId, name, type, reason, teamId, team));
+        }
+
+        return result;
+    }
+
     public async Task<string?> FetchPlayerFullNameAsync(int playerId)
     {
         if (_playerNameCache.TryGetValue(playerId, out var cachedName))
@@ -499,15 +594,36 @@ public class FootballApiClient
 
         string? leagueName = null;
         string? leagueFlag = null;
+        string? leagueLogo = null;
+        string? leagueRound = null;
         if (element.TryGetProperty("league", out var leagueElem))
         {
             leagueName = leagueElem.TryGetProperty("name", out var ln) ? ln.GetString() : null;
             leagueFlag = leagueElem.TryGetProperty("flag", out var lf) ? lf.GetString() : null;
+            leagueLogo = leagueElem.TryGetProperty("logo", out var ll) ? ll.GetString() : null;
+            leagueRound = leagueElem.TryGetProperty("round", out var lr) ? lr.GetString() : null;
         }
 
         string? venueName = null;
         if (fixtureElem.TryGetProperty("venue", out var venueElem))
             venueName = venueElem.TryGetProperty("name", out var vn) ? vn.GetString() : null;
+
+        // For AET/PEN matches the top-level goals field is the final score (including ET/shootout).
+        // score.fulltime is the score at 90 minutes, which is what the coupon cares about.
+        int homeGoals = GetInt(goalsElem.GetProperty("home"));
+        int awayGoals = GetInt(goalsElem.GetProperty("away"));
+        if ((statusShort == "AET" || statusShort == "PEN") &&
+            element.TryGetProperty("score", out var scoreElem) &&
+            scoreElem.TryGetProperty("fulltime", out var ftElem))
+        {
+            int? ftH = ftElem.TryGetProperty("home", out var ftHElem) ? GetNullableInt(ftHElem) : null;
+            int? ftA = ftElem.TryGetProperty("away", out var ftAElem) ? GetNullableInt(ftAElem) : null;
+            if (ftH.HasValue && ftA.HasValue)
+            {
+                homeGoals = ftH.Value;
+                awayGoals = ftA.Value;
+            }
+        }
 
         return new Match
         {
@@ -522,10 +638,12 @@ public class FootballApiClient
             AwayTeamId = GetNullableInt(teamsElem.GetProperty("away").GetProperty("id")),
             LeagueName = leagueName,
             LeagueFlag = leagueFlag,
+            LeagueLogo = leagueLogo,
+            LeagueRound = leagueRound,
             VenueName = venueName,
 
-            HomeGoals = GetInt(goalsElem.GetProperty("home")),
-            AwayGoals = GetInt(goalsElem.GetProperty("away")),
+            HomeGoals = homeGoals,
+            AwayGoals = awayGoals,
             Elapsed = GetInt(statusElem.GetProperty("elapsed")),
             Extra = GetInt(statusElem.GetProperty("extra"))
         };

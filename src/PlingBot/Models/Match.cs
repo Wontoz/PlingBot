@@ -10,6 +10,8 @@ public record Match
     public int? AwayTeamId { get; init; }
     public string? LeagueName { get; init; }
     public string? LeagueFlag { get; init; }
+    public string? LeagueLogo { get; init; }
+    public string? LeagueRound { get; init; }
     public string? VenueName { get; init; }
     public int HomeGoals { get; init; }
     public int AwayGoals { get; init; }

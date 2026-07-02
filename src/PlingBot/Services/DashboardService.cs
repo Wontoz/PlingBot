@@ -157,14 +157,7 @@ public class DashboardService
         if (index < 0)
             return false;
 
-        if (_tipsConfig.Data.Events[index].Text == newEvent.Text)
-            return false;
-
-        newEvent.CreatedUtc = _tipsConfig.Data.Events[index].CreatedUtc;
-        _tipsConfig.Data.Events[index] = newEvent;
-        _tipsConfig.SaveToJson();
-        _logger.Log($"Event updated in list: {newEvent.Text}");
-        return true;
+        return ReplaceEventIfChanged(index, newEvent);
     }
 
     public bool UpdateEventContaining(string textFragment, CouponEvent newEvent)
@@ -173,10 +166,19 @@ public class DashboardService
         if (index < 0)
             return false;
 
-        if (_tipsConfig.Data.Events[index].Text == newEvent.Text)
+        return ReplaceEventIfChanged(index, newEvent);
+    }
+
+    private bool ReplaceEventIfChanged(int index, CouponEvent newEvent)
+    {
+        var existing = _tipsConfig.Data.Events[index];
+        bool textChanged = existing.Text != newEvent.Text;
+        // Assist arrives later than the goal itself — update even if text is unchanged
+        bool assistChanged = newEvent.Assist != null && existing.Assist != newEvent.Assist;
+        if (!textChanged && !assistChanged)
             return false;
 
-        newEvent.CreatedUtc = _tipsConfig.Data.Events[index].CreatedUtc;
+        newEvent.CreatedUtc = existing.CreatedUtc;
         _tipsConfig.Data.Events[index] = newEvent;
         _tipsConfig.SaveToJson();
         _logger.Log($"Event updated in list: {newEvent.Text}");

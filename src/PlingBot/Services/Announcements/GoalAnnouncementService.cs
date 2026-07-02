@@ -10,6 +10,7 @@ public class GoalAnnouncementService
     private readonly DiscordAnnouncementService _discord;
     private readonly DashboardService _dashboardService;
     private readonly VersusConfig _versusConfig;
+    private readonly Logger _logger;
 
     private sealed record GoalEventInfo(
         MatchEvent Event,
@@ -21,13 +22,15 @@ public class GoalAnnouncementService
         string? Player,
         string Message,
         string MessageWithoutPlayer,
-        string Identity);
+        string Identity,
+        string TeamName);
 
-    public GoalAnnouncementService(DiscordAnnouncementService discord, DashboardService dashboardService, VersusConfig versusConfig)
+    public GoalAnnouncementService(DiscordAnnouncementService discord, DashboardService dashboardService, VersusConfig versusConfig, Logger logger)
     {
         _discord = discord;
         _dashboardService = dashboardService;
         _versusConfig = versusConfig;
+        _logger = logger;
     }
 
     public async Task<bool> TryHandleNewGoalEventsAsync(
@@ -136,7 +139,7 @@ public class GoalAnnouncementService
                 ConsoleColor.Magenta,
                 "Goal announced",
                 deleteDelay: TimeSpan.FromMinutes(5),
-                couponEvent: BuildScoreFallbackGoalEvent(match, isHome, message));
+                couponEvent: BuildScoreFallbackGoalEvent(tip, match, isHome, message));
 
             tip.AnnouncedEventKeys.Add(goalKey);
             _discord.TrackGoalMessage(goalKey, sentMessage);
@@ -246,7 +249,20 @@ public class GoalAnnouncementService
             int nextAwayGoals = expectedAwayGoals + (goal.IsHome ? 0 : 1);
 
             if (goal.HomeGoals != nextHomeGoals || goal.AwayGoals != nextAwayGoals)
+            {
+                // Diagnostic: a scoring event didn't line up with the expected running tally and
+                // got silently dropped — never announced, never stored, not even as a fallback.
+                // Logged to catch the exact case (e.g. Lukaku's goal in Belgium-Senegal 2026-07-01)
+                // instead of guessing at the root cause blind.
+                _logger.Log(
+                    $"Goal event mismatch for fixture {match.Id} (tip #{tip.Number}): " +
+                    $"index={item.Index} player={goal.Event.Player ?? "?"} team={goal.Event.Team ?? "?"} " +
+                    $"elapsed={goal.Event.Elapsed}+{goal.Event.Extra} computedScore={goal.HomeGoals}-{goal.AwayGoals} " +
+                    $"expectedNext={nextHomeGoals}-{nextAwayGoals} tipLast={tip.LastHomeGoals}-{tip.LastAwayGoals} " +
+                    $"matchScore={match.HomeGoals}-{match.AwayGoals}",
+                    ConsoleColor.DarkRed);
                 continue;
+            }
 
             if (goal.HomeGoals > match.HomeGoals || goal.AwayGoals > match.AwayGoals)
                 continue;
@@ -289,7 +305,8 @@ public class GoalAnnouncementService
             player,
             BuildGoalMessage(tip, match, isHome, item.Event, homeGoals, awayGoals, player),
             BuildGoalMessage(tip, match, isHome, item.Event, homeGoals, awayGoals, includePlayer: false),
-            BuildGoalIdentity(tip, isHome, homeGoals, awayGoals));
+            BuildGoalIdentity(tip, isHome, homeGoals, awayGoals),
+            isHome ? tip.HomeTeam : tip.AwayTeam);
     }
 
     private static CouponEvent BuildGoalCouponEvent(GoalEventInfo goal)
@@ -301,7 +318,7 @@ public class GoalAnnouncementService
             FixtureId = goal.Event.FixtureId,
             Detail = goal.Event.Detail,
             TeamId = goal.Event.TeamId,
-            Team = goal.Event.Team ?? "",
+            Team = goal.TeamName,
             Elapsed = goal.Event.Elapsed,
             Extra = goal.Event.Extra,
             Score = $"{goal.HomeGoals}-{goal.AwayGoals}",
@@ -314,7 +331,7 @@ public class GoalAnnouncementService
         };
     }
 
-    private static CouponEvent BuildScoreFallbackGoalEvent(Match match, bool isHome, string message)
+    private static CouponEvent BuildScoreFallbackGoalEvent(TipsMatch tip, Match match, bool isHome, string message)
     {
         return new CouponEvent
         {
@@ -323,7 +340,7 @@ public class GoalAnnouncementService
             FixtureId = match.Id,
             Detail = "Score Fallback",
             TeamId = isHome ? match.HomeTeamId : match.AwayTeamId,
-            Team = isHome ? match.HomeTeam : match.AwayTeam,
+            Team = isHome ? tip.HomeTeam : tip.AwayTeam,
             Elapsed = match.Elapsed,
             Extra = match.Extra,
             Score = match.Score,

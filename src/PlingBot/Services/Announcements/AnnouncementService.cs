@@ -8,20 +8,14 @@ using PlingBot.Utils;
 
 public class AnnouncementService
 {
-    private static readonly TimeSpan MatchEventsCacheTtl = TimeSpan.FromMinutes(1);
-
-    private readonly FootballApiClient _api;
     private readonly TipsConfig _tipsConfig;
     private readonly CouponEvaluator _evaluator;
     private readonly Logger _logger;
     private readonly GoalAnnouncementService _goals;
     private readonly CardAnnouncementService _cards;
     private readonly PayoutScraperService _payoutScraper;
-    private readonly Dictionary<int, (DateTime FetchedUtc, List<MatchEvent> Events)> _matchEventsCache = new();
-    private readonly Dictionary<int, (DateTime FetchedUtc, MatchStatistics? Stats)> _matchStatsCache = new();
 
     public AnnouncementService(
-        FootballApiClient api,
         TipsConfig tipsConfig,
         CouponEvaluator evaluator,
         Logger logger,
@@ -29,7 +23,6 @@ public class AnnouncementService
         CardAnnouncementService cards,
         PayoutScraperService payoutScraper)
     {
-        _api = api;
         _tipsConfig = tipsConfig;
         _evaluator = evaluator;
         _logger = logger;
@@ -38,18 +31,26 @@ public class AnnouncementService
         _payoutScraper = payoutScraper;
     }
 
-    public async Task ProcessMatchUpdateAsync(IMessageChannel channel, TipsMatch tip)
+    // events and stats are pre-fetched by the caller via a single batch API call —
+    // no internal API requests are made here any more.
+    public async Task ProcessMatchUpdateAsync(
+        IMessageChannel channel,
+        TipsMatch tip,
+        List<MatchEvent> matchEvents,
+        MatchStatistics? stats)
     {
         var match = tip.Match ?? throw new ArgumentNullException(nameof(tip.Match));
 
         bool isLive = IsLiveStatus(match.Status.Short);
+        bool isHalftime = match.Status.Short.Equals("HT", StringComparison.OrdinalIgnoreCase);
         bool scoreChanged = match.HomeGoals != tip.LastHomeGoals || match.AwayGoals != tip.LastAwayGoals;
 
-        if (!scoreChanged && !isLive)
+        // During halftime, data can still change (e.g. assists added by API) — allow storage
+        // updates but isLive remains false so Discord announcements are still suppressed.
+        if (!scoreChanged && !isLive && !isHalftime)
             return;
 
         bool somethingHappened = false;
-        var matchEvents = await FetchMatchEventsCachedAsync(match.Id, forceRefresh: scoreChanged);
 
         bool goalEventsHandled = await _goals.TryHandleNewGoalEventsAsync(channel, tip, match, matchEvents);
         if (goalEventsHandled)
@@ -76,14 +77,10 @@ public class AnnouncementService
         if (isLive && CaptureQuietEvents(tip, match, matchEvents))
             somethingHappened = true;
 
-        if (isLive)
+        if (stats != null)
         {
-            var stats = await FetchMatchStatisticsCachedAsync(match.Id, forceRefresh: scoreChanged);
-            if (stats != null)
-            {
-                tip.Statistics = stats;
-                somethingHappened = true;
-            }
+            tip.Statistics = stats;
+            somethingHappened = true;
         }
 
         if (somethingHappened)
@@ -127,33 +124,11 @@ public class AnnouncementService
         _logger.Log($"Re-evaluated coupon: {correct}/{evaluated} correct", ConsoleColor.Green);
     }
 
-    private async Task<List<MatchEvent>> FetchMatchEventsCachedAsync(int matchId, bool forceRefresh)
-    {
-        if (!forceRefresh &&
-            _matchEventsCache.TryGetValue(matchId, out var cached) &&
-            DateTime.UtcNow - cached.FetchedUtc < MatchEventsCacheTtl)
-        {
-            return cached.Events;
-        }
-
-        var events = await _api.FetchMatchEventsAsync(matchId);
-        _matchEventsCache[matchId] = (DateTime.UtcNow, events);
-        return events;
-    }
-
-    private async Task<MatchStatistics?> FetchMatchStatisticsCachedAsync(int matchId, bool forceRefresh)
-    {
-        if (!forceRefresh &&
-            _matchStatsCache.TryGetValue(matchId, out var cached) &&
-            DateTime.UtcNow - cached.FetchedUtc < MatchEventsCacheTtl)
-        {
-            return cached.Stats;
-        }
-
-        var stats = await _api.FetchMatchStatisticsAsync(matchId);
-        _matchStatsCache[matchId] = (DateTime.UtcNow, stats);
-        return stats;
-    }
+    // How far apart (in Elapsed*100+Extra units) two entries may drift and still be treated as
+    // the same physical card/subst. The API can both nudge stoppage-time extra minutes by a
+    // tick or two (diff=1–2) AND shift the whole elapsed minute by 1–2 when the player name
+    // eventually resolves (diff=100–200). 300 covers up to 3 full minutes of elapsed drift.
+    private const int QuietEventDriftTolerance = 300;
 
     // Quietly stores substitutions and plain yellow cards for the web's per-match
     // event tab — never announced to Discord and never shown in the curated live feed.
@@ -161,14 +136,66 @@ public class AnnouncementService
     {
         bool added = false;
 
+        var existingForFixture = _tipsConfig.Data.Events
+            .Where(e => e.FixtureId == match.Id && (e.Type == "Card" || e.Type == "Substitution"))
+            .ToList();
+
+        var resolvedFingerprints = existingForFixture
+            .Where(e => !string.IsNullOrWhiteSpace(e.Player))
+            .Select(e => $"{e.Type}|{e.TeamId}|{e.PlayerId}")
+            .ToHashSet();
+
         foreach (var ev in matchEvents.Where(IsQuietlyStoredEvent))
         {
+            bool isSubst = string.Equals(ev.Type, "subst", StringComparison.OrdinalIgnoreCase);
+            string evType = isSubst ? "Substitution" : "Card";
+
+            if (ev.PlayerId > 0 && resolvedFingerprints.Contains($"{evType}|{ev.TeamId}|{ev.PlayerId}"))
+                continue;
+
+            // The API often reports a card/subst the instant it happens with no player attached
+            // yet ("Okänd"), then fills the name in (and can nudge the stoppage-time minute) a
+            // poll or two later. Keying strictly on player+minute treats that as a brand new
+            // event and produces a duplicate "Okänd" + named pair for the same physical card —
+            // reconcile against the nearest still-unresolved entry for the same team/type instead.
+            if (!string.IsNullOrWhiteSpace(ev.Player))
+            {
+                int evScore = ev.Elapsed * 100 + ev.Extra;
+                var placeholder = existingForFixture
+                    .Where(e => e.Type == evType && e.TeamId == ev.TeamId && string.IsNullOrWhiteSpace(e.Player))
+                    .Select(e => (Entry: e, Diff: Math.Abs((e.Elapsed * 100 + e.Extra) - evScore)))
+                    .Where(x => x.Diff <= QuietEventDriftTolerance)
+                    .OrderBy(x => x.Diff)
+                    .Select(x => x.Entry)
+                    .FirstOrDefault();
+
+                if (placeholder != null)
+                {
+                    var resolved = BuildQuietCouponEvent(placeholder.Key, tip, match, ev);
+                    placeholder.Player = resolved.Player;
+                    placeholder.PlayerId = resolved.PlayerId;
+                    placeholder.Assist = resolved.Assist;
+                    placeholder.AssistId = resolved.AssistId;
+                    placeholder.Comments = resolved.Comments;
+                    placeholder.Text = resolved.Text;
+                    placeholder.Elapsed = ev.Elapsed;
+                    placeholder.Extra = ev.Extra;
+                    resolvedFingerprints.Add($"{evType}|{ev.TeamId}|{ev.PlayerId}");
+                    added = true;
+                    continue;
+                }
+            }
+
             string key = AnnouncementEventKeys.BuildStoredEventKey("quiet", match.Id, ev);
             if (tip.AnnouncedEventKeys.Contains(key))
                 continue;
 
             tip.AnnouncedEventKeys.Add(key);
-            _tipsConfig.Data.Events.Add(BuildQuietCouponEvent(key, tip, match, ev));
+            var couponEvent = BuildQuietCouponEvent(key, tip, match, ev);
+            _tipsConfig.Data.Events.Add(couponEvent);
+            existingForFixture.Add(couponEvent);
+            if (!string.IsNullOrWhiteSpace(couponEvent.Player))
+                resolvedFingerprints.Add($"{couponEvent.Type}|{couponEvent.TeamId}|{couponEvent.PlayerId}");
             added = true;
         }
 

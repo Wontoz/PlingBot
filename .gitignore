@@ -21,3 +21,5 @@ packages/
 
 src/PlingBot/json/*.json
 src/PlingBot/Historisk Data/
+
+CLAUDE.md

@@ -29,12 +29,7 @@ public class ScorePollerService
     private readonly PayoutScraperService _payoutScraper;
     private readonly Dictionary<DateTime, (DateTime FetchedUtc, List<Match> Matches)> _fixtureDateCache = new();
     private readonly HashSet<int> _loggedSkips = new();
-    private readonly Dictionary<int, DateTime> _lastLineupCheck = new();
-    // API-Sports updates the lineups endpoint every 15 min — checking more often than that
-    // just re-fetches the same (still empty) data. Lookahead starts a bit before the
-    // documented 20-40 min pre-kickoff publish window, not 75 min of guaranteed-empty checks.
-    private static readonly TimeSpan LineupCheckInterval = TimeSpan.FromMinutes(15);
-    private static readonly TimeSpan LineupLookaheadWindow = TimeSpan.FromMinutes(45);
+    private bool _payoutCheckedAtRoundStart = false;
 
     public ScorePollerService(
         FootballApiClient api,
@@ -73,6 +68,7 @@ public class ScorePollerService
         await _api.FetchAndApplyAccountStatusAsync();
         await InitializeFixtureIdsAsync();
         await BackfillMissingEventsAsync();
+        await FetchAndStoreInjuriesAsync();
         await _couponPercentageService.RefreshIfDueAsync();
         await SyncInitialScoresAsync();
 
@@ -88,6 +84,12 @@ public class ScorePollerService
         if (_tipsConfig.Data.MetaData.Payouts.Count == 0 && roundFullyFinished)
             _payoutScraper.ScheduleUpdate();
 
+        // If StartTime has already passed when we start, the round-start check has been missed —
+        // mark it done so we don't re-fire it on the first poll tick.
+        var startTime = _tipsConfig.Data.MetaData.StartTime;
+        if (startTime.HasValue && DateTime.UtcNow >= startTime.Value)
+            _payoutCheckedAtRoundStart = true;
+
         var channel = GetChannel(client);
         if (channel != null)
         {
@@ -102,6 +104,17 @@ public class ScorePollerService
         try
         {
             await _couponPercentageService.RefreshIfDueAsync();
+
+            if (!_payoutCheckedAtRoundStart)
+            {
+                var startTime = _tipsConfig.Data.MetaData.StartTime;
+                if (startTime.HasValue && DateTime.UtcNow >= startTime.Value)
+                {
+                    _payoutCheckedAtRoundStart = true;
+                    if (_tipsConfig.Data.MetaData.Payouts.Count == 0)
+                        _payoutScraper.ScheduleUpdate();
+                }
+            }
 
             await CheckScoresAsync(client);
 
@@ -225,27 +238,93 @@ public class ScorePollerService
         _logger.Log($"Mapping complete: {mapped} mapped, {loaded} loaded, {unresolvedTips.Count} failed", ConsoleColor.Cyan);
     }
 
+    private async Task FetchAndStoreInjuriesAsync()
+    {
+        var ids = _tipsConfig.TipsMatches
+            .Where(t => t.FixtureId.HasValue && !t.IsFinished)
+            .Select(t => t.FixtureId!.Value)
+            .ToList();
+
+        if (ids.Count == 0)
+            return;
+
+        var injuries = await _api.FetchInjuriesAsync(ids);
+        if (injuries.Count == 0)
+        {
+            _logger.Log("Injuries: none reported", ConsoleColor.DarkCyan);
+            return;
+        }
+
+        var existingKeys = _tipsConfig.Data.Events
+            .Where(e => e.Type == "Injury")
+            .Select(e => e.Key)
+            .ToHashSet();
+
+        int added = 0;
+        foreach (var injury in injuries)
+        {
+            string key = $"injury|{injury.FixtureId}|{injury.PlayerId}";
+            if (!existingKeys.Add(key))
+                continue;
+
+            string statusText = string.Equals(injury.PlayerType, "Missing Fixture", StringComparison.OrdinalIgnoreCase)
+                ? "Missar matchen" : "Tveksam";
+            string text = $"🩹 {statusText}: {injury.PlayerName}" +
+                          (injury.Reason != null ? $" ({injury.Reason})" : "");
+
+            _tipsConfig.Data.Events.Add(new CouponEvent
+            {
+                Key      = key,
+                Type     = "Injury",
+                FixtureId = injury.FixtureId,
+                Detail   = injury.PlayerType,
+                TeamId   = injury.TeamId,
+                Team     = injury.TeamName,
+                PlayerId = injury.PlayerId,
+                Player   = injury.PlayerName,
+                Comments = injury.Reason,
+                Text     = text,
+                CreatedUtc = DateTime.UtcNow
+            });
+            added++;
+        }
+
+        if (added > 0)
+            _tipsConfig.SaveToJson();
+
+        _logger.Log($"Injuries: {injuries.Count} fetched, {added} new stored", ConsoleColor.Cyan);
+    }
+
     private async Task SyncInitialScoresAsync()
     {
         _logger.Log("Initial sync: scores", ConsoleColor.Blue);
 
-        var matches = await FetchMatchesForTipDatesAsync();
+        var ids = _tipsConfig.TipsMatches
+            .Where(t => t.FixtureId.HasValue)
+            .Select(t => t.FixtureId!.Value)
+            .ToList();
+
+        if (ids.Count == 0)
+            return;
+
+        var batchResults = await _api.FetchCouponFixturesBatchAsync(ids);
+        var resultMap = batchResults.ToDictionary(r => r.Match.Id);
 
         foreach (var tip in _tipsConfig.TipsMatches.Where(t => t.FixtureId.HasValue))
         {
-            var current = matches.FirstOrDefault(m => m.Id == tip.FixtureId!.Value);
-
-            if (current == null)
+            if (!resultMap.TryGetValue(tip.FixtureId!.Value, out var result))
             {
                 _logger.Log($"No initial data for fixture {tip.FixtureId} (tip #{tip.Number})", ConsoleColor.DarkRed);
                 continue;
             }
 
+            var current = result.Match;
             UpdateTipScore(tip, current);
             tip.HomeTeamId ??= current.HomeTeamId;
             tip.AwayTeamId ??= current.AwayTeamId;
             tip.KickoffUtc = current.Date.ToUniversalTime();
             tip.Match = current;
+            tip.Statistics ??= result.Statistics;
             StoreLeagueInfo(current);
 
             _logger.Log($"Initial sync tip #{tip.Number}: {current.HomeGoals}-{current.AwayGoals} ({current.Status.Long})", ConsoleColor.DarkCyan);
@@ -257,57 +336,26 @@ public class ScorePollerService
     private async Task CheckScoresAsync(DiscordSocketClient client)
     {
         var channel = GetChannel(client);
-        if (channel == null)
+        if (channel == null || !HasMatchesInPlay())
             return;
 
-        var matches = await FetchMatchesForTipDatesAsync();
-        bool anyPolled = false;
+        var ids = _tipsConfig.TipsMatches
+            .Where(t => t.FixtureId.HasValue && !t.IsFinished)
+            .Select(t => t.FixtureId!.Value)
+            .ToList();
 
+        if (ids.Count == 0)
+            return;
+
+        var batchResults = await _api.FetchCouponFixturesBatchAsync(ids);
+        var resultMap = batchResults.ToDictionary(r => r.Match.Id);
+
+        bool anyPolled = false;
         foreach (var tip in _tipsConfig.TipsMatches)
-            anyPolled |= await ProcessTipAsync(channel, tip, matches);
+            anyPolled |= await ProcessTipAsync(channel, tip, resultMap);
 
         if (anyPolled)
             _logger.Log("-----------------------------------------------------------------------", ConsoleColor.DarkYellow);
-    }
-
-    private async Task<List<Match>> FetchMatchesForTipDatesAsync()
-    {
-        DateTime today = DateTime.UtcNow.Date;
-
-        var todayAndPastDates = _tipsConfig.TipsMatches
-            .Where(tip => tip.FixtureId.HasValue && !tip.IsFinished)
-            .Select(tip => tip.Match?.Date.Date ?? today)
-            .Where(date => date <= today)
-            .Append(today)
-            .Distinct()
-            .OrderBy(date => date)
-            .ToList();
-
-        var matches = new List<Match>();
-
-        foreach (var date in todayAndPastDates)
-            matches.AddRange(await FetchMatchesByDateCachedAsync(date));
-
-        // Future matches haven't started — reuse the data loaded at startup, no API call needed
-        foreach (var tip in _tipsConfig.TipsMatches.Where(t => t.FixtureId.HasValue && !t.IsFinished))
-            if (tip.Match?.Date.Date > today && matches.All(m => m.Id != tip.Match.Id))
-                matches.Add(tip.Match);
-
-        // Overlay live data only when at least one match has passed its scheduled kickoff
-        if (HasMatchesInPlay())
-        {
-            var liveMatches = await _api.FetchAllLiveMatchesAsync();
-            foreach (var live in liveMatches)
-            {
-                int idx = matches.FindIndex(m => m.Id == live.Id);
-                if (idx >= 0)
-                    matches[idx] = live;
-                else
-                    matches.Add(live);
-            }
-        }
-
-        return matches;
     }
 
     private async Task<List<Match>> FetchMatchesByDateCachedAsync(DateTime date, bool forceRefresh = false)
@@ -326,42 +374,32 @@ public class ScorePollerService
         return matches;
     }
 
-    private async Task<bool> ProcessTipAsync(IMessageChannel channel, TipsMatch tip, IReadOnlyList<Match> matches)
+    private async Task<bool> ProcessTipAsync(IMessageChannel channel, TipsMatch tip, Dictionary<int, FixtureBatchResult> resultMap)
     {
         if (!ShouldProcessTip(tip))
             return false;
 
-        var current = matches.FirstOrDefault(m => m.Id == tip.FixtureId!.Value);
+        if (!tip.FixtureId.HasValue || !resultMap.TryGetValue(tip.FixtureId.Value, out var result))
+            return false;
 
-        if (current == null)
-        {
-            bool wasLive = tip.StatusShort is "1H" or "2H" or "HT" or "ET" or "LIVE";
-            if (wasLive)
-            {
-                current = await _api.FetchFixtureByIdAsync(tip.FixtureId!.Value);
-                if (current == null)
-                {
-                    _logger.Log($"Fixture {tip.FixtureId} (tip #{tip.Number}) not found even by ID", ConsoleColor.DarkYellow);
-                    return false;
-                }
-            }
-            else
-            {
-                _logger.Log($"Fixture {tip.FixtureId} (tip #{tip.Number}) not found", ConsoleColor.DarkYellow);
-                return false;
-            }
-        }
-
+        var current = result.Match;
         tip.Match = current;
         tip.StatusShort = current.Status.Short;
         StoreLeagueInfo(current);
 
-        await FetchLineupsIfDueAsync(tip, current);
+        // Lineups arrive in every batch response; store them the first time they appear.
+        if (tip.HomeLineup == null && result.HomeLineup != null && result.AwayLineup != null)
+        {
+            tip.HomeLineup = result.HomeLineup;
+            tip.AwayLineup = result.AwayLineup;
+            _logger.Log($"Fetched lineups for tip #{tip.Number} ({tip.HomeTeam} vs {tip.AwayTeam})", ConsoleColor.Green);
+            _tipsConfig.SaveToJson();
+        }
 
         if (ShouldSkipStatus(current.Status.Short))
         {
             _tipsConfig.SaveToJson();
-            if (_loggedSkips.Add(tip.FixtureId!.Value))
+            if (_loggedSkips.Add(tip.FixtureId.Value))
             {
                 string kickoff = tip.KickoffUtc?.ToLocalTime().ToString("dd-MM HH:mm") ?? "";
                 _logger.Log($"Match #{tip.Number,-2}  {tip.HomeTeam} - {tip.AwayTeam}  {current.Status.Long}  {kickoff}", ConsoleColor.DarkYellow);
@@ -369,8 +407,7 @@ public class ScorePollerService
             return false;
         }
 
-        _loggedSkips.Remove(tip.FixtureId!.Value);
-
+        _loggedSkips.Remove(tip.FixtureId.Value);
         LogPolledMatch(tip, current);
 
         tip.HomeTeamId ??= current.HomeTeamId;
@@ -379,7 +416,12 @@ public class ScorePollerService
 
         if (IsFinishedStatus(current.Status.Short))
         {
-            await _announcer.ProcessMatchUpdateAsync(channel, tip);
+            // AET/PEN = match decided in extra time or penalties — goals scored in ET/shootout
+            // must not be announced (ET is intentionally out of scope for live announcements).
+            bool isExtraTimeFinish = current.Status.Short.Equals("AET", StringComparison.OrdinalIgnoreCase) ||
+                                     current.Status.Short.Equals("PEN", StringComparison.OrdinalIgnoreCase);
+            if (!isExtraTimeFinish)
+                await _announcer.ProcessMatchUpdateAsync(channel, tip, result.Events, result.Statistics);
             HandleFinishedMatch(tip, current);
             return true;
         }
@@ -388,37 +430,8 @@ public class ScorePollerService
         tip.Extra   = current.Extra > 0 ? current.Extra : 0;
         _tipsConfig.SaveToJson();
 
-        await _announcer.ProcessMatchUpdateAsync(channel, tip);
+        await _announcer.ProcessMatchUpdateAsync(channel, tip, result.Events, result.Statistics);
         return true;
-    }
-
-    // Lineups are typically published 60-75 min before kickoff and never change once
-    // the match is underway, so this fetches once and caches forever (HomeLineup != null
-    // short-circuits all future checks). Throttled per fixture so the lookahead window
-    // doesn't hammer the API every 15s tick while waiting for them to be published.
-    private async Task FetchLineupsIfDueAsync(TipsMatch tip, Match current)
-    {
-        if (tip.HomeLineup != null || !tip.FixtureId.HasValue)
-            return;
-
-        if (DateTime.UtcNow < current.Date.ToUniversalTime() - LineupLookaheadWindow)
-            return;
-
-        int fixtureId = tip.FixtureId.Value;
-        if (_lastLineupCheck.TryGetValue(fixtureId, out var lastCheck) &&
-            DateTime.UtcNow - lastCheck < LineupCheckInterval)
-            return;
-
-        _lastLineupCheck[fixtureId] = DateTime.UtcNow;
-
-        var (home, away) = await _api.FetchLineupsAsync(fixtureId);
-        if (home == null || away == null)
-            return;
-
-        tip.HomeLineup = home;
-        tip.AwayLineup = away;
-        _logger.Log($"Fetched lineups for tip #{tip.Number} ({tip.HomeTeam} vs {tip.AwayTeam})", ConsoleColor.Green);
-        _tipsConfig.SaveToJson();
     }
 
     private async Task BackfillMissingEventsAsync()
@@ -510,6 +523,7 @@ public class ScorePollerService
         int home = 0, away = 0;
 
         var filtered = events
+            .Where(e => e.Elapsed <= 90) // Exclude extra time — coupons only count regular 90 minutes
             .Where(e =>
                 (e.Type == "Goal" && !string.Equals(e.Detail, "Missed Penalty", StringComparison.OrdinalIgnoreCase)) ||
                 (e.Type == "Card" && (string.Equals(e.Detail, "Red Card", StringComparison.OrdinalIgnoreCase) ||
@@ -694,12 +708,14 @@ public class ScorePollerService
         {
             Name = match.LeagueName,
             Flag = match.LeagueFlag,
+            Logo = match.LeagueLogo,
+            Round = match.LeagueRound,
             VenueName = match.VenueName,
         };
     }
 
     private static bool ShouldSkipStatus(string status) =>
-        status is "NS" or "TBD" or "HT" or "ET";
+        status is "NS" or "TBD" or "ET" or "BT" or "P";
 
     private static bool IsFinishedStatus(string status)
     {
@@ -753,12 +769,12 @@ public class ScorePollerService
         _tipsConfig.SaveToJson();
     }
 
-    private static void UpdateTipScore(TipsMatch tip, Match current)
+    private static void UpdateTipScore(TipsMatch tip, Match match)
     {
-        tip.LastHomeGoals = current.HomeGoals;
-        tip.LastAwayGoals = current.AwayGoals;
-        tip.HomeScore = current.HomeGoals;
-        tip.AwayScore = current.AwayGoals;
+        tip.LastHomeGoals = match.HomeGoals;
+        tip.LastAwayGoals = match.AwayGoals;
+        tip.HomeScore = match.HomeGoals;
+        tip.AwayScore = match.AwayGoals;
     }
 
     private void LogPolledMatch(TipsMatch tip, Match current)

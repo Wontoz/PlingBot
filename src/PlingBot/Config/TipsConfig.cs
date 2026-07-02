@@ -27,6 +27,8 @@ public class LeagueInfo
 {
     public string Name { get; set; } = "";
     public string? Flag { get; set; }
+    public string? Logo { get; set; }
+    public string? Round { get; set; }
     public string? VenueName { get; set; }
 }
 
