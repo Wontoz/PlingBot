@@ -69,8 +69,9 @@ internal static class MatchDisplayFormatter
         {
             case "NS":
             case "TBD":
-                DateTime localDate = tip.Match.Date.ToLocalTime();
-                int dayDiff = (localDate.Date - DateTime.Today).Days;
+                var tz = TimeZoneInfo.FindSystemTimeZoneById("Europe/Stockholm");
+                DateTime localDate = TimeZoneInfo.ConvertTimeFromUtc(tip.Match.Date.ToUniversalTime(), tz);
+                int dayDiff = (localDate.Date - TimeZoneInfo.ConvertTimeFromUtc(DateTime.UtcNow, tz).Date).Days;
                 string time = localDate.ToString("HH:mm");
 
                 if (dayDiff == 0) return $"Idag {time}";
@@ -161,4 +162,6 @@ internal static class MatchDisplayFormatter
 
         return true;
     }
+
+
 }
