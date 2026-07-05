@@ -39,6 +39,7 @@ public record class TipsMatch
     public MatchStatistics? Statistics { get; set; }
     public TeamLineup? HomeLineup { get; set; }
     public TeamLineup? AwayLineup { get; set; }
+    public List<CouponEvent>? Injuries { get; set; }
     public bool BackfillComplete { get; set; }
 
     [JsonIgnore]

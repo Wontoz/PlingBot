@@ -108,11 +108,14 @@ public class GoalAnnouncementService
         foreach (var (ev, index) in varEvents.Select((ev, i) => (ev, i)))
         {
             string key = AnnouncementEventKeys.BuildVarKey(match.Id, index);
+            bool isHome = AnnouncementEventKeys.IsHomeEvent(match, ev);
 
             if (tip.AnnouncedEventKeys.Contains(key))
+            {
+                announced |= await TryCompleteVarEventAsync(channel, tip, match, isHome, ev, key);
                 continue;
+            }
 
-            bool isHome = AnnouncementEventKeys.IsHomeEvent(match, ev);
             await AnnounceGoalCancelledAsync(channel, tip, match, isHome, ev, key);
             tip.AnnouncedEventKeys.Add(key);
             announced = true;
@@ -417,21 +420,18 @@ public class GoalAnnouncementService
 
     private async Task AnnounceGoalCancelledAsync(IMessageChannel channel, TipsMatch tip, Match match, bool isHome, MatchEvent ev, string key)
     {
-        string symbol = isHome
-            ? Helpers.GetEventSymbol(tip, match.Symbol, match.HomeTeam, isHomeEvent: true, isBadEvent: true)
-            : Helpers.GetEventSymbol(tip, match.Symbol, match.AwayTeam, isHomeEvent: false, isBadEvent: true);
+        string? player = string.IsNullOrEmpty(ev.Player) ? null : ev.Player;
+        string message = BuildVarMessage(tip, match, isHome, ev, player);
+        string team = isHome ? tip.HomeTeam : tip.AwayTeam;
 
-        string score = Helpers.FormatScore(match.HomeGoals, match.AwayGoals, isHome);
-        string message = $"⚠️ {symbol} Mål bortdömt! {tip.HomeTeam} {score} {tip.AwayTeam} {Helpers.GetMinute(ev)}";
-
-        await _discord.AnnounceAsync(channel, message, ConsoleColor.Red, "Cancelled goal announced", couponEvent: new CouponEvent
+        var sentMessage = await _discord.AnnounceAsync(channel, message, ConsoleColor.Red, "Cancelled goal announced", couponEvent: new CouponEvent
         {
             Key = key,
             Type = "CancelledGoal",
             FixtureId = match.Id,
             Detail = ev.Detail,
             TeamId = ev.TeamId,
-            Team = ev.Team ?? (isHome ? match.HomeTeam : match.AwayTeam),
+            Team = team,
             Elapsed = ev.Elapsed,
             Extra = ev.Extra,
             Score = match.Score,
@@ -440,6 +440,72 @@ public class GoalAnnouncementService
             Player = ev.Player,
             CreatedUtc = DateTime.UtcNow
         });
+
+        if (player == null)
+            _discord.TrackGoalMessage(key, sentMessage);
+
+        _dashboardService.RemoveGoalEvent(match.Id, ev.TeamId, ev.Elapsed);
+    }
+
+    private async Task<bool> TryCompleteVarEventAsync(IMessageChannel channel, TipsMatch tip, Match match, bool isHome, MatchEvent ev, string key)
+    {
+        if (string.IsNullOrEmpty(ev.Player))
+            return false;
+
+        var stored = _dashboardService.GetEventByKey(key);
+        if (stored == null || stored.Player == ev.Player)
+            return false;
+
+        // Inject player+reason into the stored text, which already has the correct score
+        // from announcement time (current match score may differ due to later goals).
+        const string marker = "Mål bortdömt!";
+        string playerPart = $" - {ev.Player}{FormatVarReason(ev.Detail)}";
+        string oldText = stored.Text;
+        string newText = oldText.Contains(marker)
+            ? oldText.Replace(marker, marker + playerPart)
+            : oldText + playerPart;
+
+        var updatedEvent = new CouponEvent
+        {
+            Key = stored.Key,
+            Type = stored.Type,
+            FixtureId = stored.FixtureId,
+            Detail = ev.Detail,
+            TeamId = stored.TeamId,
+            Team = stored.Team,
+            Elapsed = stored.Elapsed,
+            Extra = stored.Extra,
+            Score = stored.Score,
+            Text = newText,
+            PlayerId = ev.PlayerId,
+            Player = ev.Player,
+            CreatedUtc = stored.CreatedUtc
+        };
+
+        bool dashboardUpdated = _dashboardService.UpdateEventByKey(key, updatedEvent);
+        bool discordUpdated = await _discord.TryUpdateGoalMessageAsync(
+            channel, key, oldText, newText);
+
+        return dashboardUpdated || discordUpdated;
+    }
+
+    private string BuildVarMessage(TipsMatch tip, Match match, bool isHome, MatchEvent ev, string? player)
+    {
+        string symbol = isHome
+            ? Helpers.GetEventSymbol(tip, match.Symbol, match.HomeTeam, isHomeEvent: true, isBadEvent: true)
+            : Helpers.GetEventSymbol(tip, match.Symbol, match.AwayTeam, isHomeEvent: false, isBadEvent: true);
+        string score = Helpers.FormatScore(match.HomeGoals, match.AwayGoals, isHome);
+        string playerPart = player != null ? $" - {player}{FormatVarReason(ev.Detail)}" : "";
+        return $"⚠️ {symbol} Mål bortdömt!{playerPart} {tip.HomeTeam} {score} {tip.AwayTeam} {Helpers.GetMinute(ev)}";
+    }
+
+    private static string FormatVarReason(string? detail)
+    {
+        if (string.IsNullOrEmpty(detail)) return "";
+        int idx = detail.IndexOf(" - ", StringComparison.Ordinal);
+        if (idx < 0) return "";
+        string reason = detail[(idx + 3)..];
+        return $" ({char.ToUpper(reason[0])}{reason[1..]})";
     }
 
     private static bool IsScoringGoalEvent(MatchEvent ev)

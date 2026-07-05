@@ -54,7 +54,6 @@ public class MessageHandler
         };
 
         _player = _tipsConfig.Data.MetaData.Player;
-        if (!string.IsNullOrEmpty(_player)) _logger.Log("Player detected, setting player: " + _player);
     }
 
     public async Task HandleMessageAsync(SocketMessage message)

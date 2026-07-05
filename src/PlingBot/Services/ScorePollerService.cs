@@ -134,7 +134,7 @@ public class ScorePollerService
         int mapped = 0;
         int loaded = 0;
 
-        _logger.Log($"Mapping {_tipsConfig.TipsMatches.Count} tips day-by-day, max {FixtureLookupDaysForward + 1} days", ConsoleColor.Blue);
+        _logger.Log($"Mapping {_tipsConfig.TipsMatches.Count} tips...", ConsoleColor.Blue);
 
         for (int i = 0; i <= FixtureLookupDaysForward && unresolvedTips.Count > 0; i++)
         {
@@ -142,7 +142,6 @@ public class ScorePollerService
             var matchesForDate = await FetchMatchesByDateCachedAsync(date, forceRefresh: true);
             allFetchedMatches.AddRange(matchesForDate);
 
-            _logger.Log($"Fetched {matchesForDate.Count} fixtures for {date:yyyy-MM-dd}", ConsoleColor.DarkBlue);
 
             foreach (var tip in unresolvedTips.ToList())
             {
@@ -195,7 +194,6 @@ public class ScorePollerService
 
                 if (alreadyMapped)
                 {
-                    _logger.Log($"Loaded tip #{tip.Number,-2} fixture {match.Id} ({match.HomeTeam} vs {match.AwayTeam}) {match.Date:yyyy-MM-dd HH:mm}", ConsoleColor.Green);
                     loaded++;
                 }
                 else
@@ -220,7 +218,6 @@ public class ScorePollerService
                     tip.KickoffUtc = match.Date.ToUniversalTime();
                     tip.Match = match;
                     StoreLeagueInfo(match);
-                    _logger.Log($"Loaded tip #{tip.Number,-2} via direct fixture lookup {match.Id} ({match.HomeTeam} vs {match.AwayTeam})", ConsoleColor.Green);
                     continue;
                 }
             }
@@ -240,64 +237,64 @@ public class ScorePollerService
 
     private async Task FetchAndStoreInjuriesAsync()
     {
-        var ids = _tipsConfig.TipsMatches
+        var tipsToFetch = _tipsConfig.TipsMatches
             .Where(t => t.FixtureId.HasValue && !t.IsFinished)
-            .Select(t => t.FixtureId!.Value)
             .ToList();
 
-        if (ids.Count == 0)
+        if (tipsToFetch.Count == 0)
             return;
 
+        var ids = tipsToFetch.Select(t => t.FixtureId!.Value).ToList();
         var injuries = await _api.FetchInjuriesAsync(ids);
-        if (injuries.Count == 0)
+
+        // Migrate: remove any legacy injury events stored in the shared Events list
+        _tipsConfig.Data.Events.RemoveAll(e => e.Type == "Injury");
+
+        var tipByFixture = tipsToFetch.ToDictionary(t => t.FixtureId!.Value);
+
+        // Clear injuries for all fetched tips so recovered players disappear
+        foreach (var tip in tipsToFetch)
+            tip.Injuries = [];
+
+        var byFixture = injuries.GroupBy(i => i.FixtureId);
+        foreach (var group in byFixture)
         {
-            _logger.Log("Injuries: none reported", ConsoleColor.DarkCyan);
-            return;
-        }
+            if (!tipByFixture.TryGetValue(group.Key, out var tip)) continue;
 
-        var existingKeys = _tipsConfig.Data.Events
-            .Where(e => e.Type == "Injury")
-            .Select(e => e.Key)
-            .ToHashSet();
-
-        int added = 0;
-        foreach (var injury in injuries)
-        {
-            string key = $"injury|{injury.FixtureId}|{injury.PlayerId}";
-            if (!existingKeys.Add(key))
-                continue;
-
-            string statusText = string.Equals(injury.PlayerType, "Missing Fixture", StringComparison.OrdinalIgnoreCase)
-                ? "Missar matchen" : "Tveksam";
-            string text = $"🩹 {statusText}: {injury.PlayerName}" +
-                          (injury.Reason != null ? $" ({injury.Reason})" : "");
-
-            _tipsConfig.Data.Events.Add(new CouponEvent
+            tip.Injuries = group.DistinctBy(i => i.PlayerId).Select(injury =>
             {
-                Key      = key,
-                Type     = "Injury",
-                FixtureId = injury.FixtureId,
-                Detail   = injury.PlayerType,
-                TeamId   = injury.TeamId,
-                Team     = injury.TeamName,
-                PlayerId = injury.PlayerId,
-                Player   = injury.PlayerName,
-                Comments = injury.Reason,
-                Text     = text,
-                CreatedUtc = DateTime.UtcNow
-            });
-            added++;
+                string teamName = injury.TeamId == tip.HomeTeamId ? tip.HomeTeam
+                                : injury.TeamId == tip.AwayTeamId  ? tip.AwayTeam
+                                : injury.TeamName;
+
+                string statusText = string.Equals(injury.PlayerType, "Missing Fixture", StringComparison.OrdinalIgnoreCase)
+                    ? "Missar matchen" : "Tveksam";
+                string text = $"🩹 {statusText}: {injury.PlayerName}" +
+                              (injury.Reason != null ? $" ({injury.Reason})" : "");
+
+                return new CouponEvent
+                {
+                    Key       = $"injury|{injury.FixtureId}|{injury.PlayerId}",
+                    Type      = "Injury",
+                    FixtureId = injury.FixtureId,
+                    Detail    = injury.PlayerType,
+                    TeamId    = injury.TeamId,
+                    Team      = teamName,
+                    PlayerId  = injury.PlayerId,
+                    Player    = injury.PlayerName,
+                    Comments  = injury.Reason,
+                    Text      = text,
+                    CreatedUtc = DateTime.UtcNow
+                };
+            }).ToList();
         }
 
-        if (added > 0)
-            _tipsConfig.SaveToJson();
-
-        _logger.Log($"Injuries: {injuries.Count} fetched, {added} new stored", ConsoleColor.Cyan);
+        _tipsConfig.SaveToJson();
+        _logger.Log($"Injuries: {injuries.Count} fetched across {byFixture.Count()} fixtures", ConsoleColor.Cyan);
     }
 
     private async Task SyncInitialScoresAsync()
     {
-        _logger.Log("Initial sync: scores", ConsoleColor.Blue);
 
         var ids = _tipsConfig.TipsMatches
             .Where(t => t.FixtureId.HasValue)
@@ -319,7 +316,13 @@ public class ScorePollerService
             }
 
             var current = result.Match;
-            UpdateTipScore(tip, current);
+            bool isInPlay =
+                current.Status.Short.Equals("1H", StringComparison.OrdinalIgnoreCase) ||
+                current.Status.Short.Equals("2H", StringComparison.OrdinalIgnoreCase) ||
+                current.Status.Short.Equals("HT", StringComparison.OrdinalIgnoreCase) ||
+                current.Status.Short.Equals("LIVE", StringComparison.OrdinalIgnoreCase);
+            if (!isInPlay)
+                UpdateTipScore(tip, current);
             tip.HomeTeamId ??= current.HomeTeamId;
             tip.AwayTeamId ??= current.AwayTeamId;
             tip.KickoffUtc = current.Date.ToUniversalTime();
@@ -327,7 +330,6 @@ public class ScorePollerService
             tip.Statistics ??= result.Statistics;
             StoreLeagueInfo(current);
 
-            _logger.Log($"Initial sync tip #{tip.Number}: {current.HomeGoals}-{current.AwayGoals} ({current.Status.Long})", ConsoleColor.DarkCyan);
         }
 
         _tipsConfig.SaveToJson();
@@ -448,8 +450,19 @@ public class ScorePollerService
         if (tipsToBackfill.Count == 0)
             return;
 
+        var ids = tipsToBackfill.Select(t => t.FixtureId!.Value).ToList();
+        var batchResults = await _api.FetchCouponFixturesBatchAsync(ids);
+        var resultMap = batchResults.ToDictionary(r => r.Match.Id);
+
         foreach (var tip in tipsToBackfill)
-            await BackfillTipAsync(tip);
+        {
+            if (!resultMap.TryGetValue(tip.FixtureId!.Value, out var result))
+            {
+                _logger.Log($"Backfill skipped for tip #{tip.Number}: fixture {tip.FixtureId} not found, will retry next startup", ConsoleColor.DarkYellow);
+                continue;
+            }
+            BackfillTip(tip, result);
+        }
 
         // Always persist — BackfillComplete may have flipped even when no new events were added,
         // and that flag must survive a restart or we'd keep re-fetching finished matches forever.
@@ -457,7 +470,7 @@ public class ScorePollerService
         _tipsConfig.SaveToJson();
     }
 
-    public async Task<int> BackfillTipAsync(TipsMatch tip)
+    private int BackfillTip(TipsMatch tip, FixtureBatchResult result)
     {
         if (!tip.FixtureId.HasValue)
             return 0;
@@ -473,38 +486,21 @@ public class ScorePollerService
             .Select(e => $"{e.FixtureId}|{e.Type}|{e.TeamId}|{e.PlayerId}|{e.Elapsed}|{e.Extra}")
             .ToHashSet();
 
-        var (match, matchEvents) = await _api.FetchFixtureWithEventsAsync(tip.FixtureId.Value);
-
-        if (match == null)
-        {
-            _logger.Log($"Backfill skipped for tip #{tip.Number}: fixture {tip.FixtureId} not found, will retry next startup", ConsoleColor.DarkYellow);
-            return 0;
-        }
-
-        var couponEvents = BuildBackfilledEvents(tip, matchEvents)
+        var couponEvents = BuildBackfilledEvents(tip, result.Events)
             .Where(e => !existingKeys.Contains(e.Key))
             .Where(e => !existingFingerprints.Contains($"{e.FixtureId}|{e.Type}|{e.TeamId}|{e.PlayerId}|{e.Elapsed}|{e.Extra}"))
             .ToList();
 
-        if (tip.Statistics == null)
+        tip.Statistics ??= result.Statistics;
+
+        if (tip.HomeLineup == null && result.HomeLineup != null && result.AwayLineup != null)
         {
-            var stats = await _api.FetchMatchStatisticsAsync(tip.FixtureId.Value);
-            if (stats != null)
-                tip.Statistics = stats;
+            tip.HomeLineup = result.HomeLineup;
+            tip.AwayLineup = result.AwayLineup;
         }
 
-        if (tip.HomeLineup == null)
-        {
-            var (home, away) = await _api.FetchLineupsAsync(tip.FixtureId.Value);
-            if (home != null && away != null)
-            {
-                tip.HomeLineup = home;
-                tip.AwayLineup = away;
-            }
-        }
-
-        // The fixture fetch succeeded for a finished match — its data won't change again,
-        // so skip it on every future startup regardless of whether new events were found.
+        // The batch fetch succeeded — data won't change again, so skip on every future startup
+        // regardless of whether new events were found.
         tip.BackfillComplete = true;
 
         if (couponEvents.Count == 0)

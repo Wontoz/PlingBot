@@ -31,20 +31,29 @@ public class CouponEventSyncService
         int matchesChecked = 0;
         int eventsSynced = 0;
 
-        foreach (var tip in _tipsConfig.TipsMatches.Where(tip => tip.FixtureId.HasValue && !tip.IsFinished))
+        var tipsToSync = _tipsConfig.TipsMatches
+            .Where(t => t.FixtureId.HasValue && !t.IsFinished && t.Match != null)
+            .ToList();
+
+        if (tipsToSync.Count > 0)
         {
-            var match = tip.Match;
-            if (match == null)
-                continue;
+            var ids = tipsToSync.Select(t => t.FixtureId!.Value).ToList();
+            var batchResults = await _api.FetchCouponFixturesBatchAsync(ids);
+            var resultMap = batchResults.ToDictionary(r => r.Match.Id);
 
-            matchesChecked++;
-            var matchEvents = await _api.FetchMatchEventsAsync(match.Id);
+            foreach (var tip in tipsToSync)
+            {
+                if (!resultMap.TryGetValue(tip.FixtureId!.Value, out var result))
+                    continue;
 
-            if (await _goals.TryHandleNewGoalEventsAsync(channel, tip, match, matchEvents))
-                eventsSynced++;
+                matchesChecked++;
 
-            if (await _cards.AnnounceRedCardsAsync(channel, tip, match, matchEvents))
-                eventsSynced++;
+                if (await _goals.TryHandleNewGoalEventsAsync(channel, tip, tip.Match!, result.Events))
+                    eventsSynced++;
+
+                if (await _cards.AnnounceRedCardsAsync(channel, tip, tip.Match!, result.Events))
+                    eventsSynced++;
+            }
         }
 
         if (eventsSynced > 0)

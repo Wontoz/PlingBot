@@ -110,7 +110,6 @@ public class DashboardService
             _messageId = existingDashboard.Id;
             _lastContent = content;
 
-            _logger.Log("Dashboard refreshed on startup", ConsoleColor.Cyan);
             return;
         }
 
@@ -151,12 +150,37 @@ public class DashboardService
         _logger.Log($"Event added to list: {couponEvent.Text}");
     }
 
+    public CouponEvent? GetEventByKey(string key) =>
+        _tipsConfig.Data.Events.FirstOrDefault(e => e.Key == key);
+
     public bool UpdateEvent(string oldText, CouponEvent newEvent)
     {
         int index = _tipsConfig.Data.Events.FindIndex(e => e.Text == oldText);
         if (index < 0)
             return false;
 
+        return ReplaceEventIfChanged(index, newEvent);
+    }
+
+    public bool RemoveGoalEvent(int fixtureId, int? teamId, int elapsed)
+    {
+        int index = _tipsConfig.Data.Events.FindIndex(e =>
+            e.Type == "Goal" &&
+            e.FixtureId == fixtureId &&
+            e.TeamId == teamId &&
+            Math.Abs(e.Elapsed - elapsed) <= 1);
+        if (index < 0) return false;
+        var removed = _tipsConfig.Data.Events[index];
+        _tipsConfig.Data.Events.RemoveAt(index);
+        _tipsConfig.SaveToJson();
+        _logger.Log($"Goal removed by VAR: {removed.Text}");
+        return true;
+    }
+
+    public bool UpdateEventByKey(string key, CouponEvent newEvent)
+    {
+        int index = _tipsConfig.Data.Events.FindIndex(e => e.Key == key);
+        if (index < 0) return false;
         return ReplaceEventIfChanged(index, newEvent);
     }
 

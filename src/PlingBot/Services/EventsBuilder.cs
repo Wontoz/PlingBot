@@ -46,7 +46,8 @@ public class EventsBuilder
 
         var loadingMsg = await message.Channel.SendMessageAsync("Hämtar händelser...");
 
-        var events = await _api.FetchMatchEventsAsync(tip.FixtureId.Value);
+        var batch = await _api.FetchCouponFixturesBatchAsync([tip.FixtureId.Value]);
+        var events = batch.FirstOrDefault()?.Events ?? [];
 
         if (events.Count == 0)
         {

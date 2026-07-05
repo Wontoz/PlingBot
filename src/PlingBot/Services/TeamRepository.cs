@@ -27,7 +27,6 @@ public class TeamRepository
         _logger = logger;
         _filePath = ResolveFilePath();
         _byName = Load();
-        _logger.Log($"Team registry loaded: {_byName.Count} entries from {_filePath}", ConsoleColor.DarkCyan);
     }
 
     public TeamRecord? FindByName(string name)

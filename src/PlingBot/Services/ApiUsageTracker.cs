@@ -54,8 +54,5 @@ public class ApiUsageTracker
             .Take(3)
             .Select(pair => $"{pair.Key}: {pair.Value}");
 
-        _logger.Log(
-            $"API usage: {callsLastMinute}/min, {_totalCalls} since startup, projected {projectedDaily:0}/day. Top: {string.Join(", ", topEndpoints)}",
-            ConsoleColor.DarkCyan);
     }
 }

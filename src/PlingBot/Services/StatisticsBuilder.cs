@@ -44,7 +44,12 @@ public class StatisticsBuilder
 
         var loadingMsg = await message.Channel.SendMessageAsync("Hämtar statistik...");
 
-        var stats = await _api.FetchMatchStatisticsAsync(tip.FixtureId.Value);
+        var stats = tip.Statistics;
+        if (stats == null)
+        {
+            var batch = await _api.FetchCouponFixturesBatchAsync([tip.FixtureId.Value]);
+            stats = batch.FirstOrDefault()?.Statistics;
+        }
 
         if (stats == null)
         {

@@ -89,9 +89,7 @@ function hasMatchEvents(tip) {
 
 function hasMatchLineups(tip) {
   if (!tip) return false;
-  const hasLineup = !!tip.HomeLineup && !!tip.AwayLineup;
-  const hasInjuries = latestEvents.some(e => e.FixtureId === tip.FixtureId && e.Type === 'Injury');
-  return hasLineup || hasInjuries;
+  return (!!tip.HomeLineup && !!tip.AwayLineup) || !!(tip.Injuries?.length);
 }
 
 const MATCH_TAB_CHECKS = {
@@ -123,7 +121,7 @@ function renderTabs() {
     if (hasMatchEvents(tip))
       html += `<button class="panel-tab ${activeTab === 'match-events' ? 'active' : ''}" data-tab="match-events">Händelser</button>`;
     if (hasMatchLineups(tip))
-      html += `<button class="panel-tab ${activeTab === 'match-lineup' ? 'active' : ''}" data-tab="match-lineup"><span class="tab-full">Laguppställning</span><span class="tab-short">Lag</span></button>`;
+      html += `<button class="panel-tab ${activeTab === 'match-lineup' ? 'active' : ''}" data-tab="match-lineup"><span class="tab-full">Laginfo</span><span class="tab-short">Lag</span></button>`;
     html += `<button class="panel-tab-close" data-tab="close" title="Stäng">✕</button>`;
   }
 
@@ -238,7 +236,7 @@ function renderMatch(m) {
   const round = league ? dedupeLeagueRound(league.Name, league.Round) : '';
   const leagueName = league ? `${league.Name}${round ? ` - ${round}` : ''}` : '';
   const leagueRow = league
-    ? `<div class="match-league">${league.Logo ? `<img class="league-logo" src="${league.Logo}" alt="">` : ''}<span class="league-name">${leagueName}</span>${league.Flag ? `<img class="league-flag" src="${league.Flag}" alt="">` : ''}${league.VenueName ? `<span class="league-venue"> · ${league.VenueName}</span>` : ''}</div>`
+    ? `<div class="match-league"><span class="league-name">${leagueName}</span>${league.Logo ? `<img class="league-logo" src="${league.Logo}" alt="">` : ''}${league.Flag ? `<img class="league-flag" src="${league.Flag}" alt="">` : ''}${league.VenueName ? `<span class="league-venue"> · ${league.VenueName}</span>` : ''}</div>`
     : '';
 
   return `
@@ -401,15 +399,15 @@ function renderMatchEventsList(events, fixtureMap) {
       html += `<div class="events-period">${period}</div>`;
       currentPeriod = period;
     }
-    html += renderEvent(e, fixtureMap);
+    html += renderEvent(e, fixtureMap, false);
   }
 
   return html || `<div class="events-empty">Inga händelser ännu</div>`;
 }
 
-function renderEvent(e, fixtureMap) {
+function renderEvent(e, fixtureMap, showMatchBadge = true) {
   const match   = fixtureMap[e.FixtureId];
-  const matchNum = match ? `#${match.Number}` : '';
+  const matchNum = showMatchBadge && match ? `#${match.Number}` : '';
 
   const typeClass = e.Type === 'Goal'         ? 'ev-goal'
     : e.Type === 'Card'                       ? 'ev-card'
@@ -457,7 +455,8 @@ function renderEvent(e, fixtureMap) {
         const h = isHome ? `<strong>${parts[0]}</strong>` : parts[0];
         const a = isHome ? parts[1] : `<strong>${parts[1]}</strong>`;
         const player = e.Player ? ` · ${e.Player}` : '';
-        subText = `${match.HomeTeam} ${h}–${a} ${match.AwayTeam}${player}`;
+        const reason = e.Detail ? ` · ${formatVarReason(e.Detail)}` : '';
+        subText = `${match.HomeTeam} ${h}–${a} ${match.AwayTeam}${player}${reason}`;
       } else {
         subText = match ? `${match.HomeTeam} ${score} ${match.AwayTeam}` : score;
       }
@@ -468,9 +467,12 @@ function renderEvent(e, fixtureMap) {
     mainText = `Byte: ${e.Team || ''}`;
     subText  = `UT: ${e.Player || '?'} · IN: ${e.Assist || '?'}`;
   } else if (e.Type === 'Injury') {
-    const label = e.Detail === 'Missing Fixture' ? 'Missar matchen' : 'Tveksam';
-    mainText = `${label}: ${e.Player || 'Okänd spelare'}`;
-    subText  = e.Comments ? `${e.Team || ''} · ${e.Comments}` : (e.Team || '');
+    const isSuspension = e.Comments === 'Yellow Cards';
+    const label = isSuspension ? 'Avstängd' : e.Detail === 'Missing Fixture' ? 'Missar matchen' : 'Tveksam';
+    mainText = e.Player || 'Okänd spelare';
+    subText = isSuspension
+      ? `${label} · ${e.Team || ''}`
+      : e.Comments ? `${label} · ${e.Team || ''} · ${e.Comments}` : `${label} · ${e.Team || ''}`;
   } else {
     mainText = e.Player ? e.Player : 'Okänd';
     subText  = e.Comments ? `${e.Team || ''} · ${e.Comments}` : (e.Team || '');
@@ -604,13 +606,13 @@ function renderLineupRow(homePlayer, awayPlayer) {
 
 function renderMatchLineupList(tip) {
   const home = tip.HomeLineup, away = tip.AwayLineup;
-  const injuries = latestEvents.filter(e => e.FixtureId === tip.FixtureId && e.Type === 'Injury');
+  const injuries = tip.Injuries || [];
 
   if (!home || !away) {
     if (!injuries.length)
       return `<div class="events-empty">Ingen laguppställning tillgänglig för match #${tip.Number} ännu</div>`;
     let html = `<div class="stats-section-header">Frånvaro</div>`;
-    for (const e of injuries) html += renderEvent(e, latestFixtureMap);
+    for (const e of injuries) html += renderEvent(e, latestFixtureMap, false);
     return html;
   }
 
@@ -669,7 +671,7 @@ function renderMatchLineupList(tip) {
           ${lineupSubsExpanded ? 'Avbytare' : 'Avbytare (klicka för att visa)'}
         </div>
         ${lineupSubsExpanded ? subRows.join('') : ''}` : ''}
-      ${injuries.length ? `<div class="stats-section-header">Frånvaro</div>${injuries.map(e => renderEvent(e, latestFixtureMap)).join('')}` : ''}
+      ${injuries.length ? `<div class="stats-section-header">Frånvaro</div>${injuries.map(e => renderEvent(e, latestFixtureMap, false)).join('')}` : ''}
     </div>`;
 }
 
@@ -882,6 +884,13 @@ function getResult(m) {
   return m.Tip.includes(m.Outcome) ? 'correct' : 'wrong';
 }
 
+function formatVarReason(detail) {
+  if (!detail) return '';
+  const idx = detail.indexOf(' - ');
+  const s = idx >= 0 ? detail.slice(idx + 3) : detail;
+  return s.charAt(0).toUpperCase() + s.slice(1);
+}
+
 function formatKickoff(utc) {
   if (!utc) return { day: '', time: '–' };
 
@@ -919,7 +928,7 @@ function eventIcon(e) {
   }
   if (e.Type === 'CancelledGoal') return ico('icon-var', 24, 17);
   if (e.Type === 'Substitution')  return ico('icon-subst', 14, 14);
-  if (e.Type === 'Injury')        return ico('icon-injury', 22, 14);
+  if (e.Type === 'Injury')        return e.Comments === 'Yellow Cards' ? ico('icon-suspension', 16, 14) : ico('icon-injury', 14, 14);
   return '';
 }
 

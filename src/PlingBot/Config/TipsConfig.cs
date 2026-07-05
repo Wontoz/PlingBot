@@ -66,7 +66,6 @@ public class TipsConfig
         DateOnly selectedDate = couponDate ?? ResolveLatestExistingDate(jsonDir, filePrefix);
         _jsonFileName = $"{filePrefix}_{selectedDate:yyyy-MM-dd}.json";
         _logger.Log($"Using game: {game}", ConsoleColor.Cyan);
-        _logger.Log($"Using coupon date: {selectedDate:yyyy-MM-dd}", ConsoleColor.Cyan);
 
         _jsonPath = Path.Combine(jsonDir, _jsonFileName);
         LoadFromJson();

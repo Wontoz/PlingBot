@@ -30,7 +30,6 @@ public class FootballApiClient
     private readonly HttpClient _http;
     private readonly Logger _logger;
     private readonly ApiUsageTracker _usageTracker;
-    private readonly Dictionary<int, string?> _playerNameCache = new();
     private readonly SemaphoreSlim _rateLimitGate = new(1, 1);
     private readonly TimeSpan _minCallInterval;
     private DateTime _lastCallUtc = DateTime.MinValue;
@@ -113,32 +112,6 @@ public class FootballApiClient
             .FirstOrDefault();
     }
 
-    public async Task<(Match? Match, List<MatchEvent> Events)> FetchFixtureWithEventsAsync(int fixtureId)
-    {
-        string json = await GetApiJsonAsync($"fixtures?id={fixtureId}", "fixtures/id");
-        using var doc = JsonDocument.Parse(json);
-
-        if (TryLogApiErrors(doc.RootElement, $"fixtures id={fixtureId}"))
-            return (null, []);
-
-        var response = doc.RootElement.GetProperty("response");
-        var first = response.EnumerateArray().FirstOrDefault();
-        if (first.ValueKind == JsonValueKind.Undefined)
-            return (null, []);
-
-        var match = CreateMatchFromJson(first);
-
-        var events = first.TryGetProperty("events", out var eventsElem) && eventsElem.ValueKind == JsonValueKind.Array
-            ? eventsElem.EnumerateArray()
-                .Select(e => MapToMatchEvent(e, fixtureId))
-                .Where(e => e != null)
-                .Cast<MatchEvent>()
-                .ToList()
-            : [];
-
-        return (match, events);
-    }
-
     // Fetches all coupon fixtures in one call, returning match data, events, statistics and
     // lineups together. Replaces the old live-overlay + per-fixture events/stats pattern:
     // instead of ?live=all + N×?statistics + N×?events we pay for exactly 1 call per tick.
@@ -195,112 +168,6 @@ public class FootballApiClient
         }
 
         return results;
-    }
-
-    public async Task<List<MatchEvent>> FetchMatchEventsByTypeAsync(int matchId, string type)
-    {
-        var events = await FetchMatchEventsAsync(matchId);
-
-        return events
-            .Where(e => string.Equals(e.Type, type, StringComparison.OrdinalIgnoreCase))
-            .ToList();
-    }
-
-    public async Task<List<MatchEvent>> FetchMatchEventsAsync(int matchId)
-    {
-        try
-        {
-            string json = await GetApiJsonAsync($"fixtures/events?fixture={matchId}", "fixtures/events");
-            using var doc = JsonDocument.Parse(json);
-
-            if (TryLogApiErrors(doc.RootElement, $"fixture events {matchId}"))
-                return [];
-
-            if (!doc.RootElement.TryGetProperty("response", out var response) ||
-                response.ValueKind != JsonValueKind.Array)
-            {
-                return [];
-            }
-
-            return response.EnumerateArray()
-                .Select(e => MapToMatchEvent(e, matchId))
-                .Where(e => e != null)
-                .Cast<MatchEvent>()
-                .ToList();
-        }
-        catch (HttpRequestException ex)
-        {
-            _logger.Log($"HTTP error fetching events for fixture {matchId}: {ex.Message}");
-            return [];
-        }
-        catch (JsonException ex)
-        {
-            _logger.Log($"JSON parse error fetching events for fixture {matchId}: {ex.Message}");
-            return [];
-        }
-        catch (Exception ex)
-        {
-            _logger.Log($"Unexpected error fetching events for fixture {matchId}: {ex.Message}");
-            return [];
-        }
-    }
-
-    public async Task<MatchStatistics?> FetchMatchStatisticsAsync(int fixtureId)
-    {
-        try
-        {
-            string json = await GetApiJsonAsync($"fixtures/statistics?fixture={fixtureId}", "fixtures/statistics");
-            using var doc = JsonDocument.Parse(json);
-
-            if (TryLogApiErrors(doc.RootElement, $"fixture statistics {fixtureId}"))
-                return null;
-
-            if (!doc.RootElement.TryGetProperty("response", out var response) ||
-                response.ValueKind != JsonValueKind.Array)
-                return null;
-
-            var items = response.EnumerateArray().ToList();
-            if (items.Count < 2)
-                return null;
-
-            return new MatchStatistics
-            {
-                Home = ParseTeamStatistics(items[0]),
-                Away = ParseTeamStatistics(items[1])
-            };
-        }
-        catch (Exception ex)
-        {
-            _logger.Log($"Error fetching statistics for fixture {fixtureId}: {ex.Message}", ConsoleColor.DarkYellow);
-            return null;
-        }
-    }
-
-    public async Task<(TeamLineup? Home, TeamLineup? Away)> FetchLineupsAsync(int fixtureId)
-    {
-        try
-        {
-            string json = await GetApiJsonAsync($"fixtures/lineups?fixture={fixtureId}", "fixtures/lineups");
-            using var doc = JsonDocument.Parse(json);
-
-            if (TryLogApiErrors(doc.RootElement, $"fixture lineups {fixtureId}"))
-                return (null, null);
-
-            if (!doc.RootElement.TryGetProperty("response", out var response) ||
-                response.ValueKind != JsonValueKind.Array)
-                return (null, null);
-
-            var items = response.EnumerateArray().Select(ParseTeamLineup).ToList();
-            if (items.Count < 2)
-                return (null, null);
-
-            return (items[0], items[1]);
-        }
-        catch (Exception ex)
-        {
-            _logger.Log($"Error fetching lineups for fixture {fixtureId}: {ex.Message}", ConsoleColor.DarkYellow);
-            return (null, null);
-        }
     }
 
     private static TeamLineup ParseTeamLineup(JsonElement element)
@@ -498,59 +365,6 @@ public class FootballApiClient
         return result;
     }
 
-    public async Task<string?> FetchPlayerFullNameAsync(int playerId)
-    {
-        if (_playerNameCache.TryGetValue(playerId, out var cachedName))
-            return cachedName;
-
-        try
-        {
-            string json = await GetApiJsonAsync($"players/profiles?player={playerId}", "players/profiles");
-            using var doc = JsonDocument.Parse(json);
-
-            if (TryLogApiErrors(doc.RootElement, $"player profile {playerId}"))
-            {
-                _playerNameCache[playerId] = null;
-                return null;
-            }
-
-            var player = doc.RootElement
-                .GetProperty("response")
-                .EnumerateArray()
-                .Select(item => item.GetProperty("player"))
-                .FirstOrDefault();
-
-            if (player.ValueKind == JsonValueKind.Undefined)
-            {
-                _playerNameCache[playerId] = null;
-                return null;
-            }
-
-            string firstName = player.TryGetProperty("firstname", out var firstNameElem)
-                ? firstNameElem.GetString() ?? ""
-                : "";
-            string lastName = player.TryGetProperty("lastname", out var lastNameElem)
-                ? lastNameElem.GetString() ?? ""
-                : "";
-            string fullName = $"{firstName} {lastName}".Trim();
-
-            if (string.IsNullOrWhiteSpace(fullName) &&
-                player.TryGetProperty("name", out var nameElem))
-            {
-                fullName = nameElem.GetString() ?? "";
-            }
-
-            _playerNameCache[playerId] = string.IsNullOrWhiteSpace(fullName) ? null : fullName;
-            return _playerNameCache[playerId];
-        }
-        catch (Exception ex)
-        {
-            _logger.Log($"Could not fetch player profile {playerId}: {ex.Message}", ConsoleColor.DarkYellow);
-            _playerNameCache[playerId] = null;
-            return null;
-        }
-    }
-
     // Hits the /status endpoint, which does NOT count against the daily quota. Its response
     // headers carry the same x-ratelimit-* values as every other call, so this lets us learn
     // the account's real per-minute/daily limits before the startup burst even begins.
@@ -719,7 +533,6 @@ public class FootballApiClient
             perMinuteLimit != _perMinuteLimit)
         {
             _perMinuteLimit = perMinuteLimit;
-            _logger.Log($"API per-minute limit detected: {perMinuteLimit}/min", ConsoleColor.DarkCyan);
         }
 
         if (headers.TryGetValues("X-RateLimit-Remaining", out var minuteRemainingValues) &&

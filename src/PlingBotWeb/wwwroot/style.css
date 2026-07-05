@@ -161,9 +161,9 @@ header {
   display: flex;
   align-items: center;
   gap: 3px;
-  font-size: 0.58rem;
+  font-size: 0.68rem;
   color: var(--muted);
-  padding-left: 7px;
+  padding-left: 21px;
 }
 
 @media (max-width: 892px) {
@@ -179,8 +179,8 @@ header {
 }
 
 .league-logo {
-  width: 11px;
-  height: 11px;
+  width: 15px;
+  height: 15px;
   object-fit: contain;
   flex-shrink: 0;
 }
@@ -510,7 +510,7 @@ header {
 .event-row.ev-card   { border-left-color: var(--red); }
 .event-row.ev-var    { border-left-color: var(--amber); }
 .event-row.ev-subst  { border-left-color: var(--muted); }
-.event-row.ev-injury { border-left-color: #f5a623; }
+.event-row.ev-injury { border-left-color: transparent; }
 .event-row.ev-good { border-left-color: var(--green); }
 .event-row.ev-warn { border-left-color: var(--lime); }
 .event-row.ev-aim  { border-left-color: var(--rose); }

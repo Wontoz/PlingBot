@@ -20,6 +20,11 @@
     "Id": 377
   },
   {
+    "Name": "Akranes",
+    "ApiName": "IA Akranes",
+    "Id": 827
+  },
+  {
     "Name": "Albanien",
     "ApiName": "Albania",
     "Id": 778
@@ -155,6 +160,11 @@
     "Id": 6
   },
   {
+    "Name": "Breidablik",
+    "ApiName": "Breidablik",
+    "Id": 276
+  },
+  {
     "Name": "Brentford",
     "ApiName": "Brentford",
     "Id": 55
@@ -163,6 +173,11 @@
     "Name": "Bristol City",
     "ApiName": "Bristol City",
     "Id": 56
+  },
+  {
+    "Name": "Bryne",
+    "ApiName": "Bryne",
+    "Id": 2142
   },
   {
     "Name": "Burnley",
@@ -485,6 +500,11 @@
     "Id": 6676
   },
   {
+    "Name": "Hödd",
+    "ApiName": "hodd",
+    "Id": 2150
+  },
+  {
     "Name": "IF Eker Örebro",
     "ApiName": "Eker Örebro",
     "Id": 25570
@@ -508,6 +528,11 @@
     "Name": "IFK Norrköping",
     "ApiName": "IFK Norrkoping",
     "Id": 378
+  },
+  {
+    "Name": "Ilves",
+    "ApiName": "Ilves",
+    "Id": 1163
   },
   {
     "Name": "Inter",
@@ -568,6 +593,11 @@
     "Name": "Jönköpings Södra",
     "ApiName": "Jonkopings Sodra",
     "Id": 764
+  },
+  {
+    "Name": "Kalmar",
+    "ApiName": "Kalmar FF",
+    "Id": 374
   },
   {
     "Name": "Kanada",
@@ -970,6 +1000,11 @@
     "Id": 332
   },
   {
+    "Name": "Sandnes",
+    "ApiName": "Sandnes ULF",
+    "Id": 2146
+  },
+  {
     "Name": "Sandviken",
     "ApiName": "Sandviken",
     "Id": 6697
@@ -1095,6 +1130,11 @@
     "Id": 75
   },
   {
+    "Name": "Strömsgodset",
+    "ApiName": "Stromsgodset",
+    "Id": 324
+  },
+  {
     "Name": "Stuttgart",
     "ApiName": "VfB Stuttgart",
     "Id": 172
@@ -1210,6 +1250,11 @@
     "Id": 532
   },
   {
+    "Name": "Valur",
+    "ApiName": "Valur Reykjavik",
+    "Id": 274
+  },
+  {
     "Name": "Varberg",
     "ApiName": "Varbergs BoIS FC",
     "Id": 2171
@@ -1218,6 +1263,11 @@
     "Name": "Venezuela",
     "ApiName": "Venezuela",
     "Id": 2379
+  },
+  {
+    "Name": "Vestmannaeyja",
+    "ApiName": "IBV Vestmannaeyjar",
+    "Id": 268
   },
   {
     "Name": "Villarreal",
@@ -1298,6 +1348,11 @@
     "Name": "Örebro",
     "ApiName": "Orebro SK",
     "Id": 365
+  },
+  {
+    "Name": "Örgryte",
+    "ApiName": "Orgryte IS",
+    "Id": 2166
   },
   {
     "Name": "Öster",

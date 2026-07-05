@@ -38,7 +38,6 @@ public class VersusConfig
 
         if (!File.Exists(path))
         {
-            logger.Log($"{_jsonFileName} not found — no versus players loaded", ConsoleColor.Yellow);
             return;
         }
 

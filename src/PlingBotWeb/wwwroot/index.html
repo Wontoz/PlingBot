@@ -56,12 +56,16 @@
       <path fill="#e5252a" d="M3.3 2h1.4v6H7L4 12 1 8h2.3z"/>
       <path fill="#22c55e" d="M11.3 14h1.4V8H15l-3-4-3 4h2.3z"/>
     </symbol>
-    <!-- Injury: bandage / plåster -->
-    <symbol id="icon-injury" viewBox="0 0 22 14">
-      <rect x="0" y="2" width="22" height="10" rx="5" fill="#f5a623"/>
-      <rect x="6" y="2" width="10" height="10" fill="white" opacity="0.85"/>
-      <circle cx="9.5" cy="7" r="1.1" fill="#ccc"/>
-      <circle cx="12.5" cy="7" r="1.1" fill="#ccc"/>
+    <!-- Injury: red cross -->
+    <symbol id="icon-injury" viewBox="0 0 14 14">
+      <rect x="4.5" y="0" width="5" height="14" rx="1" fill="#cc1010"/>
+      <rect x="0" y="4.5" width="14" height="5" rx="1" fill="#cc1010"/>
+    </symbol>
+    <!-- Suspension: yellow card (base) + prohibition circle overlapping in front -->
+    <symbol id="icon-suspension" viewBox="0 0 14 14">
+      <rect x="0" y="1" width="8" height="12" rx="1.5" fill="#f5c518"/>
+      <circle cx="9" cy="7" r="5.5" fill="white" stroke="#e52b20" stroke-width="1.5"/>
+      <line x1="5.1" y1="3.1" x2="12.9" y2="10.9" stroke="#e52b20" stroke-width="1.5" stroke-linecap="round"/>
     </symbol>
   </svg>
 
@@ -103,6 +107,6 @@
     <div id="updated"><span id="poll-time"></span><span id="data-time"></span></div>
 
   </div>
-  <script src="app.js?v=94"></script>
+  <script src="app.js?v=99"></script>
 </body>
 </html>

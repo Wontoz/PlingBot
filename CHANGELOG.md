@@ -1,5 +1,40 @@
 # Changelog
 
+## [3.1.1] - 2026-07-05
+
+### VAR-händelser uppdateras nu i efterhand
+- När API:et initialt inte känner till spelarnamn vid en bortdömning visas händelsen ändå direkt — och fylls sedan automatiskt på med spelarnamn och orsak (t.ex. "Offside") när informationen finns tillgänglig
+- Discord-meddelandet uppdateras på samma sätt som målmeddelanden redan gör
+- Orsaken till bortdömningen visas nu i både Discord och webbappen, med stor inledningsbokstav
+- När ett bortdömt mål inträffar tas det ursprungliga målkortet bort ur händelseflödet
+
+### Buggfix: mål missades vid botomstart mitt i en match
+- Om botten startades om medan en match pågick, antog den att alla mål som redan inträffat var kända — och om något mål senare kom in i cachen behandlades det som dubblett och annonserades aldrig. Nu bevaras det sparade ställningsvärdet oförändrat vid omstart för pågående matcher, så upptagningsfasen fungerar korrekt
+
+### Buggfix: VAR-händelsers ställning uppdaterades felaktigt
+- När spelarinfo fylldes i på en VAR-händelse ersattes av misstag originalställningen (vid bortdömningstillfället) med nuvarande matchställning. Nu används alltid den ursprungligt sparade texten som bas
+
+### Frånvarolistan visas inte längre i Händelser-fliken
+- Skade- och avstängningsrapporter lagras nu som ett eget fält per match i JSON-filen, separerade från matchhändelserna — de kan inte längre råka trigga Händelser-fliken att visas i onödan
+- Dubbletter i skadelistan (samma spelare dök upp flera gånger vid batchhämtning) är åtgärdade
+
+### Nya ikoner för skador och avstängningar
+- Skadeikonen är nu ett rött kors istället för ett plåster
+- Spelare som är **avstängda** (gult kort i tidigare match) får en ny ikon med ett gult kort och en förbudscirkel framför, och texten "Avstängd" — de hanterades tidigare likadant som skadade spelare trots att orsaken är en annan
+
+### Webbappförbättringar
+- Ligalogotypen visas nu direkt till vänster om flaggan istället för längst till vänster i ligaraden
+- Fliken "Laguppställning" heter nu "Laginfo" (matchar bättre att den också innehåller frånvaroinformation)
+
+### Effektivare API-användning
+- Händelse- och statistikhämtning vid synkronisering (varje poll) och ikappkörning (botomstart) sker nu i ett enda batchanrop per omgång istället för ett anrop per match — minskar API-belastningen avsevärt
+- Flera interna API-metoder som inte längre används har tagits bort
+
+### Nya lag i lagrepositoriet
+Akranes, Breidablik, Bryne, Hödd, Ilves, Kalmar, Sandnes, Strömsgodset, Valur, Vestmannaeyja, Örgryte
+
+---
+
 ## [3.1.0] - 2026-07-02
 
 ### Extra Time-buggfixar
