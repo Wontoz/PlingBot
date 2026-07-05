@@ -43,8 +43,8 @@
       background: #1a1a1a;
       border: 1px solid #242424;
       border-radius: 12px;
-      padding: 14px;
-      margin-bottom: 10px;
+      padding: 18px;
+      margin-bottom: 12px;
     }
     .match-meta {
       display: flex; justify-content: space-between; align-items: baseline;
@@ -52,14 +52,14 @@
     }
     .match-num { font-size: 0.68rem; color: #555; font-weight: 600; text-transform: uppercase; letter-spacing: 0.04em; }
     .match-kickoff { font-size: 0.68rem; color: #444; }
-    .match-teams { font-size: 0.92rem; font-weight: 500; color: #ddd; margin-bottom: 12px; }
+    .match-teams { font-size: 0.95rem; font-weight: 500; color: #ddd; margin-bottom: 14px; }
 
-    .tip-buttons { display: flex; gap: 8px; }
+    .tip-buttons { display: flex; gap: 10px; }
     .tip-btn {
-      flex: 1; padding: 11px 0; border-radius: 8px;
-      background: #252525; color: #666;
+      flex: 1; padding: 13px 0; border-radius: 8px;
+      background: #252525; color: #555;
       border: 1.5px solid #2e2e2e;
-      font-size: 1rem; font-weight: 700;
+      font-size: 1.05rem; font-weight: 700;
       transition: background 0.1s, color 0.1s, border-color 0.1s;
     }
     .tip-btn.active {
@@ -180,7 +180,8 @@ function showAdmin(data) {
         <div class="match-teams">${m.HomeTeam} – ${m.AwayTeam}</div>
         <div class="tip-buttons">
           ${['1', 'X', '2'].map(t => `
-            <button class="tip-btn ${m.Tip === t ? 'active' : ''}"
+            <button class="tip-btn ${(m.Tip || '').includes(t) ? 'active' : ''}"
+                    data-tip="${t}"
                     onclick="selectTip(${m.Number}, '${t}', this)">
               ${t}
             </button>
@@ -191,11 +192,13 @@ function showAdmin(data) {
   }).join('');
 }
 
-function selectTip(num, tip, btn) {
-  tips[num] = tip;
+function selectTip(num, t, btn) {
+  const set = new Set((tips[num] || '').split('').filter(Boolean));
+  if (set.has(t)) set.delete(t);
+  else set.add(t);
+  tips[num] = ['1', 'X', '2'].filter(x => set.has(x)).join('');
   btn.closest('.tip-buttons').querySelectorAll('.tip-btn')
-    .forEach(b => b.classList.remove('active'));
-  btn.classList.add('active');
+    .forEach(b => b.classList.toggle('active', tips[num].includes(b.dataset.tip)));
 }
 
 async function saveTips() {
