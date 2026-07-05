@@ -398,12 +398,14 @@ public class ScorePollerService
             _tipsConfig.SaveToJson();
         }
 
+        tip.KickoffUtc = current.Date.ToUniversalTime();
+
         if (ShouldSkipStatus(current.Status.Short))
         {
             _tipsConfig.SaveToJson();
             if (_loggedSkips.Add(tip.FixtureId.Value))
             {
-                string kickoff = tip.KickoffUtc?.ToLocalTime().ToString("dd-MM HH:mm") ?? "";
+                string kickoff = tip.KickoffUtc.Value.ToLocalTime().ToString("dd-MM HH:mm");
                 _logger.Log($"Match #{tip.Number,-2}  {tip.HomeTeam} - {tip.AwayTeam}  {current.Status.Long}  {kickoff}", ConsoleColor.DarkYellow);
             }
             return false;
@@ -414,7 +416,6 @@ public class ScorePollerService
 
         tip.HomeTeamId ??= current.HomeTeamId;
         tip.AwayTeamId ??= current.AwayTeamId;
-        tip.KickoffUtc = current.Date.ToUniversalTime();
 
         if (IsFinishedStatus(current.Status.Short))
         {
