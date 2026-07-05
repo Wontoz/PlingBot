@@ -1,0 +1,245 @@
+<!DOCTYPE html>
+<html lang="sv">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>PlingBot Admin</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: system-ui, -apple-system, sans-serif;
+      background: #0f0f0f;
+      color: #e0e0e0;
+      min-height: 100dvh;
+      padding: 16px 16px 100px;
+    }
+
+    h1 { font-size: 1.1rem; font-weight: 600; color: #fff; margin-bottom: 4px; }
+    .subtitle { font-size: 0.75rem; color: #555; margin-bottom: 20px; }
+
+    /* Login */
+    #login-section { max-width: 380px; margin: 80px auto 0; }
+    #login-section input {
+      width: 100%; padding: 13px 14px; border-radius: 10px;
+      border: 1px solid #2a2a2a; background: #1a1a1a; color: #e0e0e0;
+      font-size: 1rem; margin-bottom: 10px; outline: none;
+      -webkit-appearance: none;
+    }
+    #login-section input:focus { border-color: #2563eb; }
+
+    /* Buttons */
+    button { cursor: pointer; border: none; font-family: inherit; }
+
+    .btn-primary {
+      width: 100%; padding: 13px; border-radius: 10px;
+      background: #2563eb; color: #fff;
+      font-size: 0.95rem; font-weight: 600;
+    }
+    .btn-primary:active { background: #1d4ed8; }
+
+    /* Match cards */
+    .match-card {
+      background: #1a1a1a;
+      border: 1px solid #242424;
+      border-radius: 12px;
+      padding: 14px;
+      margin-bottom: 10px;
+    }
+    .match-meta {
+      display: flex; justify-content: space-between; align-items: baseline;
+      margin-bottom: 6px;
+    }
+    .match-num { font-size: 0.68rem; color: #555; font-weight: 600; text-transform: uppercase; letter-spacing: 0.04em; }
+    .match-kickoff { font-size: 0.68rem; color: #444; }
+    .match-teams { font-size: 0.92rem; font-weight: 500; color: #ddd; margin-bottom: 12px; }
+
+    .tip-buttons { display: flex; gap: 8px; }
+    .tip-btn {
+      flex: 1; padding: 11px 0; border-radius: 8px;
+      background: #252525; color: #666;
+      border: 1.5px solid #2e2e2e;
+      font-size: 1rem; font-weight: 700;
+      transition: background 0.1s, color 0.1s, border-color 0.1s;
+    }
+    .tip-btn.active {
+      background: #1e3a8a; color: #93c5fd;
+      border-color: #2563eb;
+    }
+    .tip-btn:active { opacity: 0.7; }
+
+    /* Sticky footer */
+    #footer {
+      position: fixed; bottom: 0; left: 0; right: 0;
+      padding: 12px 16px 20px;
+      background: linear-gradient(transparent, #0f0f0f 20%);
+    }
+    .btn-save {
+      width: 100%; padding: 15px;
+      border-radius: 12px;
+      background: #16a34a; color: #fff;
+      font-size: 1rem; font-weight: 700;
+    }
+    .btn-save:active { background: #15803d; }
+    .btn-save:disabled { background: #1a2e1a; color: #3a5a3a; }
+
+    /* Messages */
+    .msg {
+      text-align: center; padding: 9px 12px; border-radius: 8px;
+      font-size: 0.83rem; font-weight: 500; margin-top: 8px;
+      display: none;
+    }
+    .msg.ok  { background: #14532d; color: #4ade80; display: block; }
+    .msg.err { background: #450a0a; color: #f87171; display: block; }
+
+    #file-label {
+      font-size: 0.72rem; color: #444; margin-bottom: 14px;
+    }
+  </style>
+</head>
+<body>
+
+<div id="login-section">
+  <h1>PlingBot Admin</h1>
+  <p class="subtitle">Fyll i tips innan boten startas</p>
+  <input type="password" id="pwd-input" placeholder="Lösenord" autocomplete="current-password">
+  <button class="btn-primary" onclick="doLogin()">Logga in</button>
+  <div id="login-msg" class="msg"></div>
+</div>
+
+<div id="admin-section" style="display:none">
+  <h1>Tips</h1>
+  <div id="file-label"></div>
+  <div id="matches-list"></div>
+  <div id="footer">
+    <button class="btn-save" id="save-btn" onclick="saveTips()">Spara</button>
+    <div id="save-msg" class="msg"></div>
+  </div>
+</div>
+
+<script>
+const tips = {};
+
+function getPassword() { return sessionStorage.getItem('admin_pwd') || ''; }
+
+async function doLogin() {
+  const input = document.getElementById('pwd-input');
+  const pwd = input.value.trim();
+  if (!pwd) return;
+
+  const msg = document.getElementById('login-msg');
+  msg.className = 'msg';
+
+  try {
+    const res = await fetch('/api/admin/coupon', {
+      headers: { 'X-Admin-Password': pwd }
+    });
+    if (res.status === 401) { showMsg(msg, 'Fel lösenord', 'err'); return; }
+    if (!res.ok)            { showMsg(msg, 'Serverfel ' + res.status, 'err'); return; }
+    sessionStorage.setItem('admin_pwd', pwd);
+    showAdmin(await res.json());
+  } catch {
+    showMsg(msg, 'Kunde inte nå servern', 'err');
+  }
+}
+
+async function tryAutoLogin() {
+  const pwd = getPassword();
+  if (!pwd) return;
+  try {
+    const res = await fetch('/api/admin/coupon', {
+      headers: { 'X-Admin-Password': pwd }
+    });
+    if (!res.ok) { sessionStorage.removeItem('admin_pwd'); return; }
+    showAdmin(await res.json());
+  } catch {}
+}
+
+function showAdmin(data) {
+  document.getElementById('login-section').style.display = 'none';
+  document.getElementById('admin-section').style.display = 'block';
+
+  const matches = data.TipsData || [];
+  const meta    = data.MetaData || {};
+
+  document.getElementById('file-label').textContent =
+    `${meta.Game || ''}  ·  ${meta.Date || ''}`;
+
+  matches.forEach(m => { tips[m.Number] = m.Tip || ''; });
+
+  document.getElementById('matches-list').innerHTML = matches.map(m => {
+    const kickoff = m.KickoffUtc
+      ? new Date(m.KickoffUtc).toLocaleString('sv-SE', { weekday: 'short', hour: '2-digit', minute: '2-digit' })
+      : '';
+    return `
+      <div class="match-card">
+        <div class="match-meta">
+          <span class="match-num">Match ${m.Number}</span>
+          <span class="match-kickoff">${kickoff}</span>
+        </div>
+        <div class="match-teams">${m.HomeTeam} – ${m.AwayTeam}</div>
+        <div class="tip-buttons">
+          ${['1', 'X', '2'].map(t => `
+            <button class="tip-btn ${m.Tip === t ? 'active' : ''}"
+                    onclick="selectTip(${m.Number}, '${t}', this)">
+              ${t}
+            </button>
+          `).join('')}
+        </div>
+      </div>
+    `;
+  }).join('');
+}
+
+function selectTip(num, tip, btn) {
+  tips[num] = tip;
+  btn.closest('.tip-buttons').querySelectorAll('.tip-btn')
+    .forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+}
+
+async function saveTips() {
+  const btn = document.getElementById('save-btn');
+  const msg = document.getElementById('save-msg');
+  msg.className = 'msg';
+
+  btn.disabled = true;
+  btn.textContent = 'Sparar…';
+
+  try {
+    const body = {};
+    for (const [num, tip] of Object.entries(tips)) body[num] = tip;
+
+    const res = await fetch('/api/admin/tips', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'X-Admin-Password': getPassword()
+      },
+      body: JSON.stringify(body)
+    });
+
+    if (res.ok)  showMsg(msg, '✓ Sparat!', 'ok');
+    else         showMsg(msg, 'Fel vid sparning (' + res.status + ')', 'err');
+  } catch {
+    showMsg(msg, 'Serverfel', 'err');
+  }
+
+  btn.disabled = false;
+  btn.textContent = 'Spara';
+}
+
+function showMsg(el, text, type) {
+  el.textContent = text;
+  el.className = 'msg ' + type;
+  clearTimeout(el._t);
+  el._t = setTimeout(() => el.className = 'msg', 3000);
+}
+
+document.getElementById('pwd-input')
+  .addEventListener('keydown', e => { if (e.key === 'Enter') doLogin(); });
+
+tryAutoLogin();
+</script>
+</body>
+</html>
