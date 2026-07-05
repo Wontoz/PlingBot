@@ -12,11 +12,11 @@
       background: #0f0f0f;
       color: #e0e0e0;
       min-height: 100dvh;
-      padding: 16px 16px 100px;
+      padding: 12px 12px 90px;
     }
 
-    h1 { font-size: 1.1rem; font-weight: 600; color: #fff; margin-bottom: 4px; }
-    .subtitle { font-size: 0.75rem; color: #555; margin-bottom: 20px; }
+    h1 { font-size: 1rem; font-weight: 600; color: #fff; margin-bottom: 2px; }
+    .subtitle { font-size: 0.72rem; color: #555; margin-bottom: 16px; }
 
     /* Login */
     #login-section { max-width: 380px; margin: 80px auto 0; }
@@ -42,24 +42,24 @@
     .match-card {
       background: #1a1a1a;
       border: 1px solid #242424;
-      border-radius: 12px;
-      padding: 18px;
-      margin-bottom: 12px;
+      border-radius: 10px;
+      padding: 11px 12px;
+      margin-bottom: 7px;
     }
     .match-meta {
       display: flex; justify-content: space-between; align-items: baseline;
-      margin-bottom: 6px;
+      margin-bottom: 3px;
     }
-    .match-num { font-size: 0.68rem; color: #555; font-weight: 600; text-transform: uppercase; letter-spacing: 0.04em; }
-    .match-kickoff { font-size: 0.68rem; color: #444; }
-    .match-teams { font-size: 0.95rem; font-weight: 500; color: #ddd; margin-bottom: 14px; }
+    .match-num { font-size: 0.62rem; color: #555; font-weight: 600; text-transform: uppercase; letter-spacing: 0.04em; }
+    .match-kickoff { font-size: 0.62rem; color: #444; }
+    .match-teams { font-size: 0.88rem; font-weight: 500; color: #ddd; margin-bottom: 9px; }
 
-    .tip-buttons { display: flex; gap: 10px; }
+    .tip-buttons { display: flex; gap: 8px; }
     .tip-btn {
-      flex: 1; padding: 13px 0; border-radius: 8px;
+      flex: 1; padding: 9px 0; border-radius: 7px;
       background: #252525; color: #555;
       border: 1.5px solid #2e2e2e;
-      font-size: 1.05rem; font-weight: 700;
+      font-size: 0.95rem; font-weight: 700;
       transition: background 0.1s, color 0.1s, border-color 0.1s;
     }
     .tip-btn.active {
@@ -93,7 +93,7 @@
     .msg.err { background: #450a0a; color: #f87171; display: block; }
 
     #file-label {
-      font-size: 0.72rem; color: #444; margin-bottom: 14px;
+      font-size: 0.7rem; color: #444; margin-bottom: 10px;
     }
   </style>
 </head>
@@ -132,6 +132,7 @@ async function doLogin() {
 
   try {
     const res = await fetch('/api/admin/coupon', {
+      cache: 'no-store',
       headers: { 'X-Admin-Password': pwd }
     });
     if (res.status === 401) { showMsg(msg, 'Fel lösenord', 'err'); return; }
@@ -148,6 +149,7 @@ async function tryAutoLogin() {
   if (!pwd) return;
   try {
     const res = await fetch('/api/admin/coupon', {
+      cache: 'no-store',
       headers: { 'X-Admin-Password': pwd }
     });
     if (!res.ok) { sessionStorage.removeItem('admin_pwd'); return; }
