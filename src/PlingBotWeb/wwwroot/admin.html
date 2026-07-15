@@ -52,7 +52,18 @@
     }
     .match-num { font-size: 0.58rem; color: #555; font-weight: 600; text-transform: uppercase; letter-spacing: 0.04em; }
     .match-kickoff { font-size: 0.58rem; color: #444; }
-    .match-teams { font-size: 0.83rem; font-weight: 500; color: #ddd; margin-bottom: 7px; }
+    .match-teams { font-size: 0.83rem; font-weight: 500; color: #ddd; margin-bottom: 6px; }
+
+    .fixture-row {
+      display: flex; align-items: center; gap: 6px; margin-bottom: 6px;
+    }
+    .fixture-label { font-size: 0.62rem; color: #555; white-space: nowrap; }
+    .fixture-input {
+      width: 90px; padding: 3px 6px; border-radius: 4px;
+      border: 1px solid #2a2a2a; background: #111; color: #777;
+      font-size: 0.72rem; font-family: monospace; outline: none;
+    }
+    .fixture-input:focus { border-color: #444; color: #aaa; }
 
     .tip-buttons { display: flex; gap: 6px; }
     .tip-btn {
@@ -119,6 +130,7 @@
 
 <script>
 const tips = {};
+const fixtureIds = {};
 
 function getPassword() { return sessionStorage.getItem('admin_pwd') || ''; }
 
@@ -167,7 +179,10 @@ function showAdmin(data) {
   document.getElementById('file-label').textContent =
     `${meta.Game || ''}  ·  ${meta.Date || ''}`;
 
-  matches.forEach(m => { tips[m.Number] = m.Tip || ''; });
+  matches.forEach(m => {
+    tips[m.Number] = m.Tip || '';
+    fixtureIds[m.Number] = m.FixtureId ?? null;
+  });
 
   document.getElementById('matches-list').innerHTML = matches.map(m => {
     const kickoff = m.KickoffUtc
@@ -180,6 +195,12 @@ function showAdmin(data) {
           <span class="match-kickoff">${kickoff}</span>
         </div>
         <div class="match-teams">${m.HomeTeam} – ${m.AwayTeam}</div>
+        <div class="fixture-row">
+          <span class="fixture-label">Fixture ID</span>
+          <input class="fixture-input" type="number" value="${m.FixtureId ?? ''}"
+                 placeholder="–"
+                 oninput="fixtureIds[${m.Number}] = this.value ? parseInt(this.value) : null">
+        </div>
         <div class="tip-buttons">
           ${['1', 'X', '2'].map(t => `
             <button class="tip-btn ${(m.Tip || '').includes(t) ? 'active' : ''}"
@@ -212,20 +233,21 @@ async function saveTips() {
   btn.textContent = 'Sparar…';
 
   try {
-    const body = {};
-    for (const [num, tip] of Object.entries(tips)) body[num] = tip;
+    const tipsBody = {};
+    for (const [num, tip] of Object.entries(tips)) tipsBody[num] = tip;
 
-    const res = await fetch('/api/admin/tips', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'X-Admin-Password': getPassword()
-      },
-      body: JSON.stringify(body)
-    });
+    const fixtureBody = {};
+    for (const [num, fid] of Object.entries(fixtureIds)) fixtureBody[num] = fid;
 
-    if (res.ok)  showMsg(msg, '✓ Sparat!', 'ok');
-    else         showMsg(msg, 'Fel vid sparning (' + res.status + ')', 'err');
+    const headers = { 'Content-Type': 'application/json', 'X-Admin-Password': getPassword() };
+
+    const [r1, r2] = await Promise.all([
+      fetch('/api/admin/tips',      { method: 'POST', headers, body: JSON.stringify(tipsBody) }),
+      fetch('/api/admin/fixtureid', { method: 'POST', headers, body: JSON.stringify(fixtureBody) }),
+    ]);
+
+    if (r1.ok && r2.ok) showMsg(msg, '✓ Sparat!', 'ok');
+    else                 showMsg(msg, 'Fel vid sparning (' + [r1.status, r2.status].join('/') + ')', 'err');
   } catch {
     showMsg(msg, 'Serverfel', 'err');
   }

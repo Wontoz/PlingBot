@@ -77,6 +77,37 @@ app.MapPost("/api/admin/tips", async (HttpContext ctx) =>
     return Results.Ok();
 });
 
+app.MapPost("/api/admin/fixtureid", async (HttpContext ctx) =>
+{
+    if (!IsAuthorized(ctx, adminPassword))
+        return Results.Unauthorized();
+
+    var updates = await ctx.Request.ReadFromJsonAsync<Dictionary<string, int?>>();
+    if (updates == null)
+        return Results.BadRequest("Ogiltig body.");
+
+    var jsonDir = ResolveJsonDirectory();
+    var path = FindLatestCouponJson(jsonDir);
+    if (path == null)
+        return Results.NotFound("Ingen kupong hittad.");
+
+    var json = await File.ReadAllTextAsync(path);
+    var node = JsonNode.Parse(json);
+    var tipsData = node?["TipsData"]?.AsArray();
+    if (tipsData == null)
+        return Results.Problem("Ogiltig JSON-struktur.");
+
+    foreach (var match in tipsData)
+    {
+        var number = match?["Number"]?.GetValue<int>().ToString();
+        if (number != null && updates.TryGetValue(number, out var fixtureId))
+            match!["FixtureId"] = fixtureId.HasValue ? JsonValue.Create(fixtureId.Value) : null;
+    }
+
+    await File.WriteAllTextAsync(path, node!.ToJsonString(new JsonSerializerOptions { WriteIndented = true }));
+    return Results.Ok();
+});
+
 app.Run("http://localhost:5050");
 
 static bool IsAuthorized(HttpContext ctx, string password)
