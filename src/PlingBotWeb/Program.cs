@@ -46,13 +46,13 @@ app.MapGet("/api/admin/coupon", (HttpContext ctx) =>
     return Results.Content(File.ReadAllText(path), "application/json");
 });
 
-app.MapPost("/api/admin/tips", async (HttpContext ctx) =>
+app.MapPost("/api/admin/save", async (HttpContext ctx) =>
 {
     if (!IsAuthorized(ctx, adminPassword))
         return Results.Unauthorized();
 
-    var updates = await ctx.Request.ReadFromJsonAsync<Dictionary<string, string>>();
-    if (updates == null)
+    var body = await ctx.Request.ReadFromJsonAsync<AdminSaveBody>();
+    if (body == null)
         return Results.BadRequest("Ogiltig body.");
 
     var jsonDir = ResolveJsonDirectory();
@@ -69,38 +69,12 @@ app.MapPost("/api/admin/tips", async (HttpContext ctx) =>
     foreach (var match in tipsData)
     {
         var number = match?["Number"]?.GetValue<int>().ToString();
-        if (number != null && updates.TryGetValue(number, out var tip))
+        if (number == null) continue;
+
+        if (body.Tips != null && body.Tips.TryGetValue(number, out var tip))
             match!["Tip"] = tip;
-    }
 
-    await File.WriteAllTextAsync(path, node!.ToJsonString(new JsonSerializerOptions { WriteIndented = true }));
-    return Results.Ok();
-});
-
-app.MapPost("/api/admin/fixtureid", async (HttpContext ctx) =>
-{
-    if (!IsAuthorized(ctx, adminPassword))
-        return Results.Unauthorized();
-
-    var updates = await ctx.Request.ReadFromJsonAsync<Dictionary<string, int?>>();
-    if (updates == null)
-        return Results.BadRequest("Ogiltig body.");
-
-    var jsonDir = ResolveJsonDirectory();
-    var path = FindLatestCouponJson(jsonDir);
-    if (path == null)
-        return Results.NotFound("Ingen kupong hittad.");
-
-    var json = await File.ReadAllTextAsync(path);
-    var node = JsonNode.Parse(json);
-    var tipsData = node?["TipsData"]?.AsArray();
-    if (tipsData == null)
-        return Results.Problem("Ogiltig JSON-struktur.");
-
-    foreach (var match in tipsData)
-    {
-        var number = match?["Number"]?.GetValue<int>().ToString();
-        if (number != null && updates.TryGetValue(number, out var fixtureId))
+        if (body.FixtureIds != null && body.FixtureIds.TryGetValue(number, out var fixtureId))
             match!["FixtureId"] = fixtureId.HasValue ? JsonValue.Create(fixtureId.Value) : null;
     }
 
@@ -149,3 +123,5 @@ static string? FindFile(string startPath, string fileName)
     }
     return null;
 }
+
+record AdminSaveBody(Dictionary<string, string>? Tips, Dictionary<string, int?>? FixtureIds);

@@ -239,15 +239,14 @@ async function saveTips() {
     const fixtureBody = {};
     for (const [num, fid] of Object.entries(fixtureIds)) fixtureBody[num] = fid;
 
-    const headers = { 'Content-Type': 'application/json', 'X-Admin-Password': getPassword() };
+    const res = await fetch('/api/admin/save', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'X-Admin-Password': getPassword() },
+      body: JSON.stringify({ Tips: tipsBody, FixtureIds: fixtureBody })
+    });
 
-    const [r1, r2] = await Promise.all([
-      fetch('/api/admin/tips',      { method: 'POST', headers, body: JSON.stringify(tipsBody) }),
-      fetch('/api/admin/fixtureid', { method: 'POST', headers, body: JSON.stringify(fixtureBody) }),
-    ]);
-
-    if (r1.ok && r2.ok) showMsg(msg, '✓ Sparat!', 'ok');
-    else                 showMsg(msg, 'Fel vid sparning (' + [r1.status, r2.status].join('/') + ')', 'err');
+    if (res.ok) showMsg(msg, '✓ Sparat!', 'ok');
+    else        showMsg(msg, 'Fel vid sparning (' + res.status + ')', 'err');
   } catch {
     showMsg(msg, 'Serverfel', 'err');
   }
