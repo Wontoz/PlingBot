@@ -1,5 +1,35 @@
 # Changelog
 
+## [3.1.2] - 2026-07-16
+
+### Webbappförbättringar
+
+#### Nytt teckensnitt
+- Inter ersätter systemfonten i hela webbappen — renare och mer konsekvent typografi
+
+#### Ljust/mörkt läge
+- Temaknappar i headern låter användaren växla mellan mörkt och ljust läge
+- Valt tema sparas i `localStorage` och återställs vid nästa besök
+- Ljust läge har ett genomtänkt eget färgtema (bakgrund, text, accentfärger, badges)
+
+#### Headerdesign
+- Headern får färg baserat på speltyp: Stryktipset (mörkblå), Europatipset (grön), Topptipset (orange), Annat (röd)
+- Händelselistan och statistikpanelen sitter nu tätt mot headern utan mellanrum — ökar tillgänglig höjd för innehållet
+- Sektionerna har raka toppkanter (rundning bara i underkanten), passande att de gränsar direkt mot headern
+
+##### Ligarad och omgångsvisning
+- Ligaraden under lagnamnen döljs nu redan vid 1400px bredd (var 892px) — undviker trång visning vid mellanstora fönster
+- Omgångssträngar översätts nu till svenska i backend och sparas som ett eget fält (`RoundSwedish`): "Regular Season" → "Grundserien", "- 11" → "- Omgång 11". Webben använder `RoundSwedish` och faller tillbaka på rå API-text för äldre JSON-filer
+
+#### Matchinfo i statistikfliken
+- Längst ner i Statistik-fliken visas nu en "Matchinfo"-sektion med liga/omgång och arena — synlig även om matchstatistik ännu inte finns tillgänglig
+
+### Layoutförbättringar
+- Minskad padding i header, main-layout och footerrad för att kompensera att Inter upptar något mer utrymme
+- Händelseraderna i Live- och matchflödena har fått ökad höjd — luftigare och lättare att läsa
+
+---
+
 ## [3.1.1] - 2026-07-05
 
 ### VAR-händelser uppdateras nu i efterhand

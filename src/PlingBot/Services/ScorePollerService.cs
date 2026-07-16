@@ -709,6 +709,7 @@ public class ScorePollerService
             Flag = match.LeagueFlag,
             Logo = match.LeagueLogo,
             Round = match.LeagueRound,
+            RoundSwedish = LeagueInfo.ToSwedishRound(match.LeagueRound),
             VenueName = match.VenueName,
         };
     }

@@ -3,6 +3,7 @@ namespace PlingBot.Config;
 using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Text.RegularExpressions;
 using System.Text;
 using System.Text.Encodings.Web;
 using System.Text.Json;
@@ -29,7 +30,16 @@ public class LeagueInfo
     public string? Flag { get; set; }
     public string? Logo { get; set; }
     public string? Round { get; set; }
+    public string? RoundSwedish { get; set; }
     public string? VenueName { get; set; }
+
+    public static string? ToSwedishRound(string? round)
+    {
+        if (round == null) return null;
+        var s = round.Replace("Regular Season", "Grundserien");
+        s = Regex.Replace(s, @" - (\d+)$", " - Omgång $1");
+        return s;
+    }
 }
 
 public class MetaData

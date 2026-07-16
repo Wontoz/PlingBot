@@ -33,6 +33,7 @@ function renderAll(data) {
   const correct  = matches.filter(isCorrect);
 
   document.getElementById('game-title').textContent = `${meta.Game} — ${meta.Date}`;
+  applyGameClass(meta.Game);
 
   const fixtureMap  = buildFixtureMap(matches);
   const hasStarted  = !meta.StartTime || new Date(meta.StartTime) <= new Date();
@@ -202,12 +203,9 @@ function dedupeLeagueRound(leagueName, leagueRound) {
     return '';
 
   const prefix = lastNameSegment + separator;
-  const deduped = leagueRound.toLowerCase().startsWith(prefix.toLowerCase())
+  return leagueRound.toLowerCase().startsWith(prefix.toLowerCase())
     ? leagueRound.slice(prefix.length)
     : leagueRound;
-
-  // A round left as a bare number (e.g. "15") reads oddly on its own — spell it out.
-  return /^\d+$/.test(deduped) ? `Omgång ${deduped}` : deduped;
 }
 
 function renderMatch(m) {
@@ -233,7 +231,7 @@ function renderMatch(m) {
   // passes through unchanged. Display-only: the raw API values in leagueMap are left untouched.
 
   const league = m.FixtureId != null ? (leagueMap[m.FixtureId] ?? null) : null;
-  const round = league ? dedupeLeagueRound(league.Name, league.Round) : '';
+  const round = league ? dedupeLeagueRound(league.Name, league.RoundSwedish ?? league.Round) : '';
   const leagueName = league ? `${league.Name}${round ? ` - ${round}` : ''}` : '';
   const leagueRow = league
     ? `<div class="match-league"><span class="league-name">${leagueName}</span>${league.Logo ? `<img class="league-logo" src="${league.Logo}" alt="">` : ''}${league.Flag ? `<img class="league-flag" src="${league.Flag}" alt="">` : ''}${league.VenueName ? `<span class="league-venue"> · ${league.VenueName}</span>` : ''}</div>`
@@ -514,10 +512,31 @@ function passFraction(team) {
   return `(${team.PassesAccurate}/${team.TotalPasses})`;
 }
 
+function renderMatchInfoSection(tip) {
+  const league = tip.FixtureId != null ? (leagueMap[tip.FixtureId] ?? null) : null;
+  if (!league) return '';
+  const round = dedupeLeagueRound(league.Name, league.RoundSwedish ?? league.Round);
+  const leagueFull = `${league.Name}${round ? ` - ${round}` : ''}`;
+  const rows = [
+    ['Liga',  leagueFull],
+    ['Arena', league.VenueName],
+  ].filter(([, v]) => v);
+  if (!rows.length) return '';
+  return `
+    <div class="stats-section-header">Matchinfo</div>
+    <div class="matchinfo-rows">
+      ${rows.map(([label, val]) => `
+        <div class="matchinfo-row">
+          <span class="matchinfo-label">${label}</span>
+          <span class="matchinfo-value">${val}</span>
+        </div>`).join('')}
+    </div>`;
+}
+
 function renderMatchStatsTable(tip) {
   const stats = tip.Statistics;
   if (!stats || !stats.Home || !stats.Away)
-    return `<div class="events-empty">Ingen statistik tillgänglig för match #${tip.Number} ännu</div>`;
+    return `<div class="events-empty">Ingen statistik tillgänglig för match #${tip.Number} ännu</div>${renderMatchInfoSection(tip)}`;
 
   const h = stats.Home, a = stats.Away;
 
@@ -584,7 +603,8 @@ function renderMatchStatsTable(tip) {
       ${visibleTop.map(renderRow).join('')}
       ${visibleShot.length  ? `<div class="stats-section-header">Skott</div>${visibleShot.map(renderRow).join('')}`   : ''}
       ${visibleOther.length ? `<div class="stats-section-header">Övrigt</div>${visibleOther.map(renderRow).join('')}` : ''}
-    </div>`;
+    </div>
+    ${renderMatchInfoSection(tip)}`;
 }
 
 // ── Per-match laguppställning ────────────────────────────────────────────────
@@ -932,6 +952,33 @@ function eventIcon(e) {
   return '';
 }
 
+// ── Game type → header class ──────────────────────────────────────────────────
+
+function applyGameClass(gameName) {
+  const header = document.querySelector('header');
+  header.classList.remove('game-stryktipset', 'game-europatipset', 'game-topptipset', 'game-annat');
+  const n = (gameName || '').toLowerCase();
+  if      (n.includes('stryktipset'))  header.classList.add('game-stryktipset');
+  else if (n.includes('europatipset')) header.classList.add('game-europatipset');
+  else if (n.includes('topptipset'))   header.classList.add('game-topptipset');
+  else                                  header.classList.add('game-annat');
+}
+
+// ── Light / dark theme ────────────────────────────────────────────────────────
+
+function toggleTheme() {
+  const cur  = document.documentElement.dataset.theme || 'dark';
+  const next = cur === 'dark' ? 'light' : 'dark';
+  document.documentElement.dataset.theme = next;
+  localStorage.setItem('plingbot-theme', next);
+  updateThemeBtn(next);
+}
+
+function updateThemeBtn(theme) {
+  const btn = document.getElementById('theme-toggle');
+  if (btn) btn.textContent = theme === 'dark' ? '☀' : '☾';
+}
+
 // ── Bootstrap ─────────────────────────────────────────────────────────────────
 
 document.getElementById('matches').addEventListener('click', e => {
@@ -954,6 +1001,10 @@ document.getElementById('panel-tabs').addEventListener('click', e => {
   renderTabs();
   renderActiveTabContent();
 });
+
+const savedTheme = localStorage.getItem('plingbot-theme') || 'dark';
+document.documentElement.dataset.theme = savedTheme;
+updateThemeBtn(savedTheme);
 
 refresh();
 setInterval(refresh, 5000);
