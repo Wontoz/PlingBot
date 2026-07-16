@@ -1,9 +1,0 @@
-tunnel: a98ca248-4ce6-4940-a965-25aa2f5a2fc3
-credentials-file: C:\Users\William\.cloudflared\a98ca248-4ce6-4940-a965-25aa2f5a2fc3.json
-
-ingress:
-  - hostname: plingbot.wontoz.com
-    service: http://localhost:5050
-  - hostname: www.plingbot.wontoz.com
-    service: http://localhost:5050
-  - service: http_status:404
