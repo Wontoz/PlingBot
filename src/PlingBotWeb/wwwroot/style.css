@@ -331,6 +331,13 @@ header {
   color: var(--amber);
 }
 
+.match-status.s-live-min {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 4px;
+}
+
 @keyframes pulse {
   0%, 100% { opacity: 1; }
   50%       { opacity: 0.2; }
