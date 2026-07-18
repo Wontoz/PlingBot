@@ -164,7 +164,7 @@ header {
 .match-row {
   flex: 1;
   display: grid;
-  grid-template-columns: 24px 1fr 18px 44px max-content 66px 90px;
+  grid-template-columns: 24px 1fr 18px 44px 100px 66px 90px;
   align-items: center;
   padding: 0 12px;
   border-bottom: 1px solid var(--border);
@@ -301,9 +301,12 @@ header {
 }
 
 .match-league-logo {
-  width: 44px;
-  height: 44px;
+  max-width: 32px;
+  max-height: 32px;
+  width: auto;
+  height: auto;
   object-fit: contain;
+  display: block;
 }
 
 /* ── Match status ────────────────────────────────────────────────────────── */
@@ -314,6 +317,7 @@ header {
   font-weight: 700;
   color: var(--muted);
   white-space: nowrap;
+  text-align: right;
 }
 .row-notstarted .match-status {
   grid-column: span 2;
@@ -1079,7 +1083,7 @@ header {
 
 @media (min-width: 821px) and (max-width: 1300px) {
   .side-panel  { width: 300px; }
-  .match-row   { grid-template-columns: 24px 1fr 18px 44px max-content 60px 75px; }
+  .match-row   { grid-template-columns: 24px 1fr 18px 44px 95px 60px 75px; }
   .tip-btns    { padding-left: 10px; }
 }
 
@@ -1127,7 +1131,7 @@ header {
   .match-row {
     flex: 1;
     min-height: 0;
-    grid-template-columns: 18px 1fr max-content 40px 80px;
+    grid-template-columns: 18px 1fr 70px 40px 80px;
     padding: 5px 8px;
     gap: 4px;
   }

@@ -1,5 +1,16 @@
 # Changelog
 
+## [3.1.3.1] - 2026-07-18
+
+### Webbappförbättringar
+
+- Match-statuskolumnen återgår till fast bredd (`100px` desktop, `95px` medium, `70px` mobil) — med `max-content` beräknades bredden enbart från korta live-texter (`HT`, `45'`) eftersom ej startade rader spänner två kolumner, vilket förskjöt ligalogotypens horisontella position
+- Ligalogotyper visas nu med `max-width: 32px; max-height: 32px` inom sin 44px-container — ger jämnt visuellt luftrum oavsett logotypens ursprungliga proportioner
+- `HT`, `FT` och avsparktider är nu explicit högeralignerade (`text-align: right`) i statuskolumnen
+- Live-minuter (`45'`, `45+2'` m.fl.) är vänsteralignerade via flexbox så att siffror linjeras ihop vertikalt — `HT` berörs inte
+
+---
+
 ## [3.1.3] - 2026-07-18
 
 ### Webbappförbättringar
