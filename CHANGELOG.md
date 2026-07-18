@@ -1,5 +1,11 @@
 # Changelog
 
+## [3.1.3.2] - 2026-07-18
+
+- Live-minuter högeraligneras igen — vänsterjusteringen såg konstig ut
+
+---
+
 ## [3.1.3.1] - 2026-07-18
 
 ### Webbappförbättringar

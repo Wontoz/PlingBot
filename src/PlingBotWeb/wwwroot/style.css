@@ -346,11 +346,6 @@ header {
   flex-shrink: 0;
 }
 
-.match-status.s-live-min {
-  display: flex;
-  align-items: center;
-  gap: 4px;
-}
 
 /* ── Score badge ─────────────────────────────────────────────────────────── */
 
