@@ -35,22 +35,8 @@ public static class Helpers
     {
         if (tipStr == "1X2") return "✅";
 
-        int prevHome = homeScored ? homeGoals - 1 : homeGoals;
-        int prevAway = homeScored ? awayGoals : awayGoals - 1;
-
-        string prevOutcome = GetOutcome(prevHome, prevAway);
-        string newOutcome  = GetOutcome(homeGoals, awayGoals);
-
-        bool newGood = tipStr.Contains(newOutcome);
-        bool scorerHelps = (homeScored  && tipStr.Contains("1")) ||
-                           (!homeScored && tipStr.Contains("2")) ||
-                           (tipStr.Contains("X") && ((homeScored  && prevOutcome == "2") ||
-                                                     (!homeScored && prevOutcome == "1")));
-
-        if ( newGood &&  scorerHelps) return "✅";
-        if ( newGood && !scorerHelps) return "🟠";
-        if (!newGood &&  scorerHelps) return "🎯";
-        return "❌";
+        string newOutcome = GetOutcome(homeGoals, awayGoals);
+        return tipStr.Contains(newOutcome) ? "✅" : "❌";
     }
 
     private static string GetOutcome(int home, int away) => home > away ? "1" : home < away ? "2" : "X";

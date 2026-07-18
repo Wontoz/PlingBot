@@ -1,5 +1,27 @@
 # Changelog
 
+## [3.1.3] - 2026-07-18
+
+### Webbappförbättringar
+
+#### Matchradsdesign
+- Teamlogotyper visas nu till höger om lagnamnen på stor layout: `Hemma – Borta [logo1] [logo2]` — texterna hamnar alltid längst till vänster i kolumnen
+- På mobil (≤820px) behålls den gamla layouten med logotyper till vänster om respektive lagnamn
+- Ligalogotypen (44px) visas nu i en egen kolumn till vänster om match-status på stor layout (>820px) — placeholderbilden (API:ts standardbild för okänd liga) döljer logotypen
+- Match-statuskolumnen har ändrats från fast bredd till `max-content` — bredden anpassas till innehållet på alla skärmstorlekar
+- Live-minuter (t.ex. `45'`, `45+2'`) är nu vänsteralignerade så att siffror linjeras ihop rad för rad; `HT` och `FT` förblir högeralignerade
+
+#### Händelsesymboler
+- Förenklade målhändelseikoner: tar bort 🎯 och 🟠 — visas nu alltid som antingen ✅ (rätt) eller ❌ (fel) beroende på om målet styr mot kupongens tips
+- Samma förenkling i Discord-annonseringar — logiken som detekterade "åt rätt håll trots fel symbol" är borttagen
+- Webbappens live-flöde använder grönt/rött istället för de gamla extra symbolerna
+
+### Repoändring
+- `cloudflared/config.yml` är nu undantagen från versionshantering via `.gitignore`
+- Scraperns shell-scripts (`.sh`) har fått korrekt exekveringsbehörighet (`chmod +x`) i git
+
+---
+
 ## [3.1.2] - 2026-07-16
 
 ### Webbappförbättringar

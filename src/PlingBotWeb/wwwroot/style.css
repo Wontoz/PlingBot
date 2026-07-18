@@ -11,8 +11,6 @@
   --text:          #c9d1d9;
   --muted:         #6e7681;
   --accent:        #2f81f7;
-  --lime:          #9ACD32;
-  --rose:          #de7e7e;
   --green:         #3fb950;
   --red:           #f85149;
   --amber:         #d29922;
@@ -166,7 +164,7 @@ header {
 .match-row {
   flex: 1;
   display: grid;
-  grid-template-columns: 24px 1fr 18px 100px 66px 90px;
+  grid-template-columns: 24px 1fr 18px 44px max-content 66px 90px;
   align-items: center;
   padding: 0 12px;
   border-bottom: 1px solid var(--border);
@@ -223,7 +221,6 @@ header {
   gap: 3px;
   font-size: 0.68rem;
   color: var(--muted);
-  padding-left: 21px;
 }
 
 @media (max-width: 1400px) {
@@ -250,30 +247,31 @@ header {
   text-overflow: ellipsis;
 }
 
-.team-row {
-  display: flex;
-  align-items: center;
-  gap: 4px;
-  min-width: 0;
-}
-
 .team-logo {
   width: 20px;
   height: 20px;
   object-fit: contain;
-  flex-shrink: 0;
+  display: block;
 }
 
 .team-logo-placeholder {
   width: 20px;
   height: 20px;
-  flex-shrink: 0;
+  display: block;
 }
+
+/* Desktop: order-trick — logo-slots move after both names */
+.team-name-home { order: 1; min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.team-sep       { order: 2; flex-shrink: 0; color: var(--muted); }
+.team-name-away { order: 3; min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.team-logo-home { order: 4; flex-shrink: 0; display: flex; align-items: center; margin-left: 2px; }
+.team-logo-away { order: 5; flex-shrink: 0; display: flex; align-items: center; }
 
 .team-name {
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+  min-width: 0;
 }
 
 .team-sep {
@@ -293,13 +291,24 @@ header {
 .result-icon.wrong   { color: var(--red); }
 
 
+/* ── League logo column (stor layout) ───────────────────────────────────── */
+
+.match-league-logo-col {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-right: 10px;
+}
+
+.match-league-logo {
+  width: 44px;
+  height: 44px;
+  object-fit: contain;
+}
+
 /* ── Match status ────────────────────────────────────────────────────────── */
 
 .match-status {
-  display: flex;
-  align-items: center;
-  justify-content: flex-end;
-  width:auto;
   padding-right: 10px;
   font-size: 0.88rem;
   font-weight: 700;
@@ -316,7 +325,6 @@ header {
 
 .match-status.s-live {
   color: var(--amber);
-  gap: 4px;
 }
 
 @keyframes pulse {
@@ -334,8 +342,10 @@ header {
   flex-shrink: 0;
 }
 
-.live-min {
-  text-align: left;
+.match-status.s-live-min {
+  display: flex;
+  align-items: center;
+  gap: 4px;
 }
 
 /* ── Score badge ─────────────────────────────────────────────────────────── */
@@ -572,8 +582,6 @@ header {
 .event-row.ev-subst  { border-left-color: var(--muted); }
 .event-row.ev-injury { border-left-color: transparent; }
 .event-row.ev-good { border-left-color: var(--green); }
-.event-row.ev-warn { border-left-color: var(--lime); }
-.event-row.ev-aim  { border-left-color: var(--rose); }
 .event-row.ev-bad  { border-left-color: var(--red); }
 
 .event-icon {
@@ -607,12 +615,6 @@ header {
 .goal-new {
   color: var(--green);
   font-weight: 700;
-}
-.ev-warn .goal-new {
-  color: var(--lime);
-}
-.ev-aim .goal-new {
-  color: var(--rose);
 }
 .ev-bad .goal-new {
   color: var(--red);
@@ -1077,7 +1079,7 @@ header {
 
 @media (min-width: 821px) and (max-width: 1300px) {
   .side-panel  { width: 300px; }
-  .match-row   { grid-template-columns: 24px 1fr 18px 95px 60px 75px; }
+  .match-row   { grid-template-columns: 24px 1fr 18px 44px max-content 60px 75px; }
   .tip-btns    { padding-left: 10px; }
 }
 
@@ -1100,6 +1102,20 @@ header {
   .header-left { flex: 1; min-width: 0; display: flex; align-items: center; gap: 8px; overflow: hidden; }
   #game-title  { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; font-size: 0.85rem; }
 
+  /* ── Lagnamn: grid med logo | namn per rad ── */
+  .match-teams {
+    display: grid;
+    grid-template-columns: 20px 1fr;
+    grid-template-areas: "hl hn" "al an";
+    gap: 2px 4px;
+    font-size: inherit;
+  }
+  .team-logo-home { grid-area: hl; order: unset; margin-left: 0; align-self: center; }
+  .team-logo-away { grid-area: al; order: unset; align-self: center; }
+  .team-name-home { grid-area: hn; order: unset; }
+  .team-name-away { grid-area: an; order: unset; }
+  .team-sep       { display: none; }
+
   /* ── Kupong-layout ── */
   .main-layout  { flex-direction: column; overflow: visible; height: auto; }
 
@@ -1111,12 +1127,13 @@ header {
   .match-row {
     flex: 1;
     min-height: 0;
-    grid-template-columns: 18px 1fr 58px 40px 80px;
+    grid-template-columns: 18px 1fr max-content 40px 80px;
     padding: 5px 8px;
     gap: 4px;
   }
 
-  .result-icon  { display: none; }
+  .result-icon          { display: none; }
+  .match-league-logo-col { display: none; }
 
   .match-num    { font-size: 0.78rem; }
 
@@ -1151,7 +1168,6 @@ header {
 @media (max-width: 492px) {
   .match-teams     { flex-direction: column; align-items: flex-start; gap: 2px; }
   .team-sep        { display: none; }
-  .team-row-away   { flex-direction: row-reverse; }
   #matches         { height: auto; }
   .match-row       { flex: none; min-height: 52px; }
 }
@@ -1161,5 +1177,4 @@ header {
   #matches.matches-compact .match-row            { flex: none; min-height: 52px; }
   #matches.matches-compact .match-teams          { flex-direction: column; align-items: flex-start; gap: 2px; }
   #matches.matches-compact .team-sep             { display: none; }
-  #matches.matches-compact .team-row-away        { flex-direction: row-reverse; }
 }

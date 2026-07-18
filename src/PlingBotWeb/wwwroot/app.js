@@ -237,18 +237,25 @@ function renderMatch(m) {
     ? `<div class="match-league"><span class="league-name">${leagueName}</span>${league.Logo ? `<img class="league-logo" src="${league.Logo}" alt="">` : ''}${league.Flag ? `<img class="league-flag" src="${league.Flag}" alt="">` : ''}${league.VenueName ? `<span class="league-venue"> · ${league.VenueName}</span>` : ''}</div>`
     : '';
 
+  const EMPTY_LEAGUE_LOGO = 'https://media.api-sports.io/football/leagues/1.png';
+  const leagueLogoUrl = league?.Logo && league.Logo !== EMPTY_LEAGUE_LOGO ? league.Logo : null;
+  const leagueLogoCol = `<div class="match-league-logo-col">${leagueLogoUrl ? `<img class="match-league-logo" src="${leagueLogoUrl}" alt="">` : ''}</div>`;
+
   return `
     <div class="match-row ${rowClass} ${selectedClass}" data-num="${m.Number}">
       <div class="match-num">${m.Number}</div>
       <div class="match-info-col">
         <div class="match-teams">
-          <div class="team-row">${logo(m.HomeTeamId, m.HomeTeam)}<span class="team-name">${m.HomeTeam}</span></div>
+          <span class="team-logo-home">${logo(m.HomeTeamId, m.HomeTeam)}</span>
+          <span class="team-name team-name-home">${m.HomeTeam}</span>
           <span class="team-sep">–</span>
-          <div class="team-row team-row-away"><span class="team-name">${m.AwayTeam}</span>${logo(m.AwayTeamId, m.AwayTeam)}</div>
+          <span class="team-name team-name-away">${m.AwayTeam}</span>
+          <span class="team-logo-away">${logo(m.AwayTeamId, m.AwayTeam)}</span>
         </div>
         ${leagueRow}
       </div>
       ${renderResultIcon(result)}
+      ${leagueLogoCol}
       ${renderMatchStatus(m, status)}
       ${renderScoreBadge(m, status, result)}
       ${renderTipButtons(m)}
@@ -270,7 +277,7 @@ function renderMatchStatus(m, status) {
     return `<div class="match-status">FT</div>`;
   if (status === 'live') {
     const min = m.Extra > 0 ? `${m.Elapsed}+${m.Extra}'` : m.Elapsed > 0 ? `${m.Elapsed}'` : 'LIVE';
-    return `<div class="match-status s-live"><span class="live-dot"></span><span class="live-min">${min}</span></div>`;
+    return `<div class="match-status s-live s-live-min"><span class="live-dot"></span><span class="live-min">${min}</span></div>`;
   }
   if (status === 'finished')
     return `<div class="match-status">FT</div>`;
@@ -342,24 +349,11 @@ function classifyGoalEvent(e, match) {
   const scorerIsHome = e.TeamId ? e.TeamId === match.HomeTeamId : e.Team === match.HomeTeam;
   const homeScored = isOwnGoal ? !scorerIsHome : scorerIsHome;
 
-  const prevHome = homeScored ? newHome - 1 : newHome;
-  const prevAway = homeScored ? newAway : newAway - 1;
-
   const outcome = (h, a) => h > a ? '1' : h < a ? '2' : 'X';
-  const prevOutcome = outcome(prevHome, prevAway);
-  const newOutcome  = outcome(newHome, newAway);
+  const newOutcome = outcome(newHome, newAway);
   const tip = match.Tip || '';
 
-  const newGood = tip.includes(newOutcome);
-  const scorerHelps = (homeScored  && tip.includes('1')) ||
-                      (!homeScored && tip.includes('2')) ||
-                      (tip.includes('X') && ((homeScored  && prevOutcome === '2') ||
-                                             (!homeScored && prevOutcome === '1')));
-
-  if ( newGood &&  scorerHelps) return 'ev-good';
-  if ( newGood && !scorerHelps) return 'ev-warn';
-  if (!newGood &&  scorerHelps) return 'ev-aim';
-  return 'ev-bad';
+  return tip.includes(newOutcome) ? 'ev-good' : 'ev-bad';
 }
 
 function renderEventsList(events, fixtureMap) {
