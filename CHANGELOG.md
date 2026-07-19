@@ -1,5 +1,12 @@
 # Changelog
 
+## [3.1.3.3] - 2026-07-19
+
+- Headergradienten är nu linjär (`mörk → ljus → mörk` horisontellt) istället för radiell — mörknar vänster/höger kant, ljusnar i mitten
+- Ligalogotypen visas inte längre i ligaraden under lagnamnen — enbart i den dedikerade logotypkolumnen till vänster om status
+
+---
+
 ## [3.1.3.2] - 2026-07-18
 
 - Live-minuter högeraligneras igen — vänsterjusteringen såg konstig ut

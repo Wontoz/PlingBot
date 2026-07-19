@@ -234,7 +234,7 @@ function renderMatch(m) {
   const round = league ? dedupeLeagueRound(league.Name, league.RoundSwedish ?? league.Round) : '';
   const leagueName = league ? `${league.Name}${round ? ` - ${round}` : ''}` : '';
   const leagueRow = league
-    ? `<div class="match-league"><span class="league-name">${leagueName}</span>${league.Logo ? `<img class="league-logo" src="${league.Logo}" alt="">` : ''}${league.Flag ? `<img class="league-flag" src="${league.Flag}" alt="">` : ''}${league.VenueName ? `<span class="league-venue"> · ${league.VenueName}</span>` : ''}</div>`
+    ? `<div class="match-league"><span class="league-name">${leagueName}</span>${league.Flag ? `<img class="league-flag" src="${league.Flag}" alt="">` : ''}${league.VenueName ? `<span class="league-venue"> · ${league.VenueName}</span>` : ''}</div>`
     : '';
 
   const EMPTY_LEAGUE_LOGO = 'https://media.api-sports.io/football/leagues/1.png';

@@ -20,9 +20,9 @@
 /* ── Light mode ──────────────────────────────────────────────────────────── */
 
 :root[data-theme="light"] {
-  --bg:          #f0f2f5;
-  --surface:     #fafbfc;
-  --surface-alt: #e4e6ea;
+  --bg:          #f2f2f2;
+  --surface:     #fafafa;
+  --surface-alt: #f2f2f2;
   --border:      rgba(0,0,0,0.1);
   --border-s:    rgba(0,0,0,0.18);
   --text:        #1c1e21;
@@ -35,19 +35,19 @@
 
 /* Score badges — pastell med mättad textfärg i light mode */
 :root[data-theme="light"] .score-badge.correct { background: #1a3a22; color: #3fb950; border-color: #2a5c32; }
-:root[data-theme="light"] .score-badge.wrong   { background: #3a1a1a; color: #f85149; border-color: #5c2a2a; }
+:root[data-theme="light"] .score-b/* Stats-bar minority fill is #e8e8adge.wrong   { background: #3a1a1a; color: #f85149; border-color: #5c2a2a; }
 :root[data-theme="light"] .score-badge.live    { background: #3a2e10; color: #d29922; border-color: #5c4a20; }
 
-/* Stats-bar minority fill is #e8e8e8 — invisible on light surface-alt */
+e8 — invisible on light surface-alt */
 :root[data-theme="light"] .stats-bar-fill-minority     { background: #9ca3af; }
 :root[data-theme="light"] .stats-bar.stats-bar-sub .stats-bar-fill-minority { background: #6b7280; }
 
 /* ── Header game-type colors (theme-independent) ─────────────────────────── */
 
-header.game-stryktipset  { background: #00437A; color: #fff; border-bottom-color: rgba(255,255,255,0.18); }
-header.game-europatipset { background: #008733; color: #fff; border-bottom-color: rgba(255,255,255,0.18); }
-header.game-topptipset   { background: #F29400; color: #fff; border-bottom-color: rgba(255,255,255,0.18); }
-header.game-annat        { background: #9D0812; color: #fff; border-bottom-color: rgba(255,255,255,0.18); }
+header.game-stryktipset  { background: linear-gradient(90deg, rgba(0,0,0,0.18) 0%, rgba(255,255,255,0.16) 50%, rgba(0,0,0,0.18) 100%), #00437A; color: #fff; border-bottom-color: rgba(255,255,255,0.18); }
+header.game-europatipset { background: linear-gradient(90deg, rgba(0,0,0,0.18) 0%, rgba(255,255,255,0.16) 50%, rgba(0,0,0,0.18) 100%), #008733; color: #fff; border-bottom-color: rgba(255,255,255,0.18); }
+header.game-topptipset   { background: linear-gradient(90deg, rgba(0,0,0,0.18) 0%, rgba(255,255,255,0.16) 50%, rgba(0,0,0,0.18) 100%), #F29400; color: #fff; border-bottom-color: rgba(255,255,255,0.18); }
+header.game-annat        { background: linear-gradient(90deg, rgba(0,0,0,0.18) 0%, rgba(255,255,255,0.16) 50%, rgba(0,0,0,0.18) 100%), #9D0812; color: #fff; border-bottom-color: rgba(255,255,255,0.18); }
 
 /* ── Theme-toggle button ─────────────────────────────────────────────────── */
 
