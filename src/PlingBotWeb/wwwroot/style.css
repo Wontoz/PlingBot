@@ -379,7 +379,6 @@ header {
   background: var(--surface-alt);
   border: 1px solid var(--border-s);
   min-width: 44px;
-  letter-spacing: 0.08em;
 }
 
 .score-badge.correct { background: #1a3a22; color: var(--green); border-color: #2a5c32; }
@@ -640,8 +639,6 @@ header {
   color: var(--muted);
   margin-left: 5px;
 }
-
-.ev-score { letter-spacing: 0.06em; }
 
 .goal-new {
   color: var(--green);
@@ -1186,6 +1183,8 @@ header {
   .match-league-logo-col { display: none; }
 
   .match-num    { font-size: 0.78rem; }
+
+  .match-info-col { padding-left: 8px; }
 
   .match-teams          { font-size: 0.8rem; gap: 3px; }
   .team-logo            { width: 14px; height: 14px; }

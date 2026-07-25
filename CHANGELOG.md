@@ -1,3 +1,6 @@
+## [3.1.4.2] - 2026-07-25
+- Further style updates
+
 ## [3.1.4.1] - 2026-07-25
 - Increased spacing of score-symbols
 - Removed "Grundserien"-text in league info row

@@ -301,7 +301,7 @@ function renderScoreBadge(m, status, result) {
   } else {
     cls = '';
   }
-  return `<div class="score-badge ${cls}">${m.HomeScore}–${m.AwayScore}</div>`;
+  return `<div class="score-badge ${cls}">${m.HomeScore} - ${m.AwayScore}</div>`;
 }
 
 function renderTipButtons(m) {
@@ -433,7 +433,7 @@ function renderEvent(e, fixtureMap, showMatchBadge = true) {
         const homeGotPoint = isOwnGoal ? !scorerIsHome : scorerIsHome;
         const h = homeGotPoint ? `<span class="goal-new">${parts[0]}</span>` : parts[0];
         const a = homeGotPoint ? parts[1] : `<span class="goal-new">${parts[1]}</span>`;
-        scoreLine = `${match.HomeTeam} <span class="ev-score">${h}–${a}</span> ${match.AwayTeam}`;
+        scoreLine = `${match.HomeTeam} <span class="ev-score">${h} - ${a}</span> ${match.AwayTeam}`;
       } else {
         scoreLine = `${match.HomeTeam} <span class="ev-score">${score}</span> ${match.AwayTeam}`;
       }
