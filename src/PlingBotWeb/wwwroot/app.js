@@ -234,7 +234,7 @@ function renderMatch(m) {
   const round = league ? dedupeLeagueRound(league.Name, league.RoundSwedish ?? league.Round) : '';
   const leagueName = league ? `${league.Name}${round ? ` - ${round}` : ''}` : '';
   const leagueRow = league
-    ? `<div class="match-league"><span class="league-name">${leagueName}</span>${league.Flag ? `<img class="league-flag" src="${league.Flag}" alt="">` : ''}${league.VenueName ? `<span class="league-venue"> · ${league.VenueName}</span>` : ''}</div>`
+    ? `<div class="match-league"><span class="league-name">${round || league.Name}</span>${league.Flag ? `<img class="league-flag" src="${league.Flag}" alt="">` : ''}${league.VenueName ? `<span class="league-venue"> · ${league.VenueName}</span>` : ''}</div>`
     : '';
 
   const EMPTY_LEAGUE_LOGO = 'https://media.api-sports.io/football/leagues/1.png';
@@ -433,12 +433,12 @@ function renderEvent(e, fixtureMap, showMatchBadge = true) {
         const homeGotPoint = isOwnGoal ? !scorerIsHome : scorerIsHome;
         const h = homeGotPoint ? `<span class="goal-new">${parts[0]}</span>` : parts[0];
         const a = homeGotPoint ? parts[1] : `<span class="goal-new">${parts[1]}</span>`;
-        scoreLine = `${match.HomeTeam} ${h}–${a} ${match.AwayTeam}`;
+        scoreLine = `${match.HomeTeam} <span class="ev-score">${h}–${a}</span> ${match.AwayTeam}`;
       } else {
-        scoreLine = `${match.HomeTeam} ${score} ${match.AwayTeam}`;
+        scoreLine = `${match.HomeTeam} <span class="ev-score">${score}</span> ${match.AwayTeam}`;
       }
     } else {
-      scoreLine = match ? `${match.HomeTeam} ${score} ${match.AwayTeam}` : score;
+      scoreLine = match ? `${match.HomeTeam} <span class="ev-score">${score}</span> ${match.AwayTeam}` : score;
     }
     subText = e.Assist ? `${scoreLine} · Assist: ${e.Assist}` : scoreLine;
   } else if (e.Type === 'CancelledGoal') {
