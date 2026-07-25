@@ -40,6 +40,11 @@
     "Id": 723
   },
   {
+    "Name": "Aluminij Kidricevo",
+    "ApiName": "Aluminij",
+    "Id": 4358
+  },
+  {
     "Name": "Anderlecht",
     "ApiName": "Anderlecht",
     "Id": 554
@@ -65,9 +70,19 @@
     "Id": 66
   },
   {
+    "Name": "Atert Bissen",
+    "ApiName": "Atert Bissen",
+    "Id": 15847
+  },
+  {
     "Name": "Athletic Bilbao",
     "ApiName": "Athletic Club",
     "Id": 531
+  },
+  {
+    "Name": "Atlétic Escaldes",
+    "ApiName": "Atlètic Club d'Escaldes",
+    "Id": 3345
   },
   {
     "Name": "Atlético Madrid",
@@ -88,11 +103,6 @@
     "Name": "Barnsley",
     "ApiName": "Barnsley",
     "Id": 747
-  },
-  {
-    "Name": "Basel",
-    "ApiName": "FC Basel 1893",
-    "Id": 551
   },
   {
     "Name": "Belgien",
@@ -190,11 +200,6 @@
     "Id": 2142
   },
   {
-    "Name": "Bröndby",
-    "ApiName": "Brondby",
-    "Id": 407
-  },
-  {
     "Name": "Burnley",
     "ApiName": "Burnley",
     "Id": 44
@@ -280,9 +285,19 @@
     "Id": 520
   },
   {
+    "Name": "Criciúma",
+    "ApiName": "Criciuma",
+    "Id": 140
+  },
+  {
     "Name": "Crystal Palace",
     "ApiName": "Crystal Palace",
     "Id": 52
+  },
+  {
+    "Name": "CSKA Sofia",
+    "ApiName": "CSKA Sofia",
+    "Id": 853
   },
   {
     "Name": "Danmark",
@@ -293,6 +308,11 @@
     "Name": "Danmark D",
     "ApiName": "Denmark W",
     "Id": 1779
+  },
+  {
+    "Name": "Degerfors",
+    "ApiName": "Degerfors IF",
+    "Id": 2172
   },
   {
     "Name": "Derby",
@@ -385,9 +405,84 @@
     "Id": 2177
   },
   {
+    "Name": "FC Differdange 03",
+    "ApiName": "FC Differdange 03",
+    "Id": 684
+  },
+  {
+    "Name": "FC Flora Tallinn",
+    "ApiName": "Flora Tallinn",
+    "Id": 687
+  },
+  {
+    "Name": "FC Kairat Almaty",
+    "ApiName": "Kairat Almaty",
+    "Id": 664
+  },
+  {
+    "Name": "FC Sheriff Tiraspol",
+    "ApiName": "Sheriff Tiraspol",
+    "Id": 568
+  },
+  {
+    "Name": "FC Torpedo Kutaisi",
+    "ApiName": "Torpedo Kutaisi",
+    "Id": 685
+  },
+  {
+    "Name": "Ferencvarosi TC",
+    "ApiName": "Ferencvarosi TC",
+    "Id": 651
+  },
+  {
     "Name": "FF Jaro",
     "ApiName": "FF Jaro",
     "Id": 2075
+  },
+  {
+    "Name": "FK Borac Banja Luka",
+    "ApiName": "Borac Banja Luka",
+    "Id": 3364
+  },
+  {
+    "Name": "FK Decic Tuzi",
+    "ApiName": "Dečić",
+    "Id": 3745
+  },
+  {
+    "Name": "FK Kauno Zalgiris",
+    "ApiName": "Kauno Žalgiris",
+    "Id": 3872
+  },
+  {
+    "Name": "FK Liepaja",
+    "ApiName": "FK Liepaja",
+    "Id": 661
+  },
+  {
+    "Name": "FK Mornar Bar",
+    "ApiName": "Mornar",
+    "Id": 3740
+  },
+  {
+    "Name": "FK Sarajevo",
+    "ApiName": "FK Sarajevo",
+    "Id": 679
+  },
+  {
+    "Name": "FK Sutjeska Niksic",
+    "ApiName": "Sutjeska",
+    "Id": 673
+  },
+  {
+    "Name": "FK Vardar Skopje",
+    "ApiName": "Vardar Skopje",
+    "Id": 574
+  },
+  {
+    "Name": "FK Vojvodina",
+    "ApiName": "Vojvodina",
+    "Id": 702
   },
   {
     "Name": "Flamengo",
@@ -398,6 +493,11 @@
     "Name": "Fleetwood",
     "ApiName": "Fleetwood Town",
     "Id": 1336
+  },
+  {
+    "Name": "Floriana FC",
+    "ApiName": "Floriana",
+    "Id": 4625
   },
   {
     "Name": "Frankrike",
@@ -470,9 +570,19 @@
     "Id": 1365
   },
   {
+    "Name": "Györi ETO FC",
+    "ApiName": "Gyori ETO FC",
+    "Id": 2402
+  },
+  {
     "Name": "Haiti",
     "ApiName": "Haiti",
     "Id": 2386
+  },
+  {
+    "Name": "Hajduk Split",
+    "ApiName": "HNK Hajduk Split",
+    "Id": 608
   },
   {
     "Name": "Halmstad",
@@ -493,6 +603,11 @@
     "Name": "Harrogate",
     "ApiName": "Harrogate Town",
     "Id": 1842
+  },
+  {
+    "Name": "Hartford Athletic",
+    "ApiName": "Hartford Athletic",
+    "Id": 3995
   },
   {
     "Name": "Heerenveen",
@@ -535,6 +650,11 @@
     "Id": 2150
   },
   {
+    "Name": "Iberia 1999",
+    "ApiName": "Saburtalo",
+    "Id": 3502
+  },
+  {
     "Name": "IF Eker Örebro",
     "ApiName": "Eker Örebro",
     "Id": 25570
@@ -556,8 +676,8 @@
   },
   {
     "Name": "IFK Norrköping",
-    "ApiName": "Norrköping W",
-    "Id": 16008
+    "ApiName": "IFK Norrkoping",
+    "Id": 378
   },
   {
     "Name": "IK Start",
@@ -573,6 +693,11 @@
     "Name": "Inter",
     "ApiName": "Inter",
     "Id": 505
+  },
+  {
+    "Name": "Inter Club de Escaldes",
+    "ApiName": "Inter Club d'Escaldes",
+    "Id": 3342
   },
   {
     "Name": "Inter Åbo",
@@ -650,6 +775,26 @@
     "Id": 6682
   },
   {
+    "Name": "KF Drita",
+    "ApiName": "Drita",
+    "Id": 14281
+  },
+  {
+    "Name": "KF Egnatia",
+    "ApiName": "Egnatia Rrogozhinë",
+    "Id": 3327
+  },
+  {
+    "Name": "KFUM Oslo",
+    "ApiName": "KFUM Oslo",
+    "Id": 2143
+  },
+  {
+    "Name": "KI Klaksvik",
+    "ApiName": "KI Klaksvik",
+    "Id": 701
+  },
+  {
     "Name": "Kristianstad",
     "ApiName": "Kristianstad",
     "Id": 11675
@@ -705,6 +850,11 @@
     "Id": 46
   },
   {
+    "Name": "Levski Sofia",
+    "ApiName": "Levski Sofia",
+    "Id": 646
+  },
+  {
     "Name": "Leyton Orient",
     "ApiName": "Leyton Orient",
     "Id": 1373
@@ -715,9 +865,19 @@
     "Id": 12573
   },
   {
+    "Name": "Lilleström",
+    "ApiName": "Lillestrom",
+    "Id": 321
+  },
+  {
     "Name": "Lincoln",
     "ApiName": "Lincoln",
     "Id": 1379
+  },
+  {
+    "Name": "Lincoln Red Imps",
+    "ApiName": "Lincoln Red Imps FC",
+    "Id": 667
   },
   {
     "Name": "Liverpool",
@@ -820,6 +980,11 @@
     "Id": 329
   },
   {
+    "Name": "MSK Zilina",
+    "ApiName": "Žilina",
+    "Id": 3554
+  },
+  {
     "Name": "Málaga",
     "ApiName": "Malaga",
     "Id": 535
@@ -890,6 +1055,16 @@
     "Id": 11674
   },
   {
+    "Name": "Orange County SC",
+    "ApiName": "Orange County SC",
+    "Id": 4007
+  },
+  {
+    "Name": "Oulu",
+    "ApiName": "AC Oulu",
+    "Id": 2077
+  },
+  {
     "Name": "Oxford",
     "ApiName": "Oxford United",
     "Id": 1338
@@ -935,6 +1110,11 @@
     "Id": 1350
   },
   {
+    "Name": "Petrocub Hincesti",
+    "ApiName": "Petrocub",
+    "Id": 2271
+  },
+  {
     "Name": "Plymouth",
     "ApiName": "Plymouth",
     "Id": 1357
@@ -943,6 +1123,11 @@
     "Name": "Polen",
     "ApiName": "Poland",
     "Id": 24
+  },
+  {
+    "Name": "Ponte Preta",
+    "ApiName": "Ponte Preta",
+    "Id": 139
   },
   {
     "Name": "Port Vale",
@@ -1010,9 +1195,19 @@
     "Id": 94
   },
   {
+    "Name": "Rhode Island FC",
+    "ApiName": "Rhode Island",
+    "Id": 22855
+  },
+  {
     "Name": "Roma",
     "ApiName": "AS Roma",
     "Id": 497
+  },
+  {
+    "Name": "Rosenborg",
+    "ApiName": "Rosenborg",
+    "Id": 331
   },
   {
     "Name": "Rosengård",
@@ -1035,6 +1230,11 @@
     "Id": 12617
   },
   {
+    "Name": "Sacramento Republic FC",
+    "ApiName": "Sacramento Republic",
+    "Id": 4015
+  },
+  {
     "Name": "Salford",
     "ApiName": "Salford City",
     "Id": 1844
@@ -1053,6 +1253,11 @@
     "Name": "Sandviken",
     "ApiName": "Sandviken",
     "Id": 6697
+  },
+  {
+    "Name": "Sarpsborg",
+    "ApiName": "Sarpsborg 08 FF",
+    "Id": 333
   },
   {
     "Name": "Saudiarabien",
@@ -1078,11 +1283,6 @@
     "Name": "Serbien D",
     "ApiName": "Serbia W",
     "Id": 1773
-  },
-  {
-    "Name": "Servette",
-    "ApiName": "Servette FC",
-    "Id": 2184
   },
   {
     "Name": "Sevilla",
@@ -1168,6 +1368,11 @@
     "Name": "St. Truidense",
     "ApiName": "St. Truiden",
     "Id": 735
+  },
+  {
+    "Name": "Stjarnan",
+    "ApiName": "Stjarnan",
+    "Id": 275
   },
   {
     "Name": "Stockholm Internazionale",
@@ -1270,6 +1475,11 @@
     "Id": 6702
   },
   {
+    "Name": "Tromsö",
+    "ApiName": "Tromso",
+    "Id": 325
+  },
+  {
     "Name": "Tunisien",
     "ApiName": "Tunisia",
     "Id": 28
@@ -1330,6 +1540,16 @@
     "Id": 268
   },
   {
+    "Name": "Viking",
+    "ApiName": "Viking",
+    "Id": 759
+  },
+  {
+    "Name": "Vikingur",
+    "ApiName": "Vikingur Reykjavik",
+    "Id": 278
+  },
+  {
     "Name": "Villarreal",
     "ApiName": "Villarreal",
     "Id": 533
@@ -1350,14 +1570,19 @@
     "Id": 2241
   },
   {
+    "Name": "Vålerenga",
+    "ApiName": "Valerenga",
+    "Id": 326
+  },
+  {
+    "Name": "Víkingur Göta",
+    "ApiName": "Vikingur Gota",
+    "Id": 580
+  },
+  {
     "Name": "Wales",
     "ApiName": "Wales",
     "Id": 767
-  },
-  {
-    "Name": "Waterford",
-    "ApiName": "Waterford",
-    "Id": 3845
   },
   {
     "Name": "Watford",
@@ -1405,9 +1630,14 @@
     "Id": 1358
   },
   {
-    "Name": "Århus",
-    "ApiName": "Aarhus",
-    "Id": 406
+    "Name": "Zira FK",
+    "ApiName": "Zira",
+    "Id": 648
+  },
+  {
+    "Name": "Ålesund",
+    "ApiName": "Aalesund",
+    "Id": 757
   },
   {
     "Name": "Åtvidaberg",
