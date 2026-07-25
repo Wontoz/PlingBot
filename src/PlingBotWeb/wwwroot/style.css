@@ -3,14 +3,14 @@
 /* ── Tokens ──────────────────────────────────────────────────────────────── */
 
 :root {
-  --bg:            #0d1117;
-  --surface:       #161b27;
-  --surface-alt:   #1c2333;
+  --bg:            #181818;
+  --surface:       #1C1C1C;
+  --surface-alt:   #f9f9f91a;
   --border:        rgba(255,255,255,0.07);
   --border-s:      rgba(255,255,255,0.14);
-  --text:          #c9d1d9;
-  --muted:         #6e7681;
-  --accent:        #2f81f7;
+  --text:          #F7F7F7;
+  --muted:         #8b8c8f;
+  --accent:        #444444;
   --green:         #3fb950;
   --red:           #f85149;
   --amber:         #d29922;
@@ -20,9 +20,9 @@
 /* ── Light mode ──────────────────────────────────────────────────────────── */
 
 :root[data-theme="light"] {
-  --bg:          #f2f2f2;
-  --surface:     #fafafa;
-  --surface-alt: #f2f2f2;
+  --bg:          #ffffff;
+  --surface:     #f5f5f5;
+  --surface-alt: #a9a9a9;
   --border:      rgba(0,0,0,0.1);
   --border-s:    rgba(0,0,0,0.18);
   --text:        #1c1e21;
@@ -34,20 +34,20 @@
 }
 
 /* Score badges — pastell med mättad textfärg i light mode */
-:root[data-theme="light"] .score-badge.correct { background: #1a3a22; color: #3fb950; border-color: #2a5c32; }
-:root[data-theme="light"] .score-b/* Stats-bar minority fill is #e8e8adge.wrong   { background: #3a1a1a; color: #f85149; border-color: #5c2a2a; }
-:root[data-theme="light"] .score-badge.live    { background: #3a2e10; color: #d29922; border-color: #5c4a20; }
+:root[data-theme="light"] .score-badge.correct { background: #107e28; color: #7fe6a5; border-color: #37b164; }
+:root[data-theme="light"] .score-badge.wrong   { background: #720b0b; color: #da7a7a; border-color: #da7a7a; }
+:root[data-theme="light"] .score-badge.live    { background: #fef3c7; color: #92400e; border-color: #fde68a; }
 
-e8 — invisible on light surface-alt */
+/* Stats-bar minority fill is #e8e8e8 — invisible on light surface-alt */
 :root[data-theme="light"] .stats-bar-fill-minority     { background: #9ca3af; }
 :root[data-theme="light"] .stats-bar.stats-bar-sub .stats-bar-fill-minority { background: #6b7280; }
 
 /* ── Header game-type colors (theme-independent) ─────────────────────────── */
 
-header.game-stryktipset  { background: linear-gradient(90deg, rgba(0,0,0,0.18) 0%, rgba(255,255,255,0.16) 50%, rgba(0,0,0,0.18) 100%), #00437A; color: #fff; border-bottom-color: rgba(255,255,255,0.18); }
-header.game-europatipset { background: linear-gradient(90deg, rgba(0,0,0,0.18) 0%, rgba(255,255,255,0.16) 50%, rgba(0,0,0,0.18) 100%), #008733; color: #fff; border-bottom-color: rgba(255,255,255,0.18); }
-header.game-topptipset   { background: linear-gradient(90deg, rgba(0,0,0,0.18) 0%, rgba(255,255,255,0.16) 50%, rgba(0,0,0,0.18) 100%), #F29400; color: #fff; border-bottom-color: rgba(255,255,255,0.18); }
-header.game-annat        { background: linear-gradient(90deg, rgba(0,0,0,0.18) 0%, rgba(255,255,255,0.16) 50%, rgba(0,0,0,0.18) 100%), #9D0812; color: #fff; border-bottom-color: rgba(255,255,255,0.18); }
+header.game-stryktipset,
+header.game-europatipset,
+header.game-topptipset,
+header.game-annat        { background: var(--bg); color: var(--text); }
 
 /* ── Theme-toggle button ─────────────────────────────────────────────────── */
 
@@ -55,25 +55,19 @@ header.game-annat        { background: linear-gradient(90deg, rgba(0,0,0,0.18) 0
   margin-left: auto;
   flex-shrink: 0;
   cursor: pointer;
-  background: rgba(255,255,255,0.18);
-  border: 1px solid rgba(255,255,255,0.3);
-  color: rgba(255,255,255,0.9);
+  background: var(--surface);
+  border: 1px solid var(--border-s);
+  color: var(--muted);
   border-radius: 6px;
-  padding: 4px 10px;
+  padding: 4px 0;
+  width: 36px;
+  text-align: center;
   font-size: 0.8rem;
   font-family: inherit;
   line-height: 1.4;
   transition: background 0.15s;
 }
-#theme-toggle:hover { background: rgba(255,255,255,0.28); color: #fff; }
-
-/* Before game type is known — no game-* class on header — adapt to theme */
-header:not([class*="game-"]) #theme-toggle {
-  background: var(--surface-alt);
-  border-color: var(--border-s);
-  color: var(--muted);
-}
-header:not([class*="game-"]) #theme-toggle:hover { color: var(--text); }
+#theme-toggle:hover { background: var(--surface-alt); color: var(--text); }
 
 /* ── Reset ───────────────────────────────────────────────────────────────── */
 
@@ -96,7 +90,7 @@ body {
 
 #app {
   display: grid;
-  grid-template-rows: auto 1fr auto auto;
+  grid-template-rows: 1fr auto auto;
   height: 100vh;
   overflow: hidden;
 }
@@ -109,7 +103,6 @@ header {
   gap: 14px;
   padding: 6px 16px;
   background: var(--surface);
-  border-bottom: 1px solid var(--border);
 }
 
 
@@ -148,7 +141,7 @@ header {
   flex-direction: column;
   background: var(--surface);
   border: 1px solid var(--border);
-  border-radius: 0 0 var(--radius) var(--radius);
+  border-radius: var(--radius);
   overflow: hidden;
 }
 
@@ -184,12 +177,30 @@ header {
 .match-row.row-wrong   { border-left-color: var(--red); }
 .match-row.row-live    { border-left-color: var(--amber); }
 
+.game-stryktipset  .match-row.row-live { border-left-color: #00437A; }
+.game-europatipset .match-row.row-live { border-left-color: #008733; }
+.game-topptipset   .match-row.row-live { border-left-color: #F29400; }
+.game-annat        .match-row.row-live { border-left-color: #9D0812; }
+
 .match-num {
-  font-size: 1.15rem;
+  font-size: 0.72rem;
   font-weight: 700;
-  color: var(--accent);
+  color: #fff;
   text-align: center;
+  line-height: 22px;
+  background: var(--muted);
+  border-radius: 50%;
+  align-self: center;
+  width: 22px;
+  height: 22px;
+  flex-shrink: 0;
+  padding: 0;
 }
+
+.game-stryktipset  .match-num { background: #00437A; }
+.game-europatipset .match-num { background: #008733; }
+.game-topptipset   .match-num { background: #F29400; }
+.game-annat        .match-num { background: #9D0812; }
 
 .match-info-col {
   position: relative;
@@ -368,7 +379,7 @@ header {
   background: var(--surface-alt);
   border: 1px solid var(--border-s);
   min-width: 44px;
-  letter-spacing: -0.01em;
+  letter-spacing: 0.06em;
 }
 
 .score-badge.correct { background: #1a3a22; color: var(--green); border-color: #2a5c32; }
@@ -428,6 +439,16 @@ header {
   color: white;
 }
 
+.game-stryktipset  .tip-btn.is-tip { background: #00437A; border-color: #00437A; }
+.game-europatipset .tip-btn.is-tip { background: #008733; border-color: #008733; }
+.game-topptipset   .tip-btn.is-tip { background: #F29400; border-color: #F29400; }
+.game-annat        .tip-btn.is-tip { background: #9D0812; border-color: #9D0812; }
+
+.game-stryktipset  .tip-btn.is-tip.is-outcome { background: #00437A; border-color: var(--green); }
+.game-europatipset .tip-btn.is-tip.is-outcome { background: #008733; border-color: var(--green); }
+.game-topptipset   .tip-btn.is-tip.is-outcome { background: #F29400; border-color: var(--green); }
+.game-annat        .tip-btn.is-tip.is-outcome { background: #9D0812; border-color: var(--green); }
+
 .tip-btns-row {
   display: flex;
   gap: 3px;
@@ -472,7 +493,7 @@ header {
   flex-direction: column;
   background: var(--surface);
   border: 1px solid var(--border);
-  border-radius: 0 0 var(--radius) var(--radius);
+  border-radius: var(--radius);
   overflow: hidden;
   min-height: 0;
 }
@@ -557,6 +578,8 @@ header {
 .events-panel {
   flex: 1 1 0;
   min-height: 0;
+  border-top: none;
+  border-radius: 0 0 var(--radius) var(--radius);
 }
 
 .events-list {
@@ -647,6 +670,18 @@ header {
   text-align: center;
   font-size: 0.75rem;
   color: var(--muted);
+}
+
+.ev-match-chip {
+  padding: 5px 12px 3px;
+  font-size: 0.62rem;
+  font-weight: 600;
+  color: var(--muted);
+  border-top: 1px solid var(--border);
+  letter-spacing: 0.02em;
+}
+.ev-match-chip-first {
+  border-top: none;
 }
 
 .events-period {
@@ -1017,14 +1052,14 @@ header {
 .value-label {
   font-size: 0.72rem;
   font-weight: 700;
-  color: var(--accent);
+  color: var(--muted);
   white-space: nowrap;
 }
 
 .value-rows {
   font-size: 0.72rem;
   font-weight: 700;
-  color: var(--accent);
+  color: var(--text);
   flex-shrink: 0;
 }
 
@@ -1049,12 +1084,19 @@ header {
   font-size: 0.8rem;
 }
 
+#copyright {
+  flex: 1;
+  text-align: center;
+}
+
 #updated {
-  text-align: right;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
   font-size: 0.6rem;
   color: var(--muted);
   padding: 1px 14px 3px;
-  opacity: 0.5;
+  opacity: 0.75;
 }
 
 /* ── Compact match list (always applied — odds on top, tight row spacing) ── */
@@ -1103,8 +1145,8 @@ header {
   body { overflow: auto; }
   #app { height: auto; display: flex; flex-direction: column; }
 
-  /* ── Header: en rad ── */
-  header       { flex-wrap: nowrap; gap: 8px; padding: 8px 12px; }
+  /* ── Header: helbredd på mobil trots att den sitter i coupon-panel ── */
+  header       { flex-wrap: nowrap; gap: 8px; padding: 8px 12px; margin-left: -10px; margin-right: -10px; }
   .header-left { flex: 1; min-width: 0; display: flex; align-items: center; gap: 8px; overflow: hidden; }
   #game-title  { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; font-size: 0.85rem; }
 

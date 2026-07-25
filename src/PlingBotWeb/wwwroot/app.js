@@ -32,7 +32,7 @@ function renderAll(data) {
   const finished = matches.filter(m => m.IsFinished);
   const correct  = matches.filter(isCorrect);
 
-  document.getElementById('game-title').textContent = `${meta.Game} — ${meta.Date}`;
+  document.getElementById('game-title').textContent = `${meta.Game} - ${meta.Date}`;
   applyGameClass(meta.Game);
 
   const fixtureMap  = buildFixtureMap(matches);
@@ -360,8 +360,11 @@ function renderEventsList(events, fixtureMap) {
   if (!events.length)
     return `<div class="events-empty">Inga händelser ännu</div>`;
 
-  const sorted = events.slice().sort((a, b) => new Date(b.CreatedUtc) - new Date(a.CreatedUtc));
-  return sorted.map(e => renderEvent(e, fixtureMap)).join('');
+  return events
+    .slice()
+    .sort((a, b) => new Date(b.CreatedUtc) - new Date(a.CreatedUtc))
+    .map(e => renderEvent(e, fixtureMap, false))
+    .join('');
 }
 
 function getEventPeriod(e) {
@@ -950,12 +953,18 @@ function eventIcon(e) {
 
 function applyGameClass(gameName) {
   const header = document.querySelector('header');
-  header.classList.remove('game-stryktipset', 'game-europatipset', 'game-topptipset', 'game-annat');
+  const app    = document.getElementById('app');
+  const classes = ['game-stryktipset', 'game-europatipset', 'game-topptipset', 'game-annat'];
+  header.classList.remove(...classes);
+  app.classList.remove(...classes);
   const n = (gameName || '').toLowerCase();
-  if      (n.includes('stryktipset'))  header.classList.add('game-stryktipset');
-  else if (n.includes('europatipset')) header.classList.add('game-europatipset');
-  else if (n.includes('topptipset'))   header.classList.add('game-topptipset');
-  else                                  header.classList.add('game-annat');
+  let cls;
+  if      (n.includes('stryktipset'))  cls = 'game-stryktipset';
+  else if (n.includes('europatipset')) cls = 'game-europatipset';
+  else if (n.includes('topptipset'))   cls = 'game-topptipset';
+  else                                  cls = 'game-annat';
+  header.classList.add(cls);
+  app.classList.add(cls);
 }
 
 // ── Light / dark theme ────────────────────────────────────────────────────────

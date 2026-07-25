@@ -90,6 +90,11 @@
     "Id": 747
   },
   {
+    "Name": "Basel",
+    "ApiName": "FC Basel 1893",
+    "Id": 551
+  },
+  {
     "Name": "Belgien",
     "ApiName": "Belgium",
     "Id": 1
@@ -175,9 +180,19 @@
     "Id": 56
   },
   {
+    "Name": "Brommapojkarna",
+    "ApiName": "IF Brommapojkarna",
+    "Id": 371
+  },
+  {
     "Name": "Bryne",
     "ApiName": "Bryne",
     "Id": 2142
+  },
+  {
+    "Name": "Bröndby",
+    "ApiName": "Brondby",
+    "Id": 407
   },
   {
     "Name": "Burnley",
@@ -400,6 +415,16 @@
     "Id": 36
   },
   {
+    "Name": "GAIS",
+    "ApiName": "Gais",
+    "Id": 2170
+  },
+  {
+    "Name": "Galway",
+    "ApiName": "Galway United",
+    "Id": 3851
+  },
+  {
     "Name": "Gefle",
     "ApiName": "Gefle IF",
     "Id": 813
@@ -448,6 +473,11 @@
     "Name": "Haiti",
     "ApiName": "Haiti",
     "Id": 2386
+  },
+  {
+    "Name": "Halmstad",
+    "ApiName": "Halmstad",
+    "Id": 766
   },
   {
     "Name": "Hammarby",
@@ -526,8 +556,13 @@
   },
   {
     "Name": "IFK Norrköping",
-    "ApiName": "IFK Norrkoping",
-    "Id": 378
+    "ApiName": "Norrköping W",
+    "Id": 16008
+  },
+  {
+    "Name": "IK Start",
+    "ApiName": "Start",
+    "Id": 334
   },
   {
     "Name": "Ilves",
@@ -620,6 +655,11 @@
     "Id": 11675
   },
   {
+    "Name": "Kristiansund",
+    "ApiName": "Kristiansund BK",
+    "Id": 320
+  },
+  {
     "Name": "Kroatien",
     "ApiName": "Croatia",
     "Id": 3
@@ -703,6 +743,11 @@
     "Name": "Luxemburg",
     "ApiName": "Luxembourg",
     "Id": 1102
+  },
+  {
+    "Name": "Malmö",
+    "ApiName": "Malmo FF",
+    "Id": 375
   },
   {
     "Name": "Manchester City",
@@ -1035,6 +1080,11 @@
     "Id": 1773
   },
   {
+    "Name": "Servette",
+    "ApiName": "Servette FC",
+    "Id": 2184
+  },
+  {
     "Name": "Sevilla",
     "ApiName": "Sevilla",
     "Id": 536
@@ -1060,6 +1110,11 @@
     "Id": 3854
   },
   {
+    "Name": "Sirius",
+    "ApiName": "Sirius",
+    "Id": 370
+  },
+  {
     "Name": "SJK",
     "ApiName": "SJK",
     "Id": 689
@@ -1078,6 +1133,11 @@
     "Name": "Slavia Prag",
     "ApiName": "Slavia Praha",
     "Id": 560
+  },
+  {
+    "Name": "Sligo Rovers",
+    "ApiName": "Sligo Rovers",
+    "Id": 3842
   },
   {
     "Name": "Sollentuna",
@@ -1295,6 +1355,11 @@
     "Id": 767
   },
   {
+    "Name": "Waterford",
+    "ApiName": "Waterford",
+    "Id": 3845
+  },
+  {
     "Name": "Watford",
     "ApiName": "Watford",
     "Id": 38
@@ -1338,6 +1403,11 @@
     "Name": "Wycombe",
     "ApiName": "Wycombe",
     "Id": 1358
+  },
+  {
+    "Name": "Århus",
+    "ApiName": "Aarhus",
+    "Id": 406
   },
   {
     "Name": "Åtvidaberg",

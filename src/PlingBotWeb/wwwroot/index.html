@@ -71,17 +71,18 @@
 
   <div id="app">
 
-    <header>
-      <div class="header-left">
-        <span id="game-title">Laddar...</span>
-      </div>
-      <button id="theme-toggle" onclick="toggleTheme()">☀</button>
-    </header>
-
     <div class="main-layout">
 
       <!-- Left: coupon -->
       <section class="coupon-panel">
+
+        <header>
+          <div class="header-left">
+            <span id="game-title">Laddar...</span>
+          </div>
+          <button id="theme-toggle" onclick="toggleTheme()">☀</button>
+        </header>
+
         <div class="coupon-table">
           <div id="matches"></div>
         </div>
@@ -105,7 +106,10 @@
     </div>
 
     <div id="error" style="display:none">Kunde inte hämta data. Försöker igen...</div>
-    <div id="updated"><span id="poll-time"></span><span id="data-time"></span></div>
+    <div id="updated">
+      <span id="copyright">© 2026 PlingBot</span>
+      <span><span id="poll-time"></span><span id="data-time"></span></span>
+    </div>
 
   </div>
   <script src="app.js?v=99"></script>
