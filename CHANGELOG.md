@@ -1,3 +1,6 @@
+## [3.1.4.3] - 2026-07-25
+- Bugfix in league name
+
 ## [3.1.4.2] - 2026-07-25
 - Further style updates
 
