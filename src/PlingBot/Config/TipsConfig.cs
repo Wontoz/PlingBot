@@ -36,7 +36,7 @@ public class LeagueInfo
     public static string? ToSwedishRound(string? round)
     {
         if (round == null) return null;
-        var s = round.Replace("Regular Season", "Grundserien");
+        var s = Regex.Replace(round, @"^Regular Season - (\d+)$", "Omgång $1");
         s = Regex.Replace(s, @" - (\d+)$", " - Omgång $1");
         return s;
     }
