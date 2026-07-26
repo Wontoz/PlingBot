@@ -1,8 +1,17 @@
+## [3.1.4.4] - 2026-07-26
+- Changed color of light theme stat pillar for clarity
+- Remade how best/worst picks are calculated to only include finished fixtures
+
+---
 ## [3.1.4.3] - 2026-07-25
 - Bugfix in league name
 
+---
+
 ## [3.1.4.2] - 2026-07-25
 - Further style updates
+
+---
 
 ## [3.1.4.1] - 2026-07-25
 - Increased spacing of score-symbols

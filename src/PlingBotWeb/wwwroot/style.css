@@ -39,8 +39,8 @@
 :root[data-theme="light"] .score-badge.live    { background: #fef3c7; color: #92400e; border-color: #fde68a; }
 
 /* Stats-bar minority fill is #e8e8e8 — invisible on light surface-alt */
-:root[data-theme="light"] .stats-bar-fill-minority     { background: #9ca3af; }
-:root[data-theme="light"] .stats-bar.stats-bar-sub .stats-bar-fill-minority { background: #6b7280; }
+:root[data-theme="light"] .stats-bar-fill-minority     { background: var(--accent); }
+:root[data-theme="light"] .stats-bar.stats-bar-sub .stats-bar-fill-minority { background: var(--accent); }
 
 /* ── Header game-type colors (theme-independent) ─────────────────────────── */
 

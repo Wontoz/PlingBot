@@ -840,7 +840,7 @@ function outcomeOptions(m) {
 function calcBestMoves(matches) {
   const result = [];
   for (const m of matches) {
-    if (getStatus(m) === 'notstarted' || !m.Tip) continue;
+    if (!m.IsFinished || !m.Tip) continue;
     const outcome = getOutcomeSymbol(m);
     if (!m.Tip.includes(outcome)) continue;
     const opt = outcomeOptions(m).find(o => o.sym === outcome);
@@ -854,7 +854,7 @@ function calcBestMoves(matches) {
 function calcTraps(matches) {
   const result = [];
   for (const m of matches) {
-    if (getStatus(m) === 'notstarted' || !m.Tip) continue;
+    if (!m.IsFinished || !m.Tip) continue;
     const outcome = getOutcomeSymbol(m);
     const opts = outcomeOptions(m).filter(o => o.pct != null);
     if (!opts.length) continue;
@@ -869,7 +869,7 @@ function calcTraps(matches) {
 function calcSurprises(matches) {
   const result = [];
   for (const m of matches) {
-    if (getStatus(m) === 'notstarted') continue;
+    if (!m.IsFinished) continue;
     const outcome = getOutcomeSymbol(m);
     const opt = outcomeOptions(m).find(o => o.sym === outcome);
     if (!opt || opt.pct == null) continue;
