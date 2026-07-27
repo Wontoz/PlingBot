@@ -42,6 +42,23 @@ public record class TipsMatch
     public List<CouponEvent>? Injuries { get; set; }
     public bool BackfillComplete { get; set; }
 
+    public List<H2HFixture>? H2H { get; set; }
+
     [JsonIgnore]
     public Match? Match { get; set; }
+}
+
+public class H2HFixture
+{
+    public int FixtureId { get; set; }
+    public DateTime Date { get; set; }
+    public int HomeTeamId { get; set; }
+    public string HomeTeam { get; set; } = "";
+    public string? HomeTeamLogo { get; set; }
+    public int HomeGoals { get; set; }
+    public int AwayTeamId { get; set; }
+    public string AwayTeam { get; set; } = "";
+    public string? AwayTeamLogo { get; set; }
+    public int AwayGoals { get; set; }
+    public string StatusShort { get; set; } = "";
 }

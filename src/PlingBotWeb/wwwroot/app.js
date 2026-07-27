@@ -93,16 +93,21 @@ function hasMatchLineups(tip) {
   return (!!tip.HomeLineup && !!tip.AwayLineup) || !!(tip.Injuries?.length);
 }
 
+function hasMatchH2H(tip) {
+  return !!(tip?.H2H?.length);
+}
+
 const MATCH_TAB_CHECKS = {
   'match-stats':   hasMatchStats,
   'match-events':  hasMatchEvents,
   'match-lineup':  hasMatchLineups,
+  'match-h2h':     hasMatchH2H,
 };
 
 // Picks the tab to land on for a given match: prefers Statistik, falls back to
-// Händelser, falls back to Laguppställning, falls back to Live if none exist yet.
+// Händelser, falls back to Laguppställning, falls back to H2H, falls back to Live.
 function pickMatchTab(tip) {
-  for (const tab of ['match-stats', 'match-events', 'match-lineup'])
+  for (const tab of ['match-stats', 'match-events', 'match-lineup', 'match-h2h'])
     if (MATCH_TAB_CHECKS[tab](tip)) return tab;
   return 'live';
 }
@@ -123,6 +128,8 @@ function renderTabs() {
       html += `<button class="panel-tab ${activeTab === 'match-events' ? 'active' : ''}" data-tab="match-events">Händelser</button>`;
     if (hasMatchLineups(tip))
       html += `<button class="panel-tab ${activeTab === 'match-lineup' ? 'active' : ''}" data-tab="match-lineup"><span class="tab-full">Laginfo</span><span class="tab-short">Lag</span></button>`;
+    if (hasMatchH2H(tip))
+      html += `<button class="panel-tab ${activeTab === 'match-h2h' ? 'active' : ''}" data-tab="match-h2h">H2H</button>`;
     html += `<button class="panel-tab-close" data-tab="close" title="Stäng">✕</button>`;
   }
 
@@ -156,6 +163,8 @@ function renderActiveTabContent() {
     container.innerHTML = renderMatchStatsTable(tip);
   } else if (activeTab === 'match-lineup') {
     container.innerHTML = renderMatchLineupList(tip);
+  } else if (activeTab === 'match-h2h') {
+    container.innerHTML = renderMatchH2HList(tip);
   }
 }
 
@@ -741,6 +750,41 @@ function renderPreMatch(matches) {
     + renderSection('Bästa streckvärde', best, v => valueRow(v, true), 'Tecknen med bäst streckvärde baserat på streckprocent kontra odds')
     + renderSection('Sämsta streckvärde', worst, v => valueRow(v, false), 'Tecknen med sämst streckvärde baserat på streckprocent kontra odds')
     + `</div>`;
+}
+
+// ── H2H tab ───────────────────────────────────────────────────────────────────
+
+function renderMatchH2HList(tip) {
+  const matches = tip.H2H;
+  if (!matches?.length)
+    return `<div class="events-empty">Ingen H2H-data tillgänglig</div>`;
+
+  const sorted = matches.slice().sort((a, b) => new Date(b.Date) - new Date(a.Date));
+  let html = '';
+  let first = true;
+
+  for (const m of sorted) {
+    const date = new Date(m.Date).toLocaleDateString('sv-SE', { day: 'numeric', month: 'short', year: 'numeric' });
+    const homeLogo = m.HomeTeamLogo
+      ? `<img class="h2h-logo" src="${m.HomeTeamLogo}" alt="">`
+      : `<span class="h2h-logo"></span>`;
+    const awayLogo = m.AwayTeamLogo
+      ? `<img class="h2h-logo" src="${m.AwayTeamLogo}" alt="">`
+      : `<span class="h2h-logo"></span>`;
+
+    const winClass = m.HomeGoals > m.AwayGoals ? 'h2h-home-win'
+                   : m.AwayGoals > m.HomeGoals ? 'h2h-away-win'
+                   : 'h2h-draw';
+
+    html += `<div class="h2h-date-chip${first ? ' h2h-date-chip-first' : ''}">${date}</div>
+    <div class="h2h-row ${winClass}">
+      <div class="h2h-team h2h-home"><span class="h2h-name">${m.HomeTeam}</span>${homeLogo}</div>
+      <div class="h2h-score">${m.HomeGoals} – ${m.AwayGoals}</div>
+      <div class="h2h-team h2h-away">${awayLogo}<span class="h2h-name">${m.AwayTeam}</span></div>
+    </div>`;
+    first = false;
+  }
+  return html;
 }
 
 // ── Stats panel ───────────────────────────────────────────────────────────────

@@ -71,6 +71,7 @@ public class ScorePollerService
         await InitializeFixtureIdsAsync();
         await BackfillMissingEventsAsync();
         await FetchAndStoreInjuriesAsync();
+        await FetchAndStoreH2HAsync();
         await _couponPercentageService.RefreshIfDueAsync();
         await SyncInitialScoresAsync();
 
@@ -293,6 +294,37 @@ public class ScorePollerService
 
         _tipsConfig.SaveToJson();
         _logger.Log($"Injuries: {injuries.Count} fetched across {byFixture.Count()} fixtures", ConsoleColor.Cyan);
+    }
+
+    private async Task FetchAndStoreH2HAsync()
+    {
+        bool any = false;
+        foreach (var tip in _tipsConfig.TipsMatches)
+        {
+            if (!tip.HomeTeamId.HasValue || !tip.AwayTeamId.HasValue)
+                continue;
+
+            // Re-fetch if missing or if cached data predates team-ID support (all IDs are 0)
+            bool needsFetch = tip.H2H == null || tip.H2H.All(f => f.HomeTeamId == 0 && f.AwayTeamId == 0);
+            if (!needsFetch) continue;
+
+            _logger.Log($"H2H #{tip.Number}: {tip.HomeTeam} vs {tip.AwayTeam}", ConsoleColor.DarkCyan);
+            var fixtures = await _api.FetchHeadToHeadAsync(tip.HomeTeamId.Value, tip.AwayTeamId.Value);
+
+            // Replace API team names with coupon display names
+            foreach (var f in fixtures)
+            {
+                if (f.HomeTeamId == tip.HomeTeamId) f.HomeTeam = tip.HomeTeam;
+                else if (f.HomeTeamId == tip.AwayTeamId) f.HomeTeam = tip.AwayTeam;
+
+                if (f.AwayTeamId == tip.AwayTeamId) f.AwayTeam = tip.AwayTeam;
+                else if (f.AwayTeamId == tip.HomeTeamId) f.AwayTeam = tip.HomeTeam;
+            }
+
+            tip.H2H = fixtures;
+            any = true;
+        }
+        if (any) _tipsConfig.SaveToJson();
     }
 
     private async Task SyncInitialScoresAsync()

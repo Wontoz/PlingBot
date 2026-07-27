@@ -2,6 +2,7 @@ namespace PlingBot.Services;
 using Discord.WebSocket;
 using System;
 using System.Linq;
+using System.Text;
 using PlingBot.Config;
 using PlingBot.Utils;
 
@@ -130,6 +131,27 @@ public class MessageHandler
                 await _statsBuilder.HandleAsync(message, arg);
             break;
 
+            case "h2h":
+                if (!int.TryParse(arg.Trim(), out int h2hNr))
+                {
+                    await message.Channel.SendMessageAsync("Ange matchnummer, t.ex. `!h2h 3`");
+                    break;
+                }
+                var h2hTip = _tipsConfig.TipsMatches.FirstOrDefault(t => t.Number == h2hNr);
+                if (h2hTip == null)
+                {
+                    await message.Channel.SendMessageAsync($"Hittade ingen match #{h2hNr}.");
+                    break;
+                }
+                if (h2hTip.H2H == null || h2hTip.H2H.Count == 0)
+                {
+                    await message.Channel.SendMessageAsync($"Ingen H2H-data tillgänglig för match #{h2hNr} ({h2hTip.HomeTeam} vs {h2hTip.AwayTeam}).");
+                    break;
+                }
+                var h2hMsg = await message.Channel.SendMessageAsync(FormatH2H(h2hNr, h2hTip));
+                Helpers.DeleteAfterDelay(TimeSpan.FromMinutes(2), h2hMsg);
+            break;
+
             case "status":
                 if (_options.IsVersusMode)
                 {
@@ -173,6 +195,29 @@ public class MessageHandler
                     $"Metadata updated: {correctMeta}/{evaluatedMeta} correct | Player: {_tipsConfig.Data.MetaData.Player} | Date: {_tipsConfig.Data.MetaData.Date}");
             break;
         }
+    }
+
+    private static string FormatH2H(int tipNumber, PlingBot.Models.TipsMatch tip)
+    {
+        var sb = new StringBuilder();
+        sb.AppendLine($"**#{tipNumber} {tip.HomeTeam} vs {tip.AwayTeam} — H2H (5 senaste)**");
+        sb.AppendLine("```");
+
+        int nameW = tip.H2H!
+            .SelectMany(m => new[] { m.HomeTeam, m.AwayTeam })
+            .Max(s => s.Length);
+
+        foreach (var m in tip.H2H!.OrderByDescending(m => m.Date))
+        {
+            string date  = m.Date.ToString("yyyy-MM-dd");
+            string score = $"{m.HomeGoals}-{m.AwayGoals}";
+            string home  = m.HomeTeam.PadRight(nameW);
+            string away  = m.AwayTeam;
+            sb.AppendLine($"{date}  {home}  {score,5}  {away}");
+        }
+
+        sb.Append("```");
+        return sb.ToString();
     }
 
     private string BuildVersusScoreLine()

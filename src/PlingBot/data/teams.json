@@ -680,6 +680,11 @@
     "Id": 378
   },
   {
+    "Name": "IFK Skövde",
+    "ApiName": "IFK Skövde",
+    "Id": 16605
+  },
+  {
     "Name": "IK Start",
     "ApiName": "Start",
     "Id": 334
@@ -908,6 +913,11 @@
     "Name": "Malmö",
     "ApiName": "Malmo FF",
     "Id": 375
+  },
+  {
+    "Name": "Malmö FF",
+    "ApiName": "Malmö FF W",
+    "Id": 21698
   },
   {
     "Name": "Manchester City",
@@ -1310,6 +1320,11 @@
     "Id": 3854
   },
   {
+    "Name": "Silkeborg",
+    "ApiName": "Silkeborg",
+    "Id": 2073
+  },
+  {
     "Name": "Sirius",
     "ApiName": "Sirius",
     "Id": 370
@@ -1553,6 +1568,11 @@
     "Name": "Villarreal",
     "ApiName": "Villarreal",
     "Id": 533
+  },
+  {
+    "Name": "Vittsjö",
+    "ApiName": "Vittsjö W",
+    "Id": 11083
   },
   {
     "Name": "VPS",

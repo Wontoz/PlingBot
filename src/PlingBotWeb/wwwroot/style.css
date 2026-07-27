@@ -648,6 +648,69 @@ header {
   color: var(--red);
 }
 
+/* ── H2H tab ─────────────────────────────────────────────────────────────────── */
+
+.h2h-date-chip {
+  padding: 7px 12px 4px;
+  font-size: 0.72rem;
+  font-weight: 600;
+  color: var(--muted);
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  border-top: 1px solid var(--border);
+}
+.h2h-date-chip-first { border-top: none; }
+
+.h2h-row {
+  display: grid;
+  grid-template-columns: 1fr auto 1fr;
+  align-items: center;
+  padding: 6px 12px 9px;
+  gap: 10px;
+}
+
+.h2h-team {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 1.0rem;
+  font-weight: 500;
+}
+
+.h2h-name {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  min-width: 0;
+}
+
+.h2h-home { justify-content: flex-end; }
+.h2h-away { justify-content: flex-start; }
+
+.h2h-logo {
+  width: 24px;
+  height: 24px;
+  object-fit: contain;
+  flex-shrink: 0;
+  display: block;
+}
+
+.h2h-score {
+  font-size: 1.1rem;
+  font-weight: 700;
+  white-space: nowrap;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: 0.06em;
+  padding-right: 0.06em;
+}
+
+.h2h-home-win .h2h-home .h2h-name { color: var(--green); }
+.h2h-away-win .h2h-away .h2h-name { color: var(--green); }
+.h2h-draw .h2h-score              { color: var(--muted); }
+
 .event-sub {
   font-size: 0.68rem;
   color: var(--muted);
@@ -1226,4 +1289,10 @@ header {
   #matches.matches-compact .match-row            { flex: none; min-height: 52px; }
   #matches.matches-compact .match-teams          { flex-direction: column; align-items: flex-start; gap: 2px; }
   #matches.matches-compact .team-sep             { display: none; }
+
+  .h2h-date-chip  { font-size: 0.62rem; padding: 5px 12px 3px; }
+  .h2h-row        { padding: 5px 12px 7px; gap: 8px; }
+  .h2h-team       { font-size: 0.78rem; gap: 6px; }
+  .h2h-logo       { width: 18px; height: 18px; }
+  .h2h-score      { font-size: 0.82rem; }
 }

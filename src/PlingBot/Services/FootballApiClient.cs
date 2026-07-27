@@ -330,6 +330,60 @@ public class FootballApiClient
         }
     }
 
+    public async Task<List<H2HFixture>> FetchHeadToHeadAsync(int homeTeamId, int awayTeamId)
+    {
+        string json = await GetApiJsonAsync($"fixtures/headtohead?h2h={homeTeamId}-{awayTeamId}&last=5", "fixtures/h2h");
+        using var doc = JsonDocument.Parse(json);
+
+        if (TryLogApiErrors(doc.RootElement, $"fixtures/h2h {homeTeamId}-{awayTeamId}"))
+            return [];
+
+        var result = new List<H2HFixture>();
+        foreach (var item in doc.RootElement.GetProperty("response").EnumerateArray())
+        {
+            try
+            {
+                var fixture = item.GetProperty("fixture");
+                var teams   = item.GetProperty("teams");
+                var goals   = item.GetProperty("goals");
+                var status  = fixture.GetProperty("status");
+
+                string statusShort = status.TryGetProperty("short", out var ss) ? ss.GetString() ?? "" : "";
+                int homeGoals = GetInt(goals.GetProperty("home"));
+                int awayGoals = GetInt(goals.GetProperty("away"));
+
+                if ((statusShort == "AET" || statusShort == "PEN") &&
+                    item.TryGetProperty("score", out var scoreElem) &&
+                    scoreElem.TryGetProperty("fulltime", out var ftElem))
+                {
+                    int? ftH = ftElem.TryGetProperty("home", out var ftHElem) ? GetNullableInt(ftHElem) : null;
+                    int? ftA = ftElem.TryGetProperty("away", out var ftAElem) ? GetNullableInt(ftAElem) : null;
+                    if (ftH.HasValue && ftA.HasValue) { homeGoals = ftH.Value; awayGoals = ftA.Value; }
+                }
+
+                var home = teams.GetProperty("home");
+                var away = teams.GetProperty("away");
+
+                result.Add(new H2HFixture
+                {
+                    FixtureId    = GetInt(fixture.GetProperty("id")),
+                    Date         = fixture.GetProperty("date").GetDateTime(),
+                    HomeTeamId   = home.TryGetProperty("id",   out var hid) ? GetInt(hid) : 0,
+                    HomeTeam     = home.TryGetProperty("name", out var hn)  ? hn.GetString() ?? "" : "",
+                    HomeTeamLogo = home.TryGetProperty("logo", out var hl)  ? hl.GetString() : null,
+                    HomeGoals    = homeGoals,
+                    AwayTeamId   = away.TryGetProperty("id",   out var aid) ? GetInt(aid) : 0,
+                    AwayTeam     = away.TryGetProperty("name", out var an)  ? an.GetString() ?? "" : "",
+                    AwayTeamLogo = away.TryGetProperty("logo", out var al)  ? al.GetString() : null,
+                    AwayGoals    = awayGoals,
+                    StatusShort  = statusShort,
+                });
+            }
+            catch { }
+        }
+        return result;
+    }
+
     public async Task<List<InjuryInfo>> FetchInjuriesAsync(List<int> fixtureIds)
     {
         if (fixtureIds.Count == 0) return [];

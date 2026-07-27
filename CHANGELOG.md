@@ -1,3 +1,8 @@
+## [3.1.5] - 2026-07-27
+- Added Head2Head section on both web app and discord (!h2h <n>)
+
+---
+
 ## [3.1.4.4] - 2026-07-26
 - Changed color of light theme stat pillar for clarity
 - Remade how best/worst picks are calculated to only include finished fixtures
