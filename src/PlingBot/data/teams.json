@@ -105,6 +105,11 @@
     "Id": 747
   },
   {
+    "Name": "Basel",
+    "ApiName": "FC Basel 1893",
+    "Id": 551
+  },
+  {
     "Name": "Belgien",
     "ApiName": "Belgium",
     "Id": 1
@@ -198,6 +203,11 @@
     "Name": "Bryne",
     "ApiName": "Bryne",
     "Id": 2142
+  },
+  {
+    "Name": "Bröndby",
+    "ApiName": "Brondby",
+    "Id": 407
   },
   {
     "Name": "Burnley",
@@ -676,13 +686,8 @@
   },
   {
     "Name": "IFK Norrköping",
-    "ApiName": "IFK Norrkoping",
-    "Id": 378
-  },
-  {
-    "Name": "IFK Skövde",
-    "ApiName": "IFK Skövde",
-    "Id": 16605
+    "ApiName": "Norrköping W",
+    "Id": 16008
   },
   {
     "Name": "IK Start",
@@ -913,11 +918,6 @@
     "Name": "Malmö",
     "ApiName": "Malmo FF",
     "Id": 375
-  },
-  {
-    "Name": "Malmö FF",
-    "ApiName": "Malmö FF W",
-    "Id": 21698
   },
   {
     "Name": "Manchester City",
@@ -1295,6 +1295,11 @@
     "Id": 1773
   },
   {
+    "Name": "Servette",
+    "ApiName": "Servette FC",
+    "Id": 2184
+  },
+  {
     "Name": "Sevilla",
     "ApiName": "Sevilla",
     "Id": 536
@@ -1318,11 +1323,6 @@
     "Name": "Shelbourne",
     "ApiName": "Shelbourne",
     "Id": 3854
-  },
-  {
-    "Name": "Silkeborg",
-    "ApiName": "Silkeborg",
-    "Id": 2073
   },
   {
     "Name": "Sirius",
@@ -1570,11 +1570,6 @@
     "Id": 533
   },
   {
-    "Name": "Vittsjö",
-    "ApiName": "Vittsjö W",
-    "Id": 11083
-  },
-  {
     "Name": "VPS",
     "ApiName": "VPS",
     "Id": 650
@@ -1603,6 +1598,11 @@
     "Name": "Wales",
     "ApiName": "Wales",
     "Id": 767
+  },
+  {
+    "Name": "Waterford",
+    "ApiName": "Waterford",
+    "Id": 3845
   },
   {
     "Name": "Watford",
@@ -1658,6 +1658,11 @@
     "Name": "Ålesund",
     "ApiName": "Aalesund",
     "Id": 757
+  },
+  {
+    "Name": "Århus",
+    "ApiName": "Aarhus",
+    "Id": 406
   },
   {
     "Name": "Åtvidaberg",
