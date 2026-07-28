@@ -347,6 +347,7 @@ public class FootballApiClient
                 var teams   = item.GetProperty("teams");
                 var goals   = item.GetProperty("goals");
                 var status  = fixture.GetProperty("status");
+                var league  = item.TryGetProperty("league", out var lg) ? lg : (JsonElement?)null;
 
                 string statusShort = status.TryGetProperty("short", out var ss) ? ss.GetString() ?? "" : "";
                 int homeGoals = GetInt(goals.GetProperty("home"));
@@ -377,6 +378,8 @@ public class FootballApiClient
                     AwayTeamLogo = away.TryGetProperty("logo", out var al)  ? al.GetString() : null,
                     AwayGoals    = awayGoals,
                     StatusShort  = statusShort,
+                    LeagueName   = league?.TryGetProperty("name", out var ln) == true ? ln.GetString() : null,
+                    LeagueLogo   = league?.TryGetProperty("logo", out var ll) == true ? ll.GetString() : null,
                 });
             }
             catch { }

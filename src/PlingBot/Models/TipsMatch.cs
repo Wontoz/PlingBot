@@ -61,4 +61,6 @@ public class H2HFixture
     public string? AwayTeamLogo { get; set; }
     public int AwayGoals { get; set; }
     public string StatusShort { get; set; } = "";
+    public string? LeagueName { get; set; }
+    public string? LeagueLogo { get; set; }
 }

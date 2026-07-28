@@ -32,7 +32,14 @@ function renderAll(data) {
   const finished = matches.filter(m => m.IsFinished);
   const correct  = matches.filter(isCorrect);
 
-  document.getElementById('game-title').textContent = `${meta.Game} - ${meta.Date}`;
+  const _titleEl = document.getElementById('game-title');
+  const _logoMap = { stryktipset: 'stryktipset', europatipset: 'europatipset', topptipset: 'topptipset' };
+  const _logoKey = Object.keys(_logoMap).find(k => (meta.Game || '').toLowerCase().includes(k));
+  if (_logoKey) {
+    _titleEl.innerHTML = `<img class="game-logo" src="/assets/img/${_logoKey}.png" alt="${meta.Game}"><span class="header-date">${meta.Date}</span>`;
+  } else {
+    _titleEl.textContent = `${meta.Game} - ${meta.Date}`;
+  }
   applyGameClass(meta.Game);
 
   const fixtureMap  = buildFixtureMap(matches);
@@ -765,22 +772,31 @@ function renderMatchH2HList(tip) {
 
   for (const m of sorted) {
     const date = new Date(m.Date).toLocaleDateString('sv-SE', { day: 'numeric', month: 'short', year: 'numeric' });
-    const homeLogo = m.HomeTeamLogo
-      ? `<img class="h2h-logo" src="${m.HomeTeamLogo}" alt="">`
-      : `<span class="h2h-logo"></span>`;
-    const awayLogo = m.AwayTeamLogo
-      ? `<img class="h2h-logo" src="${m.AwayTeamLogo}" alt="">`
-      : `<span class="h2h-logo"></span>`;
 
-    const winClass = m.HomeGoals > m.AwayGoals ? 'h2h-home-win'
-                   : m.AwayGoals > m.HomeGoals ? 'h2h-away-win'
+    // Swap left/right so coupon's home team is always on the left
+    const isSwapped  = tip.HomeTeamId && m.AwayTeamId === tip.HomeTeamId;
+    const leftTeam   = isSwapped ? m.AwayTeam     : m.HomeTeam;
+    const rightTeam  = isSwapped ? m.HomeTeam     : m.AwayTeam;
+    const leftLogo   = isSwapped ? m.AwayTeamLogo : m.HomeTeamLogo;
+    const rightLogo  = isSwapped ? m.HomeTeamLogo : m.AwayTeamLogo;
+    const leftGoals  = isSwapped ? m.AwayGoals    : m.HomeGoals;
+    const rightGoals = isSwapped ? m.HomeGoals    : m.AwayGoals;
+
+    const leftLogoEl  = leftLogo  ? `<img class="h2h-logo" src="${leftLogo}"  alt="">` : `<span class="h2h-logo"></span>`;
+    const rightLogoEl = rightLogo ? `<img class="h2h-logo" src="${rightLogo}" alt="">` : `<span class="h2h-logo"></span>`;
+
+    const winClass = leftGoals > rightGoals ? 'h2h-home-win'
+                   : rightGoals > leftGoals ? 'h2h-away-win'
                    : 'h2h-draw';
 
-    html += `<div class="h2h-date-chip${first ? ' h2h-date-chip-first' : ''}">${date}</div>
+    const leaguePart = m.LeagueLogo
+      ? `<img class="h2h-league-logo" src="${m.LeagueLogo}" alt=""> ${m.LeagueName ?? ''}`
+      : (m.LeagueName ? m.LeagueName : '');
+    html += `<div class="h2h-date-chip${first ? ' h2h-date-chip-first' : ''}"><span class="h2h-chip-date">${date}</span>${leaguePart ? `<span class="h2h-chip-league">${leaguePart}</span>` : ''}</div>
     <div class="h2h-row ${winClass}">
-      <div class="h2h-team h2h-home"><span class="h2h-name">${m.HomeTeam}</span>${homeLogo}</div>
-      <div class="h2h-score">${m.HomeGoals} – ${m.AwayGoals}</div>
-      <div class="h2h-team h2h-away">${awayLogo}<span class="h2h-name">${m.AwayTeam}</span></div>
+      <div class="h2h-team h2h-home"><span class="h2h-name">${leftTeam}</span>${leftLogoEl}</div>
+      <div class="h2h-score">${leftGoals} – ${rightGoals}</div>
+      <div class="h2h-team h2h-away">${rightLogoEl}<span class="h2h-name">${rightTeam}</span></div>
     </div>`;
     first = false;
   }

@@ -1,5 +1,10 @@
 ﻿[
   {
+    "Name": "Aberdeen",
+    "ApiName": "Aberdeen",
+    "Id": 252
+  },
+  {
     "Name": "Accrington",
     "ApiName": "Accrington ST",
     "Id": 1360
@@ -620,9 +625,19 @@
     "Id": 3995
   },
   {
+    "Name": "Hearts",
+    "ApiName": "Heart Of Midlothian",
+    "Id": 254
+  },
+  {
     "Name": "Heerenveen",
     "ApiName": "Heerenveen",
     "Id": 210
+  },
+  {
+    "Name": "Helsingborg",
+    "ApiName": "Helsingborg",
+    "Id": 811
   },
   {
     "Name": "HJK Helsingfors",
@@ -686,8 +701,13 @@
   },
   {
     "Name": "IFK Norrköping",
-    "ApiName": "Norrköping W",
-    "Id": 16008
+    "ApiName": "IFK Norrkoping",
+    "Id": 378
+  },
+  {
+    "Name": "IFK Skövde",
+    "ApiName": "IFK Skövde",
+    "Id": 16605
   },
   {
     "Name": "IK Start",
@@ -835,6 +855,11 @@
     "Id": 1166
   },
   {
+    "Name": "Landskrona",
+    "ApiName": "Landskrona BoIS",
+    "Id": 2176
+  },
+  {
     "Name": "Las Palmas",
     "ApiName": "Las Palmas",
     "Id": 534
@@ -915,9 +940,19 @@
     "Id": 1102
   },
   {
+    "Name": "Lyngby",
+    "ApiName": "Lyngby",
+    "Id": 625
+  },
+  {
     "Name": "Malmö",
     "ApiName": "Malmo FF",
     "Id": 375
+  },
+  {
+    "Name": "Malmö FF",
+    "ApiName": "Malmö FF W",
+    "Id": 21698
   },
   {
     "Name": "Manchester City",
@@ -1063,6 +1098,11 @@
     "Name": "Oddevold",
     "ApiName": "Oddevold",
     "Id": 11674
+  },
+  {
+    "Name": "Olympic",
+    "ApiName": "Olympic",
+    "Id": 12601
   },
   {
     "Name": "Orange County SC",
@@ -1325,6 +1365,11 @@
     "Id": 3854
   },
   {
+    "Name": "Silkeborg",
+    "ApiName": "Silkeborg",
+    "Id": 2073
+  },
+  {
     "Name": "Sirius",
     "ApiName": "Sirius",
     "Id": 370
@@ -1568,6 +1613,11 @@
     "Name": "Villarreal",
     "ApiName": "Villarreal",
     "Id": 533
+  },
+  {
+    "Name": "Vittsjö",
+    "ApiName": "Vittsjö W",
+    "Id": 11083
   },
   {
     "Name": "VPS",

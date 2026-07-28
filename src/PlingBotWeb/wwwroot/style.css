@@ -15,6 +15,12 @@
   --red:           #f85149;
   --amber:         #d29922;
   --radius:        6px;
+
+  /* Colors associated with each support gamemode, default svenskaspel-red for other games */
+  --color-stryktipset:  #004077;
+  --color-europatipset: #008733;
+  --color-topptipset:   #D34600;
+  --color-annat:        #ED0000;
 }
 
 /* ── Light mode ──────────────────────────────────────────────────────────── */
@@ -107,8 +113,24 @@ header {
 
 
 #game-title {
+  display: flex;
+  align-items: center;
+  gap: 8px;
   font-size: 0.95rem;
   font-weight: 700;
+}
+
+.game-logo {
+  height: 30px;
+  width: auto;
+  object-fit: contain;
+  display: block;
+}
+
+.header-date {
+  font-size: 1.2rem;
+  font-weight: 900;
+  color: var(--text);
 }
 
 
@@ -173,14 +195,15 @@ header {
 .match-row.row-selected         { background: rgba(47, 129, 247, 0.12); }
 .match-row.row-selected:hover   { background: rgba(47, 129, 247, 0.18); }
 
+
+.game-stryktipset  .match-row { border-left-color: var(--color-stryktipset); }
+.game-europatipset .match-row { border-left-color: var(--color-europatipset); }
+.game-topptipset   .match-row { border-left-color: var(--color-topptipset); }
+.game-annat        .match-row{ border-left-color: var(--color-annat); }
+
 .match-row.row-correct { border-left-color: var(--green); }
 .match-row.row-wrong   { border-left-color: var(--red); }
 .match-row.row-live    { border-left-color: var(--amber); }
-
-.game-stryktipset  .match-row.row-live { border-left-color: #00437A; }
-.game-europatipset .match-row.row-live { border-left-color: #008733; }
-.game-topptipset   .match-row.row-live { border-left-color: #F29400; }
-.game-annat        .match-row.row-live { border-left-color: #9D0812; }
 
 .match-num {
   font-size: 0.72rem;
@@ -197,10 +220,10 @@ header {
   padding: 0;
 }
 
-.game-stryktipset  .match-num { background: #00437A; }
-.game-europatipset .match-num { background: #008733; }
-.game-topptipset   .match-num { background: #F29400; }
-.game-annat        .match-num { background: #9D0812; }
+.game-stryktipset  .match-num { background: var(--color-stryktipset); }
+.game-europatipset .match-num { background: var(--color-europatipset); }
+.game-topptipset   .match-num { background: var(--color-topptipset); }
+.game-annat        .match-num { background: var(--color-annat); }
 
 .match-info-col {
   position: relative;
@@ -438,15 +461,15 @@ header {
   color: white;
 }
 
-.game-stryktipset  .tip-btn.is-tip { background: #00437A; border-color: #00437A; }
-.game-europatipset .tip-btn.is-tip { background: #008733; border-color: #008733; }
-.game-topptipset   .tip-btn.is-tip { background: #F29400; border-color: #F29400; }
-.game-annat        .tip-btn.is-tip { background: #9D0812; border-color: #9D0812; }
+.game-stryktipset  .tip-btn.is-tip { background: var(--color-stryktipset); border-color: var(--color-stryktipset); }
+.game-europatipset .tip-btn.is-tip { background: var(--color-europatipset); border-color: var(--color-europatipset); }
+.game-topptipset   .tip-btn.is-tip { background: var(--color-topptipset); border-color: var(--color-topptipset); }
+.game-annat        .tip-btn.is-tip { background: var(--color-annat); border-color: var(--color-annat); }
 
-.game-stryktipset  .tip-btn.is-tip.is-outcome { background: #00437A; border-color: var(--green); }
-.game-europatipset .tip-btn.is-tip.is-outcome { background: #008733; border-color: var(--green); }
-.game-topptipset   .tip-btn.is-tip.is-outcome { background: #F29400; border-color: var(--green); }
-.game-annat        .tip-btn.is-tip.is-outcome { background: #9D0812; border-color: var(--green); }
+.game-stryktipset  .tip-btn.is-tip.is-outcome { background: var(--color-stryktipset); border-color: var(--green); }
+.game-europatipset .tip-btn.is-tip.is-outcome { background: var(--color-europatipset); border-color: var(--green); }
+.game-topptipset   .tip-btn.is-tip.is-outcome { background: var(--color-topptipset); border-color: var(--green); }
+.game-annat        .tip-btn.is-tip.is-outcome { background: var(--color-annat); border-color: var(--green); }
 
 .tip-btns-row {
   display: flex;
@@ -651,6 +674,9 @@ header {
 /* ── H2H tab ─────────────────────────────────────────────────────────────────── */
 
 .h2h-date-chip {
+  display: flex;
+  align-items: center;
+  gap: 6px;
   padding: 7px 12px 4px;
   font-size: 0.72rem;
   font-weight: 600;
@@ -660,6 +686,20 @@ header {
   border-top: 1px solid var(--border);
 }
 .h2h-date-chip-first { border-top: none; }
+
+.h2h-chip-league {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  opacity: 0.7;
+}
+
+.h2h-league-logo {
+  width: 12px;
+  height: 12px;
+  object-fit: contain;
+  flex-shrink: 0;
+}
 
 .h2h-row {
   display: grid;
@@ -1211,6 +1251,7 @@ header {
   header       { flex-wrap: nowrap; gap: 8px; padding: 8px 12px; margin-left: -10px; margin-right: -10px; }
   .header-left { flex: 1; min-width: 0; display: flex; align-items: center; gap: 8px; overflow: hidden; }
   #game-title  { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; font-size: 0.85rem; }
+  .game-logo   { height: 22px; }
 
   /* ── Lagnamn: grid med logo | namn per rad ── */
   .match-teams {

@@ -1,3 +1,10 @@
+## [3.1.5.1] - 2026-07-28
+- Expanded Head2Head section with further data
+- Added logotypes to header
+- Updated color schemes to better match topptipset logo
+
+---
+
 ## [3.1.5] - 2026-07-27
 - Added Head2Head section on both web app and discord (!h2h <n>)
 
