@@ -64,6 +64,7 @@ public class TipsConfig
     private readonly string jsonFileName;
 
     private const int MaxLookbackDays = 30;
+    private const int MaxLookaheadDays = 14;
 
     public TipsConfig(Logger logger, string game, DateOnly? couponDate = null)
     {
@@ -73,7 +74,7 @@ public class TipsConfig
         string jsonDir = ResolveJsonDirectory();
         Directory.CreateDirectory(jsonDir);
 
-        DateOnly selectedDate = couponDate ?? ResolveLatestExistingDate(jsonDir, filePrefix);
+        DateOnly selectedDate = couponDate ?? ResolveCouponDate(jsonDir, filePrefix);
         jsonFileName = $"{filePrefix}_{selectedDate:yyyy-MM-dd}.json";
         _logger.Log($"Using game: {game}", ConsoleColor.Cyan);
 
@@ -81,22 +82,72 @@ public class TipsConfig
         LoadFromJson();
     }
 
-    // Går bakåt dag för dag från idag och letar efter den senaste kupong-JSON:en för
-    // det här spelläget, så att boten inte startar en tom kupong för idag när den
-    // senast skrapade kupongen faktiskt är några dagar gammal.
-    private static DateOnly ResolveLatestExistingDate(string jsonDir, string filePrefix)
+    // Väljer vilken kupong som ska laddas. Den senaste kupongen som redan finns på disk
+    // (t.ex. en Stryktipsomgång inlämnad på lördag) kan fortfarande ha matcher kvar att
+    // spela flera dagar senare (söndag, måndag). Om den gör det fortsätter vi använda den
+    // istället för att av misstag hoppa till en redan utskrapad kommande omgång bara för
+    // att den råkar ha lagts upp under tiden. Först när den senaste kupongen inte längre
+    // har någon match kvar idag letar vi framåt efter nästa.
+    private static DateOnly ResolveCouponDate(string jsonDir, string filePrefix)
     {
-        DateOnly today = DateOnly.FromDateTime(DateTime.Today);
+        DateOnly today = DateOnly.FromDateTime(SwedishTime.Now());
 
-        for (int i = 0; i <= MaxLookbackDays; i++)
+        DateOnly? latestExisting = FindExistingDate(jsonDir, filePrefix, today, MaxLookbackDays, forward: false);
+        if (latestExisting.HasValue && CouponHasMatchOn(jsonDir, filePrefix, latestExisting.Value, today))
+            return latestExisting.Value;
+
+        DateOnly? next = FindExistingDate(jsonDir, filePrefix, today, MaxLookaheadDays, forward: true);
+        if (next.HasValue)
+            return next.Value;
+
+        return latestExisting ?? today;
+    }
+
+    private static DateOnly? FindExistingDate(string jsonDir, string filePrefix, DateOnly start, int maxDays, bool forward)
+    {
+        for (int i = 0; i <= maxDays; i++)
         {
-            DateOnly candidate = today.AddDays(-i);
+            DateOnly candidate = forward ? start.AddDays(i) : start.AddDays(-i);
             string candidatePath = Path.Combine(jsonDir, $"{filePrefix}_{candidate:yyyy-MM-dd}.json");
             if (File.Exists(candidatePath))
                 return candidate;
         }
 
-        return today;
+        return null;
+    }
+
+    // Läser bara TipsData/KickoffUtc ur filen (inte hela strukturen via LoadFromJson) för
+    // att slippa sätta igång hela laddningsflödet bara för att kolla ett datum. KickoffUtc
+    // sätts av ScorePollerService/FixtureMappingService redan vid första uppstarten för en
+    // kupong, långt innan första avspark, så det finns tillgängligt för alla omgångar som
+    // boten någonsin körts mot.
+    private static bool CouponHasMatchOn(string jsonDir, string filePrefix, DateOnly couponDate, DateOnly targetDate)
+    {
+        string path = Path.Combine(jsonDir, $"{filePrefix}_{couponDate:yyyy-MM-dd}.json");
+
+        try
+        {
+            using var doc = JsonDocument.Parse(File.ReadAllText(path, Encoding.UTF8));
+            if (!doc.RootElement.TryGetProperty("TipsData", out var tipsData))
+                return false;
+
+            foreach (var tip in tipsData.EnumerateArray())
+            {
+                if (!tip.TryGetProperty("KickoffUtc", out var kickoffElem) ||
+                    kickoffElem.ValueKind != JsonValueKind.String ||
+                    !kickoffElem.TryGetDateTime(out var kickoffUtc))
+                    continue;
+
+                if (DateOnly.FromDateTime(SwedishTime.ToLocal(kickoffUtc)) == targetDate)
+                    return true;
+            }
+        }
+        catch (Exception)
+        {
+            // Trasig eller oläsbar fil — låt anroparen falla tillbaka på annan logik.
+        }
+
+        return false;
     }
 
     private static string GetFilePrefix(string game)

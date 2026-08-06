@@ -94,8 +94,12 @@ public class ScorePollerService
         var channel = GetChannel(client);
         if (channel != null)
         {
+            // Ta bort ev. gammalt dashboard-meddelande och posta ett nytt vid uppstart,
+            // precis som !refresh gör — annars blir det kvar högre upp i kanalen istället
+            // för att hamna längst ner igen.
             string message = statusMessageService.Generate(tipsConfig.Data.MetaData.Player);
-            await dashboardService.RefreshOrCreateOnStartupAsync(channel, message);
+            await dashboardService.DeletePreviousDashboardsAsync(channel);
+            await dashboardService.CreateOrUpdateAsync(channel, message);
         }
 
     }

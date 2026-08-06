@@ -1,3 +1,8 @@
+## [3.1.6] - 2026-08-06
+- Improved logic when deciding which coupon to use
+
+---
+
 ## [3.1.5.2] - 2026-08-06
 - Redesigned header to be full-width
 - Refreshed color palette for light and dark theme

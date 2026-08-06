@@ -92,36 +92,6 @@ public class DashboardService
         _logger.Log("Dashboard updated", ConsoleColor.Cyan);
     }
 
-    public async Task RefreshOrCreateOnStartupAsync(IMessageChannel channel, string? extraMessage = null)
-    {
-        var messages = await channel.GetMessagesAsync(50).FlattenAsync();
-
-        var dashboard = messages.FirstOrDefault(message =>
-            message.Author.IsBot &&
-            message.Content.TrimStart().StartsWith("```"));
-
-        string content = BuildContent(extraMessage);
-
-        if (dashboard is IUserMessage existingDashboard)
-        {
-            await existingDashboard.ModifyAsync(m => m.Content = content);
-
-            channelId = channel.Id;
-            messageId = existingDashboard.Id;
-            lastContent = content;
-
-            return;
-        }
-
-        var sentMessage = await channel.SendMessageAsync(content);
-
-        channelId = channel.Id;
-        messageId = sentMessage.Id;
-        lastContent = content;
-
-        _logger.Log("Dashboard created on startup", ConsoleColor.Cyan);
-    }
-
     public async Task DeletePreviousDashboardsAsync(IMessageChannel channel)
     {
         var messages = await channel.GetMessagesAsync(50).FlattenAsync();

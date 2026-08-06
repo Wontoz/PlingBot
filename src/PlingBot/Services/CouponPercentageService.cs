@@ -156,7 +156,7 @@ public class CouponPercentageService
             if (closeElement != null)
             {
                 string closeText = await closeElement.InnerTextAsync();
-                startTime = ParseSwedishStartTimeUtc(closeText, GetStockholmNow());
+                startTime = ParseSwedishStartTimeUtc(closeText, SwedishTime.Now());
             }
 
             var rawRows = await page.EvaluateAsync<string[][]>(
@@ -233,7 +233,7 @@ private static DateTime? ParseSwedishStartTimeUtc(string value, DateTime nowLoca
         if (IsSwedishWeekday(rawDay) && localClose <= nowLocal)
             localClose = localClose.AddDays(7);
 
-        return TimeZoneInfo.ConvertTimeToUtc(localClose, GetStockholmTimeZone());
+        return SwedishTime.ToUtc(localClose);
     }
 
     private static DateOnly ResolveSwedishDate(string rawDay, DateTime nowLocal)
@@ -285,23 +285,6 @@ private static DateTime? ParseSwedishStartTimeUtc(string value, DateTime nowLoca
 
         string day = value.Trim().ToLower(new CultureInfo("sv-SE"));
         return ParseSwedishWeekday(day).HasValue;
-    }
-
-    private static TimeZoneInfo GetStockholmTimeZone()
-    {
-        try
-        {
-            return TimeZoneInfo.FindSystemTimeZoneById("Europe/Stockholm");
-        }
-        catch (TimeZoneNotFoundException)
-        {
-            return TimeZoneInfo.FindSystemTimeZoneById("W. Europe Standard Time");
-        }
-    }
-
-    private static DateTime GetStockholmNow()
-    {
-        return TimeZoneInfo.ConvertTimeFromUtc(DateTime.UtcNow, GetStockholmTimeZone());
     }
 
     private static string GetCouponUrl(string game)

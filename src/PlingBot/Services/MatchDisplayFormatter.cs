@@ -5,6 +5,7 @@ using System.Collections.Generic;
 using System.Globalization;
 using System.Linq;
 using PlingBot.Models;
+using PlingBot.Utils;
 
 internal static class MatchDisplayFormatter
 {
@@ -69,9 +70,8 @@ internal static class MatchDisplayFormatter
         {
             case "NS":
             case "TBD":
-                var tz = TimeZoneInfo.FindSystemTimeZoneById("Europe/Stockholm");
-                DateTime localDate = TimeZoneInfo.ConvertTimeFromUtc(tip.Match.Date.ToUniversalTime(), tz);
-                int dayDiff = (localDate.Date - TimeZoneInfo.ConvertTimeFromUtc(DateTime.UtcNow, tz).Date).Days;
+                DateTime localDate = SwedishTime.ToLocal(tip.Match.Date.ToUniversalTime());
+                int dayDiff = (localDate.Date - SwedishTime.Now().Date).Days;
                 string time = localDate.ToString("HH:mm");
 
                 if (dayDiff == 0) return $"Idag {time}";
