@@ -29,9 +29,6 @@ function renderAll(data) {
   const events  = data.Events     || [];
   leagueMap = meta.LeagueMap || {};
 
-  const finished = matches.filter(m => m.IsFinished);
-  const correct  = matches.filter(isCorrect);
-
   const _titleEl = document.getElementById('game-title');
   const _logoMap = { stryktipset: 'stryktipset', europatipset: 'europatipset', topptipset: 'topptipset' };
   const _logoKey = Object.keys(_logoMap).find(k => (meta.Game || '').toLowerCase().includes(k));
@@ -281,7 +278,7 @@ function renderMatch(m) {
 
 // ── Match sub-components ──────────────────────────────────────────────────────
 
-function renderResultIcon(result) {
+function renderResultIcon() {
   return `<div class="result-icon"></div>`;
 }
 
@@ -364,8 +361,6 @@ function classifyGoalEvent(e, match) {
 
   const isOwnGoal = e.Detail === 'Own Goal';
   const scorerIsHome = e.TeamId ? e.TeamId === match.HomeTeamId : e.Team === match.HomeTeam;
-  const homeScored = isOwnGoal ? !scorerIsHome : scorerIsHome;
-
   const outcome = (h, a) => h > a ? '1' : h < a ? '2' : 'X';
   const newOutcome = outcome(newHome, newAway);
   const tip = match.Tip || '';
@@ -380,7 +375,7 @@ function renderEventsList(events, fixtureMap) {
   return events
     .slice()
     .sort((a, b) => new Date(b.CreatedUtc) - new Date(a.CreatedUtc))
-    .map(e => renderEvent(e, fixtureMap, false))
+    .map(e => renderEvent(e, fixtureMap))
     .join('');
 }
 
@@ -411,15 +406,14 @@ function renderMatchEventsList(events, fixtureMap) {
       html += `<div class="events-period">${period}</div>`;
       currentPeriod = period;
     }
-    html += renderEvent(e, fixtureMap, false);
+    html += renderEvent(e, fixtureMap);
   }
 
   return html || `<div class="events-empty">Inga händelser ännu</div>`;
 }
 
-function renderEvent(e, fixtureMap, showMatchBadge = true) {
-  const match   = fixtureMap[e.FixtureId];
-  const matchNum = showMatchBadge && match ? `#${match.Number}` : '';
+function renderEvent(e, fixtureMap) {
+  const match = fixtureMap[e.FixtureId];
 
   const typeClass = e.Type === 'Goal'         ? 'ev-goal'
     : e.Type === 'Card'                       ? 'ev-card'
@@ -497,7 +491,6 @@ function renderEvent(e, fixtureMap, showMatchBadge = true) {
         <div class="event-main">${mainText}${minuteHtml}</div>
         <div class="event-sub">${subText}</div>
       </div>
-      <div class="event-match">${matchNum}</div>
     </div>`;
 }
 
@@ -646,7 +639,7 @@ function renderMatchLineupList(tip) {
     if (!injuries.length)
       return `<div class="events-empty">Ingen laguppställning tillgänglig för match #${tip.Number} ännu</div>`;
     let html = `<div class="stats-section-header">Frånvaro</div>`;
-    for (const e of injuries) html += renderEvent(e, latestFixtureMap, false);
+    for (const e of injuries) html += renderEvent(e, latestFixtureMap);
     return html;
   }
 
@@ -705,7 +698,7 @@ function renderMatchLineupList(tip) {
           ${lineupSubsExpanded ? 'Avbytare' : 'Avbytare (klicka för att visa)'}
         </div>
         ${lineupSubsExpanded ? subRows.join('') : ''}` : ''}
-      ${injuries.length ? `<div class="stats-section-header">Frånvaro</div>${injuries.map(e => renderEvent(e, latestFixtureMap, false)).join('')}` : ''}
+      ${injuries.length ? `<div class="stats-section-header">Frånvaro</div>${injuries.map(e => renderEvent(e, latestFixtureMap)).join('')}` : ''}
     </div>`;
 }
 

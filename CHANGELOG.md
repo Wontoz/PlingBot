@@ -1,3 +1,12 @@
+## [3.1.5.2] - 2026-08-06
+- Redesigned header to be full-width
+- Refreshed color palette for light and dark theme
+- Removed match-number badge from event list entries
+- Cleaned up unused CSS
+- Refactored bot backend into smaller services for improved maintainability
+
+---
+
 ## [3.1.5.1] - 2026-07-28
 - Expanded Head2Head section with further data
 - Added logotypes to header

@@ -14,12 +14,12 @@ public class EventsBuilder
 {
     private const int SeparatorWidth = 80;
 
-    private readonly TipsConfig _tipsConfig;
+    private readonly TipsConfig tipsConfig;
     private readonly FootballApiClient _api;
 
     public EventsBuilder(TipsConfig tipsConfig, FootballApiClient api)
     {
-        _tipsConfig = tipsConfig;
+        this.tipsConfig = tipsConfig;
         _api = api;
     }
 
@@ -31,7 +31,7 @@ public class EventsBuilder
             return;
         }
 
-        var tip = _tipsConfig.TipsMatches.FirstOrDefault(t => t.Number == tipNumber);
+        var tip = tipsConfig.TipsMatches.FirstOrDefault(t => t.Number == tipNumber);
         if (tip == null)
         {
             await message.Channel.SendMessageAsync($"Hittade ingen match #{tipNumber}.");

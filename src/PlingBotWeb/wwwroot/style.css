@@ -8,9 +8,9 @@
   --surface-alt:   #f9f9f91a;
   --border:        rgba(255,255,255,0.07);
   --border-s:      rgba(255,255,255,0.14);
-  --text:          #F7F7F7;
+  --text:          #F7F9FA;
   --muted:         #8b8c8f;
-  --accent:        #444444;
+  --accent:        #5F5A58;
   --green:         #3fb950;
   --red:           #f85149;
   --amber:         #d29922;
@@ -26,13 +26,13 @@
 /* ── Light mode ──────────────────────────────────────────────────────────── */
 
 :root[data-theme="light"] {
-  --bg:          #ffffff;
-  --surface:     #f5f5f5;
+  --bg:          #F7F9FA;
+  --surface:     #FFFFFF;
   --surface-alt: #a9a9a9;
   --border:      rgba(0,0,0,0.1);
   --border-s:    rgba(0,0,0,0.18);
-  --text:        #1c1e21;
-  --muted:       #65676b;
+  --text:        #1B1918;
+  --muted:       #5F5A58;
   --accent:      #1877f2;
   --green:       #16a34a;
   --red:         #dc2626;
@@ -47,6 +47,13 @@
 /* Stats-bar minority fill is #e8e8e8 — invisible on light surface-alt */
 :root[data-theme="light"] .stats-bar-fill-minority     { background: var(--accent); }
 :root[data-theme="light"] .stats-bar.stats-bar-sub .stats-bar-fill-minority { background: var(--accent); }
+
+/* Alternerande matchrads-bakgrund i light mode */
+:root[data-theme="light"] .match-row:nth-child(odd)        { background: var(--surface); }
+:root[data-theme="light"] .match-row:nth-child(even)       { background: var(--bg); }
+:root[data-theme="light"] .match-row:hover                 { background: var(--surface-alt); }
+:root[data-theme="light"] .match-row.row-selected          { background: rgba(47, 129, 247, 0.12); }
+:root[data-theme="light"] .match-row.row-selected:hover    { background: rgba(47, 129, 247, 0.18); }
 
 /* ── Header game-type colors (theme-independent) ─────────────────────────── */
 
@@ -84,8 +91,7 @@ html {
 }
 
 body {
-  height: 100%;
-  overflow: hidden;
+  overflow: auto;
   font-family: 'Inter', Arial, Helvetica, sans-serif;
   background: var(--bg);
   color: var(--text);
@@ -96,19 +102,29 @@ body {
 
 #app {
   display: grid;
-  grid-template-rows: 1fr auto auto;
-  height: 100vh;
-  overflow: hidden;
+  grid-template-rows: auto 1fr auto auto;
+  min-height: 100vh;
 }
 
 /* ── Header ──────────────────────────────────────────────────────────────── */
 
 header {
+  position: sticky;
+  top: 0;
+  z-index: 100;
   display: flex;
   align-items: center;
   gap: 14px;
-  padding: 6px 16px;
+  padding: 10px 10px 10px 30px;
   background: var(--surface);
+}
+
+.header-left {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  gap: 8px;
 }
 
 
@@ -128,9 +144,11 @@ header {
 }
 
 .header-date {
-  font-size: 1.2rem;
-  font-weight: 900;
+  padding: 2.75px 1px 1px 1px;
+  font-size: 1.1rem;
+  font-weight: 700;
   color: var(--text);
+  letter-spacing: 0.07em;
 }
 
 
@@ -141,8 +159,6 @@ header {
   flex-direction: row;
   gap: 10px;
   padding: 0 10px 6px;
-  min-height: 0;   /* lets grid child shrink */
-  overflow: hidden;
 }
 
 /* ── Coupon panel (left) ─────────────────────────────────────────────────── */
@@ -150,38 +166,31 @@ header {
 .coupon-panel {
   flex: 1 1 0;
   min-width: 0;
-  min-height: 0;
   display: flex;
   flex-direction: column;
-  overflow: hidden;
 }
 
 .coupon-table {
-  flex: 1 1 0;
-  min-height: 0;
   display: flex;
   flex-direction: column;
   background: var(--surface);
   border: 1px solid var(--border);
   border-radius: var(--radius);
-  overflow: hidden;
 }
 
 .c-r { display: flex; justify-content: center; align-items: center; }
 
 #matches {
-  flex: 1 1 0;
-  min-height: 0;
   display: flex;
   flex-direction: column;
 }
 
 .match-row {
-  flex: 1;
+  flex: none;
   display: grid;
   grid-template-columns: 24px 1fr 18px 44px 100px 66px 90px;
   align-items: center;
-  padding: 0 12px;
+  padding: 10px 12px;
   border-bottom: 1px solid var(--border);
   border-left: 3px solid transparent;
   gap: 6px;
@@ -196,21 +205,22 @@ header {
 .match-row.row-selected:hover   { background: rgba(47, 129, 247, 0.18); }
 
 
-.game-stryktipset  .match-row { border-left-color: var(--color-stryktipset); }
-.game-europatipset .match-row { border-left-color: var(--color-europatipset); }
-.game-topptipset   .match-row { border-left-color: var(--color-topptipset); }
-.game-annat        .match-row{ border-left-color: var(--color-annat); }
+.game-stryktipset  .match-row.row-selected  { border-left-color: var(--color-stryktipset); }
+.game-europatipset .match-row.row-selected  { border-left-color: var(--color-europatipset); }
+.game-topptipset   .match-row.row-selected  { border-left-color: var(--color-topptipset); }
+.game-annat        .match-row.row-selected { border-left-color: var(--color-annat); }
 
 .match-row.row-correct { border-left-color: var(--green); }
 .match-row.row-wrong   { border-left-color: var(--red); }
 .match-row.row-live    { border-left-color: var(--amber); }
 
 .match-num {
-  font-size: 0.72rem;
+  font-size: 0.62rem;
   font-weight: 700;
   color: #fff;
-  text-align: center;
-  line-height: 22px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
   background: var(--muted);
   border-radius: 50%;
   align-self: center;
@@ -308,11 +318,6 @@ header {
   min-width: 0;
 }
 
-.team-sep {
-  flex-shrink: 0;
-  color: var(--muted);
-}
-
 /* ── Result icon ─────────────────────────────────────────────────────────── */
 
 .result-icon {
@@ -320,9 +325,6 @@ header {
   font-weight: 900;
   text-align: center;
 }
-
-.result-icon.correct { color: var(--green); }
-.result-icon.wrong   { color: var(--red); }
 
 
 /* ── League logo column (stor layout) ───────────────────────────────────── */
@@ -477,12 +479,7 @@ header {
   justify-content: center;
 }
 
-.tip-pcts-row {
-  display: flex;
-  gap: 3px;
-  justify-content: center;
-  margin-top: 4px;
-}
+.tip-pcts-row { margin-top: 4px; }
 
 .tip-pct {
   width: 26px;
@@ -600,8 +597,6 @@ header {
 .events-panel {
   flex: 1 1 0;
   min-height: 0;
-  border-top: none;
-  border-radius: 0 0 var(--radius) var(--radius);
 }
 
 .events-list {
@@ -760,13 +755,6 @@ header {
   text-overflow: ellipsis;
 }
 
-.event-match {
-  font-size: 0.65rem;
-  font-weight: 700;
-  color: var(--accent);
-  opacity: 0.8;
-}
-
 .events-empty {
   padding: 20px 12px;
   text-align: center;
@@ -774,17 +762,6 @@ header {
   color: var(--muted);
 }
 
-.ev-match-chip {
-  padding: 5px 12px 3px;
-  font-size: 0.62rem;
-  font-weight: 600;
-  color: var(--muted);
-  border-top: 1px solid var(--border);
-  letter-spacing: 0.02em;
-}
-.ev-match-chip-first {
-  border-top: none;
-}
 
 .events-period {
   padding: 6px 12px 3px;
@@ -1205,11 +1182,12 @@ header {
 
 #matches.matches-compact .tip-btns     { flex-direction: column; gap: 1px; padding-left: 10px; }
 #matches.matches-compact .tip-pcts-row { position: static; width: auto; }
-#matches.matches-compact .match-row    { padding-top: 3px; padding-bottom: 3px; }
+#matches.matches-compact .match-row    { padding-top: 3px; padding-bottom: 3px; flex: none; }
 
 @media (min-width: 821px) {
-  #matches.matches-compact .tip-odds-row            { margin-bottom: 6px; }
-  #matches.matches-compact .match-row               { padding-top: 1px; padding-bottom: 1px; }
+  #matches.matches-compact .tip-odds-row                         { margin-bottom: 6px; }
+  #matches.matches-compact .tip-pcts-row:not(.tip-odds-row)      { padding-bottom: 6px; }
+  #matches.matches-compact .match-row                            { padding-top: 1px; padding-bottom: 1px; }
   #matches.matches-compact .match-num               { font-size: 0.9rem; }
   #matches.matches-compact .match-teams             { font-size: 0.9rem; }
   #matches.matches-compact .team-logo               { width: 16px; height: 16px; }
@@ -1243,15 +1221,14 @@ header {
   .tip-btns    { flex-direction: column; gap: 3px; }
   .tip-pcts-row { position: static; width: auto; }
   .tip-odds-row { margin-bottom: 5px; }
+  .tip-pcts-row:not(.tip-odds-row) { padding-bottom: 4px; }
 
-  body { overflow: auto; }
   #app { height: auto; display: flex; flex-direction: column; }
 
-  /* ── Header: helbredd på mobil trots att den sitter i coupon-panel ── */
-  header       { flex-wrap: nowrap; gap: 8px; padding: 8px 12px; margin-left: -10px; margin-right: -10px; }
-  .header-left { flex: 1; min-width: 0; display: flex; align-items: center; gap: 8px; overflow: hidden; }
-  #game-title  { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; font-size: 0.85rem; }
-  .game-logo   { height: 22px; }
+  /* ── Header ── */
+  header      { flex-wrap: nowrap; gap: 8px; padding: 8px 12px 8px 24px; }
+  #game-title { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; font-size: 0.85rem; }
+  .game-logo  { height: 22px; }
 
   /* ── Lagnamn: grid med logo | namn per rad ── */
   .match-teams {

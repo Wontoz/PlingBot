@@ -7,9 +7,9 @@ using PlingBot.Utils;
 
 public class GoalAnnouncementService
 {
-    private readonly DiscordAnnouncementService _discord;
-    private readonly DashboardService _dashboardService;
-    private readonly VersusConfig _versusConfig;
+    private readonly DiscordAnnouncementService discord;
+    private readonly DashboardService dashboardService;
+    private readonly VersusConfig versusConfig;
     private readonly Logger _logger;
 
     private sealed record GoalEventInfo(
@@ -27,9 +27,9 @@ public class GoalAnnouncementService
 
     public GoalAnnouncementService(DiscordAnnouncementService discord, DashboardService dashboardService, VersusConfig versusConfig, Logger logger)
     {
-        _discord = discord;
-        _dashboardService = dashboardService;
-        _versusConfig = versusConfig;
+        this.discord = discord;
+        this.dashboardService = dashboardService;
+        this.versusConfig = versusConfig;
         _logger = logger;
     }
 
@@ -136,7 +136,7 @@ public class GoalAnnouncementService
                 continue;
 
             string message = BuildGoalMessage(tip, match, isHome, null, match.HomeGoals, match.AwayGoals);
-            var sentMessage = await _discord.AnnounceAsync(
+            var sentMessage = await discord.AnnounceAsync(
                 channel,
                 message,
                 ConsoleColor.Magenta,
@@ -145,7 +145,7 @@ public class GoalAnnouncementService
                 couponEvent: BuildScoreFallbackGoalEvent(tip, match, isHome, message));
 
             tip.AnnouncedEventKeys.Add(goalKey);
-            _discord.TrackGoalMessage(goalKey, sentMessage);
+            discord.TrackGoalMessage(goalKey, sentMessage);
             announced = true;
         }
 
@@ -155,7 +155,7 @@ public class GoalAnnouncementService
     private async Task<bool> AnnounceNewGoalEventAsync(IMessageChannel channel, TipsMatch tip, GoalEventInfo goal)
     {
         bool playerKnown = !string.IsNullOrWhiteSpace(goal.Player);
-        var sentMessage = await _discord.AnnounceAsync(
+        var sentMessage = await discord.AnnounceAsync(
             channel,
             goal.Message,
             ConsoleColor.Magenta,
@@ -167,7 +167,7 @@ public class GoalAnnouncementService
         RemoveScoreFallbackKeyForGoal(tip, goal);
 
         if (!playerKnown)
-            _discord.TrackGoalMessage(goal.Key, sentMessage);
+            discord.TrackGoalMessage(goal.Key, sentMessage);
 
         return true;
     }
@@ -203,9 +203,9 @@ public class GoalAnnouncementService
     {
         var couponEvent = BuildGoalCouponEvent(goal);
         bool dashboardUpdated =
-            _dashboardService.UpdateEvent(goal.MessageWithoutPlayer, couponEvent) ||
-            _dashboardService.UpdateEventContaining(goal.Identity, couponEvent);
-        bool discordUpdated = await _discord.TryUpdateGoalMessageAsync(
+            dashboardService.UpdateEvent(goal.MessageWithoutPlayer, couponEvent) ||
+            dashboardService.UpdateEventContaining(goal.Identity, couponEvent);
+        bool discordUpdated = await discord.TryUpdateGoalMessageAsync(
             channel,
             goal.Key,
             goal.MessageWithoutPlayer,
@@ -253,10 +253,10 @@ public class GoalAnnouncementService
 
             if (goal.HomeGoals != nextHomeGoals || goal.AwayGoals != nextAwayGoals)
             {
-                // Diagnostic: a scoring event didn't line up with the expected running tally and
-                // got silently dropped — never announced, never stored, not even as a fallback.
-                // Logged to catch the exact case (e.g. Lukaku's goal in Belgium-Senegal 2026-07-01)
-                // instead of guessing at the root cause blind.
+                // Diagnostik: ett målevent stämde inte överens med den förväntade löpande
+                // ställningen och tappades tyst bort — annonserades aldrig, sparades aldrig,
+                // inte ens som fallback. Loggas för att fånga det exakta fallet (t.ex. Lukakus
+                // mål i Belgien-Senegal 2026-07-01) istället för att gissa blint på orsaken.
                 _logger.Log(
                     $"Goal event mismatch for fixture {match.Id} (tip #{tip.Number}): " +
                     $"index={item.Index} player={goal.Event.Player ?? "?"} team={goal.Event.Team ?? "?"} " +
@@ -399,10 +399,10 @@ public class GoalAnnouncementService
     {
         string primary = Helpers.ClassifyGoalBenefit(tip.Tip, homeScored, homeGoals, awayGoals);
 
-        if (_versusConfig.Players.Count == 0)
+        if (versusConfig.Players.Count == 0)
             return primary;
 
-        var others = _versusConfig.Players.Select(p =>
+        var others = versusConfig.Players.Select(p =>
         {
             string? playerTip = p.GetTip(tip.Number);
             if (string.IsNullOrWhiteSpace(playerTip)) return "❓";
@@ -424,7 +424,7 @@ public class GoalAnnouncementService
         string message = BuildVarMessage(tip, match, isHome, ev, player);
         string team = isHome ? tip.HomeTeam : tip.AwayTeam;
 
-        var sentMessage = await _discord.AnnounceAsync(channel, message, ConsoleColor.Red, "Cancelled goal announced", couponEvent: new CouponEvent
+        var sentMessage = await discord.AnnounceAsync(channel, message, ConsoleColor.Red, "Cancelled goal announced", couponEvent: new CouponEvent
         {
             Key = key,
             Type = "CancelledGoal",
@@ -442,9 +442,9 @@ public class GoalAnnouncementService
         });
 
         if (player == null)
-            _discord.TrackGoalMessage(key, sentMessage);
+            discord.TrackGoalMessage(key, sentMessage);
 
-        _dashboardService.RemoveGoalEvent(match.Id, ev.TeamId, ev.Elapsed);
+        dashboardService.RemoveGoalEvent(match.Id, ev.TeamId, ev.Elapsed);
     }
 
     private async Task<bool> TryCompleteVarEventAsync(IMessageChannel channel, TipsMatch tip, Match match, bool isHome, MatchEvent ev, string key)
@@ -452,12 +452,12 @@ public class GoalAnnouncementService
         if (string.IsNullOrEmpty(ev.Player))
             return false;
 
-        var stored = _dashboardService.GetEventByKey(key);
+        var stored = dashboardService.GetEventByKey(key);
         if (stored == null || stored.Player == ev.Player)
             return false;
 
-        // Inject player+reason into the stored text, which already has the correct score
-        // from announcement time (current match score may differ due to later goals).
+        // Lägg in spelare+anledning i den sparade texten, som redan har rätt ställning
+        // från annonseringstillfället (aktuell matchställning kan skilja sig p.g.a. senare mål).
         const string marker = "Mål bortdömt!";
         string playerPart = $" - {ev.Player}{FormatVarReason(ev.Detail)}";
         string oldText = stored.Text;
@@ -482,8 +482,8 @@ public class GoalAnnouncementService
             CreatedUtc = stored.CreatedUtc
         };
 
-        bool dashboardUpdated = _dashboardService.UpdateEventByKey(key, updatedEvent);
-        bool discordUpdated = await _discord.TryUpdateGoalMessageAsync(
+        bool dashboardUpdated = dashboardService.UpdateEventByKey(key, updatedEvent);
+        bool discordUpdated = await discord.TryUpdateGoalMessageAsync(
             channel, key, oldText, newText);
 
         return dashboardUpdated || discordUpdated;

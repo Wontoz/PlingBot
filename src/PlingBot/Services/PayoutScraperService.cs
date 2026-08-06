@@ -6,33 +6,34 @@ using PlingBot.Utils;
 
 public class PayoutScraperService
 {
-    private readonly TipsConfig _tipsConfig;
+    private readonly TipsConfig tipsConfig;
     private readonly Logger _logger;
-    private IPlaywright? _playwright;
-    private IBrowser? _browser;
-    private CancellationTokenSource? _cts;
-    private readonly object _lock = new();
-    private readonly SemaphoreSlim _fetchLock = new(1, 1);
+    private IPlaywright? playwright;
+    private IBrowser? browser;
+    private CancellationTokenSource? cts;
+    private readonly object syncLock = new();
+    private readonly SemaphoreSlim fetchLock = new(1, 1);
 
-    // Official payouts are often posted a while after the actual final whistle (not right
-    // after the last goal), so this needs a generous window — 20 attempts a minute apart.
+    // Officiella utdelningar postas ofta en stund efter den faktiska slutsignalen (inte
+    // direkt efter sista målet), så det här behöver ett generöst fönster — 20 försök
+    // med en minuts mellanrum.
     private const int RetryCount = 20;
     private static readonly TimeSpan RetryInterval = TimeSpan.FromSeconds(60);
 
     public PayoutScraperService(TipsConfig tipsConfig, Logger logger)
     {
-        _tipsConfig = tipsConfig;
+        this.tipsConfig = tipsConfig;
         _logger = logger;
     }
 
     public void ScheduleUpdate()
     {
         CancellationTokenSource newCts;
-        lock (_lock)
+        lock (syncLock)
         {
-            _cts?.Cancel();
-            _cts = new CancellationTokenSource();
-            newCts = _cts;
+            cts?.Cancel();
+            cts = new CancellationTokenSource();
+            newCts = cts;
         }
 
         _ = Task.Run(async () =>
@@ -55,29 +56,30 @@ public class PayoutScraperService
         });
     }
 
-    // Returns true once payouts were actually found and saved, so the retry loop can stop early
-    // instead of always burning through the full window once results are already in hand.
+    // Returnerar true så fort utdelningar faktiskt hittats och sparats, så att
+    // retry-loopen kan avsluta tidigt istället för att alltid bränna igenom hela
+    // fönstret när resultatet redan finns i hand.
     private async Task<bool> FetchAndUpdateAsync()
     {
-        if (!await _fetchLock.WaitAsync(0))
+        if (!await fetchLock.WaitAsync(0))
             return false;
 
         try
         {
-            string game = _tipsConfig.Data.MetaData.Game.ToLowerInvariant();
-            string date = _tipsConfig.Data.MetaData.Date;
+            string game = tipsConfig.Data.MetaData.Game.ToLowerInvariant();
+            string date = tipsConfig.Data.MetaData.Date;
             string url  = $"https://spela.svenskaspel.se/{game}/resultat/{date}/statistik";
 
             _logger.Log($"Fetching payouts: {url}", ConsoleColor.Cyan);
 
-            if (_browser == null || !_browser.IsConnected)
+            if (browser == null || !browser.IsConnected)
             {
-                _playwright?.Dispose();
-                _playwright = await Playwright.CreateAsync();
-                _browser = await _playwright.Chromium.LaunchAsync(new BrowserTypeLaunchOptions { Headless = true });
+                playwright?.Dispose();
+                playwright = await Playwright.CreateAsync();
+                browser = await playwright.Chromium.LaunchAsync(new BrowserTypeLaunchOptions { Headless = true });
             }
 
-            var page = await _browser.NewPageAsync();
+            var page = await browser.NewPageAsync();
             try
             {
                 await page.GotoAsync(url);
@@ -117,8 +119,8 @@ public class PayoutScraperService
                     Rows    = r[2],
                 }).ToList();
 
-                _tipsConfig.Data.MetaData.Payouts = payouts;
-                _tipsConfig.SaveToJson();
+                tipsConfig.Data.MetaData.Payouts = payouts;
+                tipsConfig.SaveToJson();
                 _logger.Log(
                     $"Payouts saved: {string.Join(", ", payouts.Select(p => $"{p.Correct} rätt = {p.Amount}"))}",
                     ConsoleColor.Green);
@@ -131,7 +133,7 @@ public class PayoutScraperService
         }
         finally
         {
-            _fetchLock.Release();
+            fetchLock.Release();
         }
     }
 }

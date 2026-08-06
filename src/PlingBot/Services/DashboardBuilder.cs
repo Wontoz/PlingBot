@@ -15,11 +15,11 @@ public class DashboardBuilder
     private const int MaximumMatchColumnWidth = 38;
     private const int PickColumnWidth = 6;
 
-    private readonly CouponEvaluator _evaluator;
+    private readonly CouponEvaluator evaluator;
 
     public DashboardBuilder(CouponEvaluator evaluator)
     {
-        _evaluator = evaluator;
+        this.evaluator = evaluator;
     }
 
     public string Build(TipsConfig tipsConfig, string? playerMessage = null, IReadOnlyList<CouponEvent>? events = null)
@@ -28,7 +28,7 @@ public class DashboardBuilder
 
         var sb = new StringBuilder();
 
-        var (correct, evaluated) = _evaluator.Evaluate(tips);
+        var (correct, evaluated) = evaluator.Evaluate(tips);
 
         string game = tipsConfig.Data.MetaData.Game;
         string date = tipsConfig.Data.MetaData.Date;

@@ -9,12 +9,12 @@ using PlingBot.Utils;
 
 public class BotHost
 {
-    private readonly DiscordSocketClient _client;
-    private readonly ScorePollerService _poller;
-    private readonly MessageHandler _messageHandler;
+    private readonly DiscordSocketClient client;
+    private readonly ScorePollerService poller;
+    private readonly MessageHandler messageHandler;
     private readonly Logger _logger;
-    private readonly BotOptions _options;
-    private bool _pollerStarted;
+    private readonly BotOptions options;
+    private bool pollerStarted;
 
     public BotHost(
         ScorePollerService poller,
@@ -22,12 +22,12 @@ public class BotHost
         Logger logger,
         BotOptions options)
     {
-        _poller = poller;
-        _messageHandler = messageHandler;
+        this.poller = poller;
+        this.messageHandler = messageHandler;
         _logger = logger;
-        _options = options;
+        this.options = options;
 
-        _client = new DiscordSocketClient(new DiscordSocketConfig
+        client = new DiscordSocketClient(new DiscordSocketConfig
         {
             GatewayIntents =
                 GatewayIntents.Guilds |
@@ -35,13 +35,13 @@ public class BotHost
                 GatewayIntents.MessageContent
         });
 
-        _client.Log += msg =>
+        client.Log += msg =>
         {
             _logger.Log(msg.ToString());
             return Task.CompletedTask;
         };
 
-        _client.MessageReceived += _messageHandler.HandleMessageAsync;
+        client.MessageReceived += this.messageHandler.HandleMessageAsync;
     }
 
     public async Task RunAsync()
@@ -50,29 +50,29 @@ public class BotHost
         if (string.IsNullOrWhiteSpace(token))
             throw new InvalidOperationException("DISCORD_TOKEN not set");
 
-        _client.Ready += OnReadyAsync;
+        client.Ready += OnReadyAsync;
 
-        await _client.LoginAsync(TokenType.Bot, token);
-        await _client.StartAsync();
+        await client.LoginAsync(TokenType.Bot, token);
+        await client.StartAsync();
 
         _logger.Log(
-            _options.TestMode ? "Bot started in TEST MODE" : "Bot logged in and started",
+            options.TestMode ? "Bot started in TEST MODE" : "Bot logged in and started",
             ConsoleColor.Green
         );
     }
 
     private async Task OnReadyAsync()
     {
-        if (_pollerStarted)
+        if (pollerStarted)
             return;
 
-        _pollerStarted = true;
+        pollerStarted = true;
 
         _logger.Log("Discord client ready, starting poller", ConsoleColor.Green);
 
-        _ = Task.Run(() => _poller.StartPollingAsync(_client));
+        _ = Task.Run(() => poller.StartPollingAsync(client));
 
         await Task.CompletedTask;
     }
-    
+
 }

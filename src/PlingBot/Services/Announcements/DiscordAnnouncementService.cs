@@ -6,13 +6,13 @@ using PlingBot.Utils;
 
 public class DiscordAnnouncementService
 {
-    private readonly DashboardService _dashboardService;
+    private readonly DashboardService dashboardService;
     private readonly Logger _logger;
-    private readonly Dictionary<string, IUserMessage> _goalMessages = new();
+    private readonly Dictionary<string, IUserMessage> goalMessages = new();
 
     public DiscordAnnouncementService(DashboardService dashboardService, Logger logger)
     {
-        _dashboardService = dashboardService;
+        this.dashboardService = dashboardService;
         _logger = logger;
     }
 
@@ -25,7 +25,7 @@ public class DiscordAnnouncementService
         TimeSpan? deleteDelay = null,
         CouponEvent? couponEvent = null)
     {
-        _dashboardService.AddEvent(couponEvent ?? new CouponEvent
+        dashboardService.AddEvent(couponEvent ?? new CouponEvent
         {
             Type = "Message",
             Text = message,
@@ -43,7 +43,7 @@ public class DiscordAnnouncementService
 
     public void TrackGoalMessage(string key, IUserMessage message)
     {
-        _goalMessages[key] = message;
+        goalMessages[key] = message;
     }
 
     public async Task<bool> TryUpdateGoalMessageAsync(
@@ -69,7 +69,7 @@ public class DiscordAnnouncementService
         }
         catch (Exception ex)
         {
-            _goalMessages.Remove(key);
+            goalMessages.Remove(key);
             _logger.Log($"Could not update goal message: {ex.Message}", ConsoleColor.DarkYellow);
             return false;
         }
@@ -81,7 +81,7 @@ public class DiscordAnnouncementService
         string oldMessage,
         string? oldMessageFragment)
     {
-        if (_goalMessages.TryGetValue(key, out var trackedMessage))
+        if (goalMessages.TryGetValue(key, out var trackedMessage))
             return trackedMessage;
 
         try
@@ -96,7 +96,7 @@ public class DiscordAnnouncementService
                             message.Content.Contains(oldMessageFragment, StringComparison.Ordinal))));
 
             if (existingMessage != null)
-                _goalMessages[key] = existingMessage;
+                goalMessages[key] = existingMessage;
 
             return existingMessage;
         }
@@ -124,12 +124,12 @@ public class DiscordAnnouncementService
 
     private void RemoveTrackedGoalMessage(ulong messageId)
     {
-        foreach (var key in _goalMessages
+        foreach (var key in goalMessages
             .Where(pair => pair.Value.Id == messageId)
             .Select(pair => pair.Key)
             .ToList())
         {
-            _goalMessages.Remove(key);
+            goalMessages.Remove(key);
         }
     }
 }

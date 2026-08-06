@@ -59,9 +59,9 @@ public class TipsConfig
     public TipsDataWrapper Data { get; private set; } = new();
 
     private readonly Logger _logger;
-    private readonly string _jsonPath;
+    private readonly string jsonPath;
 
-    private readonly string _jsonFileName;
+    private readonly string jsonFileName;
 
     private const int MaxLookbackDays = 30;
 
@@ -74,16 +74,16 @@ public class TipsConfig
         Directory.CreateDirectory(jsonDir);
 
         DateOnly selectedDate = couponDate ?? ResolveLatestExistingDate(jsonDir, filePrefix);
-        _jsonFileName = $"{filePrefix}_{selectedDate:yyyy-MM-dd}.json";
+        jsonFileName = $"{filePrefix}_{selectedDate:yyyy-MM-dd}.json";
         _logger.Log($"Using game: {game}", ConsoleColor.Cyan);
 
-        _jsonPath = Path.Combine(jsonDir, _jsonFileName);
+        jsonPath = Path.Combine(jsonDir, jsonFileName);
         LoadFromJson();
     }
 
-    // Walks backwards day-by-day from today looking for the most recent coupon JSON
-    // for this game mode, so the bot doesn't spin up an empty coupon for today when
-    // the latest scraped coupon is actually a few days old.
+    // Går bakåt dag för dag från idag och letar efter den senaste kupong-JSON:en för
+    // det här spelläget, så att boten inte startar en tom kupong för idag när den
+    // senast skrapade kupongen faktiskt är några dagar gammal.
     private static DateOnly ResolveLatestExistingDate(string jsonDir, string filePrefix)
     {
         DateOnly today = DateOnly.FromDateTime(DateTime.Today);
@@ -136,26 +136,26 @@ public class TipsConfig
 
     private void LoadFromJson()
     {
-        if (File.Exists(_jsonPath))
+        if (File.Exists(jsonPath))
         {
             try
             {
-                var json = File.ReadAllText(_jsonPath, Encoding.UTF8);
+                var json = File.ReadAllText(jsonPath, Encoding.UTF8);
                 Data = JsonSerializer.Deserialize<TipsDataWrapper>(json) ?? new TipsDataWrapper();
 
                 _logger.Log(
-                    $"Loaded {_jsonFileName} — {Data.TipsData.Count} tips + metadata (player: {Data.MetaData.Player}, correct: {Data.MetaData.TotalCorrect})",
+                    $"Loaded {jsonFileName} — {Data.TipsData.Count} tips + metadata (player: {Data.MetaData.Player}, correct: {Data.MetaData.TotalCorrect})",
                     ConsoleColor.Green);
             }
             catch (Exception ex)
             {
-                _logger.Error($"Failed to load {_jsonFileName}: {ex.Message}");
+                _logger.Error($"Failed to load {jsonFileName}: {ex.Message}");
                 Data = new TipsDataWrapper();
             }
         }
         else
         {
-            _logger.Log($"{_jsonFileName} not found — creating new empty structure", ConsoleColor.Yellow);
+            _logger.Log($"{jsonFileName} not found — creating new empty structure", ConsoleColor.Yellow);
             Data = new TipsDataWrapper();
             SaveToJson();
         }
@@ -163,7 +163,7 @@ public class TipsConfig
 
     public void SaveToJson()
     {
-        Directory.CreateDirectory(Path.GetDirectoryName(_jsonPath)!);
+        Directory.CreateDirectory(Path.GetDirectoryName(jsonPath)!);
 
         var options = new JsonSerializerOptions
         {
@@ -172,7 +172,7 @@ public class TipsConfig
         };
 
         var json = JsonSerializer.Serialize(Data, options);
-        File.WriteAllText(_jsonPath, json, Encoding.UTF8);
+        File.WriteAllText(jsonPath, json, Encoding.UTF8);
     }
 
     public List<TipsMatch> TipsMatches => Data.TipsData;

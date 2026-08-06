@@ -70,6 +70,8 @@ class Program
         services.AddSingleton<PlayerMessageService>();
         services.AddSingleton<CouponPercentageService>();
         services.AddSingleton<PayoutScraperService>();
+        services.AddSingleton<FixtureMappingService>();
+        services.AddSingleton<EventBackfillService>();
 
         services.AddSingleton<TipsConfig>(sp =>
         {

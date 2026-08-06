@@ -25,16 +25,16 @@ public class VersusConfig
 {
     public VersusPlayersData Data { get; private set; } = new();
 
-    private readonly string _jsonFileName;
+    private readonly string jsonFileName;
 
     public VersusConfig(Logger logger, BotOptions options)
     {
         string filePrefix = GetFilePrefix(options.Game);
         DateOnly date = options.CouponDate ?? DateOnly.FromDateTime(DateTime.Today);
-        _jsonFileName = $"{filePrefix}_{date:yyyy-MM-dd}_versus.json";
+        jsonFileName = $"{filePrefix}_{date:yyyy-MM-dd}_versus.json";
 
         string jsonDir = ResolveJsonDirectory();
-        string path = Path.Combine(jsonDir, _jsonFileName);
+        string path = Path.Combine(jsonDir, jsonFileName);
 
         if (!File.Exists(path))
         {
@@ -45,11 +45,11 @@ public class VersusConfig
         {
             var json = File.ReadAllText(path, Encoding.UTF8);
             Data = JsonSerializer.Deserialize<VersusPlayersData>(json) ?? new VersusPlayersData();
-            logger.Log($"Loaded {_jsonFileName} — {Data.Players.Count} versus players", ConsoleColor.Green);
+            logger.Log($"Loaded {jsonFileName} — {Data.Players.Count} versus players", ConsoleColor.Green);
         }
         catch (Exception ex)
         {
-            logger.Log($"Failed to load {_jsonFileName}: {ex.Message}", ConsoleColor.Red);
+            logger.Log($"Failed to load {jsonFileName}: {ex.Message}", ConsoleColor.Red);
         }
     }
 

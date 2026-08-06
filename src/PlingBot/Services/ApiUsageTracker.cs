@@ -6,11 +6,11 @@ public class ApiUsageTracker
 {
     private static readonly TimeSpan ReportInterval = TimeSpan.FromMinutes(5);
     private readonly Logger _logger;
-    private readonly Queue<DateTime> _recentCalls = new();
-    private readonly Dictionary<string, int> _totalByEndpoint = new();
-    private readonly object _sync = new();
-    private DateTime _lastReportUtc = DateTime.MinValue;
-    private int _totalCalls;
+    private readonly Queue<DateTime> recentCalls = new();
+    private readonly Dictionary<string, int> totalByEndpoint = new();
+    private readonly object syncLock = new();
+    private DateTime lastReportUtc = DateTime.MinValue;
+    private int totalCalls;
 
     public ApiUsageTracker(Logger logger)
     {
@@ -19,20 +19,20 @@ public class ApiUsageTracker
 
     public void Record(string endpoint)
     {
-        lock (_sync)
+        lock (syncLock)
         {
             DateTime now = DateTime.UtcNow;
-            _recentCalls.Enqueue(now);
-            _totalCalls++;
+            recentCalls.Enqueue(now);
+            totalCalls++;
 
-            if (!_totalByEndpoint.TryAdd(endpoint, 1))
-                _totalByEndpoint[endpoint]++;
+            if (!totalByEndpoint.TryAdd(endpoint, 1))
+                totalByEndpoint[endpoint]++;
 
             PruneRecentCalls(now);
 
-            if (now - _lastReportUtc >= ReportInterval)
+            if (now - lastReportUtc >= ReportInterval)
             {
-                _lastReportUtc = now;
+                lastReportUtc = now;
                 LogUsage(now);
             }
         }
@@ -40,16 +40,16 @@ public class ApiUsageTracker
 
     private void PruneRecentCalls(DateTime now)
     {
-        while (_recentCalls.Count > 0 && now - _recentCalls.Peek() > TimeSpan.FromMinutes(1))
-            _recentCalls.Dequeue();
+        while (recentCalls.Count > 0 && now - recentCalls.Peek() > TimeSpan.FromMinutes(1))
+            recentCalls.Dequeue();
     }
 
     private void LogUsage(DateTime now)
     {
-        int callsLastMinute = _recentCalls.Count;
+        int callsLastMinute = recentCalls.Count;
         double projectedDaily = callsLastMinute * 60 * 24;
 
-        var topEndpoints = _totalByEndpoint
+        var topEndpoints = totalByEndpoint
             .OrderByDescending(pair => pair.Value)
             .Take(3)
             .Select(pair => $"{pair.Key}: {pair.Value}");

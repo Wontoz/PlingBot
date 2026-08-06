@@ -8,19 +8,19 @@ using PlingBot.Utils;
 
 public class MessageHandler
 {
-    private readonly TipsConfig _tipsConfig;
-    private readonly CouponEvaluator _evaluator;
+    private readonly TipsConfig tipsConfig;
+    private readonly CouponEvaluator evaluator;
     private readonly Logger _logger;
-    private readonly DashboardService _dashboardService;
-    private readonly PlayerMessageService _statusMessageService;
-    private readonly CouponEventSyncService _syncService;
-    private readonly StatisticsBuilder _statsBuilder;
-    private readonly EventsBuilder _eventsBuilder;
-    private readonly VersusConfig _versusConfig;
-    private readonly BotOptions _options;
-    private readonly HashSet<ulong> _allowedUsers;
-    private readonly ulong _williamId;
-    private string _player = "";
+    private readonly DashboardService dashboardService;
+    private readonly PlayerMessageService statusMessageService;
+    private readonly CouponEventSyncService syncService;
+    private readonly StatisticsBuilder statsBuilder;
+    private readonly EventsBuilder eventsBuilder;
+    private readonly VersusConfig versusConfig;
+    private readonly BotOptions options;
+    private readonly HashSet<ulong> allowedUsers;
+    private readonly ulong williamId;
+    private string player = "";
 
     public MessageHandler(
         TipsConfig tipsConfig,
@@ -34,27 +34,27 @@ public class MessageHandler
         VersusConfig versusConfig,
         BotOptions options)
     {
-        _tipsConfig = tipsConfig;
-        _evaluator = evaluator;
+        this.tipsConfig = tipsConfig;
+        this.evaluator = evaluator;
         _logger = logger;
-        _dashboardService = dashboardService;
-        _statusMessageService = statusMessageService;
-        _syncService = syncService;
-        _statsBuilder = statsBuilder;
-        _eventsBuilder = eventsBuilder;
-        _versusConfig = versusConfig;
-        _options = options;
+        this.dashboardService = dashboardService;
+        this.statusMessageService = statusMessageService;
+        this.syncService = syncService;
+        this.statsBuilder = statsBuilder;
+        this.eventsBuilder = eventsBuilder;
+        this.versusConfig = versusConfig;
+        this.options = options;
 
-        _williamId = ulong.Parse(Environment.GetEnvironmentVariable("DISCORD_USER_ID_WILLIAM") ?? "0");
+        williamId = ulong.Parse(Environment.GetEnvironmentVariable("DISCORD_USER_ID_WILLIAM") ?? "0");
 
-        _allowedUsers = new HashSet<ulong>
+        allowedUsers = new HashSet<ulong>
         {
-            _williamId,
+            williamId,
             ulong.Parse(Environment.GetEnvironmentVariable("DISCORD_USER_ID_WIBB") ?? "0"),
             ulong.Parse(Environment.GetEnvironmentVariable("DISCORD_USER_ID_JONAS") ?? "0")
         };
 
-        _player = _tipsConfig.Data.MetaData.Player;
+        player = this.tipsConfig.Data.MetaData.Player;
     }
 
     public async Task HandleMessageAsync(SocketMessage message)
@@ -66,7 +66,7 @@ public class MessageHandler
             || message.Channel.Id != allowedChannelId)
             return;
 
-        if (!_allowedUsers.Contains(message.Author.Id))
+        if (!allowedUsers.Contains(message.Author.Id))
         {
             await message.Channel.SendMessageAsync("He");
             return;
@@ -84,7 +84,7 @@ public class MessageHandler
         switch (command)
         {
             case "events":
-                await _eventsBuilder.HandleAsync(message, arg);
+                await eventsBuilder.HandleAsync(message, arg);
             break;
 
             case "procent":
@@ -99,7 +99,7 @@ public class MessageHandler
                     break;
                 }
 
-                var procentTip = _tipsConfig.TipsMatches.FirstOrDefault(t => t.Number == matchNr);
+                var procentTip = tipsConfig.TipsMatches.FirstOrDefault(t => t.Number == matchNr);
                 if (procentTip == null)
                 {
                     await message.Channel.SendMessageAsync($"Hittade ingen match #{matchNr}.");
@@ -109,8 +109,8 @@ public class MessageHandler
                 procentTip.Percentage1 = p1;
                 procentTip.PercentageX = pX;
                 procentTip.Percentage2 = p2;
-                _tipsConfig.Data.MetaData.DataLastUpdatedUtc = DateTime.UtcNow;
-                _tipsConfig.SaveToJson();
+                tipsConfig.Data.MetaData.DataLastUpdatedUtc = DateTime.UtcNow;
+                tipsConfig.SaveToJson();
 
                 //await message.Channel.SendMessageAsync($"Uppdaterade procent för match #{matchNr} ({procentTip.HomeTeam} - {procentTip.AwayTeam}): 1={p1}% X={pX}% 2={p2}%");
             break;
@@ -121,14 +121,14 @@ public class MessageHandler
             break;
 
             case "refresh":
-                string extraMessage = _statusMessageService.Generate(_player);
+                string extraMessage = statusMessageService.Generate(player);
 
-                await _dashboardService.DeletePreviousDashboardsAsync(message.Channel);
-                await _dashboardService.CreateOrUpdateAsync(message.Channel, extraMessage);
+                await dashboardService.DeletePreviousDashboardsAsync(message.Channel);
+                await dashboardService.CreateOrUpdateAsync(message.Channel, extraMessage);
             break;
 
             case "stats":
-                await _statsBuilder.HandleAsync(message, arg);
+                await statsBuilder.HandleAsync(message, arg);
             break;
 
             case "h2h":
@@ -137,7 +137,7 @@ public class MessageHandler
                     await message.Channel.SendMessageAsync("Ange matchnummer, t.ex. `!h2h 3`");
                     break;
                 }
-                var h2hTip = _tipsConfig.TipsMatches.FirstOrDefault(t => t.Number == h2hNr);
+                var h2hTip = tipsConfig.TipsMatches.FirstOrDefault(t => t.Number == h2hNr);
                 if (h2hTip == null)
                 {
                     await message.Channel.SendMessageAsync($"Hittade ingen match #{h2hNr}.");
@@ -153,15 +153,15 @@ public class MessageHandler
             break;
 
             case "status":
-                if (_options.IsVersusMode)
+                if (options.IsVersusMode)
                 {
                     await message.Channel.SendMessageAsync(BuildVersusScoreLine());
                     break;
                 }
                 else
                 {
-                    var (correct, evaluated) = _evaluator.Evaluate(_tipsConfig.TipsMatches);
-                    string suffix = _statusMessageService.Generate(_player);
+                    var (correct, evaluated) = evaluator.Evaluate(tipsConfig.TipsMatches);
+                    string suffix = statusMessageService.Generate(player);
 
                     string statusMsg = $"Just nu har vi {correct}/{evaluated} rätt!";
                     statusMsg += $"\n{suffix}";
@@ -170,29 +170,29 @@ public class MessageHandler
                 }     
             
             case "sync":
-                if (message.Author.Id != _williamId)
+                if (message.Author.Id != williamId)
                 {
                     await message.Channel.SendMessageAsync("He");
                     return;
                 }
 
-                var (matchesChecked, eventsSynced) = await _syncService.SyncAsync(message.Channel);
+                var (matchesChecked, eventsSynced) = await syncService.SyncAsync(message.Channel);
                 await message.Channel.SendMessageAsync($"Sync klar: kollade {matchesChecked} matcher, synkade {eventsSynced} händelsegrupper.");
             break;
 
             case "updatemeta":
-                if (message.Author.Id != _williamId)
+                if (message.Author.Id != williamId)
                 {
                     await message.Channel.SendMessageAsync("He");
                     return;
                 }
 
-                var (correctMeta, evaluatedMeta) = _evaluator.Evaluate(_tipsConfig.TipsMatches);
-                _tipsConfig.Data.MetaData.TotalCorrect = correctMeta;
-                _tipsConfig.SaveToJson();
+                var (correctMeta, evaluatedMeta) = evaluator.Evaluate(tipsConfig.TipsMatches);
+                tipsConfig.Data.MetaData.TotalCorrect = correctMeta;
+                tipsConfig.SaveToJson();
 
                 await message.Channel.SendMessageAsync(
-                    $"Metadata updated: {correctMeta}/{evaluatedMeta} correct | Player: {_tipsConfig.Data.MetaData.Player} | Date: {_tipsConfig.Data.MetaData.Date}");
+                    $"Metadata updated: {correctMeta}/{evaluatedMeta} correct | Player: {tipsConfig.Data.MetaData.Player} | Date: {tipsConfig.Data.MetaData.Date}");
             break;
         }
     }
@@ -222,13 +222,13 @@ public class MessageHandler
 
     private string BuildVersusScoreLine()
     {
-        if (!_options.IsVersusMode || _versusConfig.Players.Count == 0)
+        if (!options.IsVersusMode || versusConfig.Players.Count == 0)
             return "";
 
-        var tips = _tipsConfig.TipsMatches;
+        var tips = tipsConfig.TipsMatches;
         var parts = new List<string>();
 
-        string primaryName = _tipsConfig.Data.MetaData.Player;
+        string primaryName = tipsConfig.Data.MetaData.Player;
         int primaryCorrect = tips.Count(t =>
         {
             string? sym = CouponEvaluator.GetCurrentSymbol(t);
@@ -236,7 +236,7 @@ public class MessageHandler
         });
         parts.Add($"{primaryName}: {primaryCorrect}");
 
-        foreach (var p in _versusConfig.Players)
+        foreach (var p in versusConfig.Players)
         {
             int playerCorrect = tips.Count(t =>
             {

@@ -31,8 +31,8 @@ public class VersusDashboardBuilder
         int matchColumnWidth = GetMatchColumnWidth(tips, MinimumMatchColumnWidth, MaximumMatchColumnWidth);
         int nameAreaWidth = Math.Max(allPlayers.Max(p => p.Name.Length), 5);
 
-        // Header row: spaces until the pick columns, then each player's name above their column.
-        // Prefix = "{nr,2}. " (4) + match + " " (1) + statusAndScore (14) + " | " (3) + symbols + " " (1)
+        // Rubrikrad: mellanslag fram till pick-kolumnerna, sedan varje spelares namn ovanför sin kolumn.
+        // Prefix = "{nr,2}. " (4) + match + " " (1) + statusAndScore (14) + " | " (3) + symboler + " " (1)
         int symbolWidth = FormatSymbolBox("1", null).Length;
         int prefixWidth = 4 + matchColumnWidth + 1 + StatusAndScoreColumnWidth + 3 + symbolWidth * 3 + 1;
         string playerHeader = new string(' ', prefixWidth)
@@ -122,15 +122,15 @@ public class VersusDashboardBuilder
         if (existing.All(p => p.Initial != first))
             return first;
 
-        // Fallback: use a digit to distinguish (unlikely with W/J/F)
+        // Fallback: använd en siffra för att skilja dem åt (osannolikt med W/J/F)
         return (char)('0' + existing.Count);
     }
 
-    // Slot width = nameAreaWidth + 3 chars ("|" + " " + name/content + " ").
-    // nameAreaWidth = max(longest player name, 5) — scales dynamically so pipes always align.
-    // Both emoji/no-emoji branches produce identical string lengths:
-    //   emoji:    "| {e} {tip padded} "
-    //   no emoji: "|   {tip padded} "
+    // Slotbredd = nameAreaWidth + 3 tecken ("|" + " " + namn/innehåll + " ").
+    // nameAreaWidth = max(längsta spelarnamnet, 5) — skalar dynamiskt så pipes alltid radas upp.
+    // Både emoji- och icke-emoji-grenarna ger identisk stränglängd:
+    //   emoji:      "| {e} {tip paddad} "
+    //   utan emoji: "|   {tip paddad} "
     private static string FormatPickSlot(string? tip, string? currentSymbol, bool isPostponed, int nameAreaWidth)
     {
         string tipText = string.IsNullOrWhiteSpace(tip) ? "-" : tip;

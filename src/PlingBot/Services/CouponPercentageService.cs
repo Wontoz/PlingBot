@@ -12,17 +12,17 @@ public class CouponPercentageService
     private static readonly TimeSpan FrequentRefreshInterval = TimeSpan.FromSeconds(30);
     private static readonly TimeSpan FinalRefreshBeforeClose = TimeSpan.FromMinutes(5);
 
-    private readonly TipsConfig _tipsConfig;
-    private readonly BotOptions _options;
+    private readonly TipsConfig tipsConfig;
+    private readonly BotOptions options;
     private readonly Logger _logger;
-    private DateTime? _lastRefreshUtc;
-    private IPlaywright? _playwright;
-    private IBrowser? _browser;
+    private DateTime? lastRefreshUtc;
+    private IPlaywright? playwright;
+    private IBrowser? browser;
 
     public CouponPercentageService(TipsConfig tipsConfig, BotOptions options, Logger logger)
     {
-        _tipsConfig = tipsConfig;
-        _options = options;
+        this.tipsConfig = tipsConfig;
+        this.options = options;
         _logger = logger;
     }
 
@@ -30,7 +30,7 @@ public class CouponPercentageService
     {
         try
         {
-            var snapshot = await FetchCouponSnapshotAsync(GetCouponUrl(_options.Game));
+            var snapshot = await FetchCouponSnapshotAsync(GetCouponUrl(options.Game));
             var rows = snapshot.Percentages;
 
             if (rows.Count == 0)
@@ -42,7 +42,7 @@ public class CouponPercentageService
             int refreshed = 0;
             DateTime updatedUtc = DateTime.UtcNow;
             bool metadataChanged = false;
-            DateTime? currentStartTime = _tipsConfig.Data.MetaData.StartTime;
+            DateTime? currentStartTime = tipsConfig.Data.MetaData.StartTime;
 
             if (currentStartTime.HasValue &&
                 snapshot.StartTime.HasValue &&
@@ -55,11 +55,11 @@ public class CouponPercentageService
             if (snapshot.StartTime.HasValue &&
                 currentStartTime != snapshot.StartTime)
             {
-                _tipsConfig.Data.MetaData.StartTime = snapshot.StartTime;
+                tipsConfig.Data.MetaData.StartTime = snapshot.StartTime;
                 metadataChanged = true;
             }
 
-            foreach (var tip in _tipsConfig.TipsMatches)
+            foreach (var tip in tipsConfig.TipsMatches)
             {
                 if (tip.Number <= 0 || tip.Number > rows.Count)
                     continue;
@@ -77,10 +77,10 @@ public class CouponPercentageService
                 refreshed++;
             }
 
-            _lastRefreshUtc = updatedUtc;
+            lastRefreshUtc = updatedUtc;
 
             if (refreshed > 0)
-                _tipsConfig.Data.MetaData.DataLastUpdatedUtc = updatedUtc;
+                tipsConfig.Data.MetaData.DataLastUpdatedUtc = updatedUtc;
 
             if (refreshed == 0 && !metadataChanged)
             {
@@ -88,7 +88,7 @@ public class CouponPercentageService
                 return false;
             }
 
-            _tipsConfig.SaveToJson();
+            tipsConfig.SaveToJson();
             _logger.Log($"Refreshed coupon percentages for {refreshed} tips", ConsoleColor.Cyan);
             return true;
         }
@@ -111,7 +111,7 @@ public class CouponPercentageService
 
     private bool ShouldRefreshNow(DateTime nowUtc)
     {
-        DateTime? closeUtc = _tipsConfig.Data.MetaData.StartTime;
+        DateTime? closeUtc = tipsConfig.Data.MetaData.StartTime;
 
         if (closeUtc.HasValue)
         {
@@ -119,15 +119,15 @@ public class CouponPercentageService
                 return false;
 
             if (IsFinalRefreshWindow(nowUtc))
-                return !_lastRefreshUtc.HasValue || nowUtc - _lastRefreshUtc.Value >= FrequentRefreshInterval;
+                return !lastRefreshUtc.HasValue || nowUtc - lastRefreshUtc.Value >= FrequentRefreshInterval;
         }
 
-        return !_lastRefreshUtc.HasValue || nowUtc - _lastRefreshUtc.Value >= DefaultRefreshInterval;
+        return !lastRefreshUtc.HasValue || nowUtc - lastRefreshUtc.Value >= DefaultRefreshInterval;
     }
 
     private bool IsFinalRefreshWindow(DateTime nowUtc)
     {
-        DateTime? closeUtc = _tipsConfig.Data.MetaData.StartTime;
+        DateTime? closeUtc = tipsConfig.Data.MetaData.StartTime;
 
         return closeUtc.HasValue &&
             nowUtc >= closeUtc.Value - FinalRefreshBeforeClose &&
@@ -136,14 +136,14 @@ public class CouponPercentageService
 
     private async Task<CouponSnapshot> FetchCouponSnapshotAsync(string url)
     {
-        if (_browser == null || !_browser.IsConnected)
+        if (browser == null || !browser.IsConnected)
         {
-            _playwright?.Dispose();
-            _playwright = await Playwright.CreateAsync();
-            _browser = await _playwright.Chromium.LaunchAsync(new BrowserTypeLaunchOptions { Headless = true });
+            playwright?.Dispose();
+            playwright = await Playwright.CreateAsync();
+            browser = await playwright.Chromium.LaunchAsync(new BrowserTypeLaunchOptions { Headless = true });
         }
 
-        var page = await _browser.NewPageAsync();
+        var page = await browser.NewPageAsync();
         try
         {
             await page.GotoAsync(url);

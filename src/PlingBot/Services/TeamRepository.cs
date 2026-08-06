@@ -12,9 +12,9 @@ using PlingBot.Utils;
 
 public class TeamRepository
 {
-    private readonly string _filePath;
+    private readonly string filePath;
     private readonly Logger _logger;
-    private readonly Dictionary<string, TeamRecord> _byName;
+    private readonly Dictionary<string, TeamRecord> byName;
 
     private static readonly JsonSerializerOptions WriteOptions = new()
     {
@@ -25,18 +25,18 @@ public class TeamRepository
     public TeamRepository(Logger logger)
     {
         _logger = logger;
-        _filePath = ResolveFilePath();
-        _byName = Load();
+        filePath = ResolveFilePath();
+        byName = Load();
     }
 
     public TeamRecord? FindByName(string name)
-        => _byName.TryGetValue(name, out var r) ? r : null;
+        => byName.TryGetValue(name, out var r) ? r : null;
 
     public void Upsert(string name, string apiName, int? id)
     {
-        if (!_byName.TryGetValue(name, out var existing))
+        if (!byName.TryGetValue(name, out var existing))
         {
-            _byName[name] = new TeamRecord { Name = name, ApiName = apiName, Id = id };
+            byName[name] = new TeamRecord { Name = name, ApiName = apiName, Id = id };
             Save();
             _logger.Log($"Team registry: added '{name}' → '{apiName}' (id={id})", ConsoleColor.DarkGray);
             return;
@@ -65,21 +65,21 @@ public class TeamRepository
 
     private Dictionary<string, TeamRecord> Load()
     {
-        if (!File.Exists(_filePath))
+        if (!File.Exists(filePath))
             return new Dictionary<string, TeamRecord>(StringComparer.OrdinalIgnoreCase);
 
-        var json = File.ReadAllText(_filePath, Encoding.UTF8);
+        var json = File.ReadAllText(filePath, Encoding.UTF8);
         var list = JsonSerializer.Deserialize<List<TeamRecord>>(json) ?? [];
         return list.ToDictionary(r => r.Name, StringComparer.OrdinalIgnoreCase);
     }
 
     private void Save()
     {
-        var list = _byName.Values
+        var list = byName.Values
             .OrderBy(r => r.Name, StringComparer.OrdinalIgnoreCase)
             .ToList();
-        Directory.CreateDirectory(Path.GetDirectoryName(_filePath)!);
-        File.WriteAllText(_filePath, JsonSerializer.Serialize(list, WriteOptions), Encoding.UTF8);
+        Directory.CreateDirectory(Path.GetDirectoryName(filePath)!);
+        File.WriteAllText(filePath, JsonSerializer.Serialize(list, WriteOptions), Encoding.UTF8);
     }
 
     private static string ResolveFilePath()

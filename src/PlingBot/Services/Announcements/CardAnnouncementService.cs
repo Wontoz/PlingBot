@@ -6,11 +6,11 @@ using PlingBot.Utils;
 
 public class CardAnnouncementService
 {
-    private readonly DiscordAnnouncementService _discord;
+    private readonly DiscordAnnouncementService discord;
 
     public CardAnnouncementService(DiscordAnnouncementService discord)
     {
-        _discord = discord;
+        this.discord = discord;
     }
 
     public async Task<bool> AnnounceRedCardsAsync(
@@ -52,7 +52,7 @@ public class CardAnnouncementService
         string player = string.IsNullOrEmpty(evt?.Player) ? "Okänd spelare" : evt.Player;
         string message = $"🟥 {symbol} Rött kort! {team} - {player} {(evt != null ? Helpers.GetMinute(evt) : Helpers.GetMinute(match))}";
 
-        await _discord.AnnounceAsync(channel, message, ConsoleColor.DarkRed, "Red card announced", couponEvent: new CouponEvent
+        await discord.AnnounceAsync(channel, message, ConsoleColor.DarkRed, "Red card announced", couponEvent: new CouponEvent
         {
             Key = key,
             Type = "Card",

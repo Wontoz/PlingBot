@@ -7,9 +7,9 @@ using PlingBot.Utils;
 public class CouponEventSyncService
 {
     private readonly FootballApiClient _api;
-    private readonly TipsConfig _tipsConfig;
-    private readonly GoalAnnouncementService _goals;
-    private readonly CardAnnouncementService _cards;
+    private readonly TipsConfig tipsConfig;
+    private readonly GoalAnnouncementService goals;
+    private readonly CardAnnouncementService cards;
     private readonly Logger _logger;
 
     public CouponEventSyncService(
@@ -20,9 +20,9 @@ public class CouponEventSyncService
         Logger logger)
     {
         _api = api;
-        _tipsConfig = tipsConfig;
-        _goals = goals;
-        _cards = cards;
+        this.tipsConfig = tipsConfig;
+        this.goals = goals;
+        this.cards = cards;
         _logger = logger;
     }
 
@@ -31,7 +31,7 @@ public class CouponEventSyncService
         int matchesChecked = 0;
         int eventsSynced = 0;
 
-        var tipsToSync = _tipsConfig.TipsMatches
+        var tipsToSync = tipsConfig.TipsMatches
             .Where(t => t.FixtureId.HasValue && !t.IsFinished && t.Match != null)
             .ToList();
 
@@ -48,17 +48,17 @@ public class CouponEventSyncService
 
                 matchesChecked++;
 
-                if (await _goals.TryHandleNewGoalEventsAsync(channel, tip, tip.Match!, result.Events))
+                if (await goals.TryHandleNewGoalEventsAsync(channel, tip, tip.Match!, result.Events))
                     eventsSynced++;
 
-                if (await _cards.AnnounceRedCardsAsync(channel, tip, tip.Match!, result.Events))
+                if (await cards.AnnounceRedCardsAsync(channel, tip, tip.Match!, result.Events))
                     eventsSynced++;
             }
         }
 
         if (eventsSynced > 0)
         {
-            _tipsConfig.SaveToJson();
+            tipsConfig.SaveToJson();
             _logger.Log($"Manual sync completed: {eventsSynced} event groups synced across {matchesChecked} matches", ConsoleColor.Cyan);
         }
         else

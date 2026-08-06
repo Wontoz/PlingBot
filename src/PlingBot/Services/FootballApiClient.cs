@@ -27,15 +27,15 @@ public record InjuryInfo(
 
 public class FootballApiClient
 {
-    private readonly HttpClient _http;
+    private readonly HttpClient http;
     private readonly Logger _logger;
-    private readonly ApiUsageTracker _usageTracker;
-    private readonly SemaphoreSlim _rateLimitGate = new(1, 1);
-    private readonly TimeSpan _minCallInterval;
-    private DateTime _lastCallUtc = DateTime.MinValue;
-    private int? _perMinuteLimit;
-    private int? _dailyLimit;
-    private int? _dailyRemaining;
+    private readonly ApiUsageTracker usageTracker;
+    private readonly SemaphoreSlim rateLimitGate = new(1, 1);
+    private readonly TimeSpan minCallInterval;
+    private DateTime lastCallUtc = DateTime.MinValue;
+    private int? perMinuteLimit;
+    private int? dailyLimit;
+    private int? dailyRemaining;
     private static readonly Dictionary<string, (string Type, string Description)> StatusMetadata = new(StringComparer.OrdinalIgnoreCase)
     {
         ["TBD"] = ("Scheduled", "Scheduled but date and time are not known"),
@@ -62,12 +62,12 @@ public class FootballApiClient
     public FootballApiClient(Logger logger, ApiUsageTracker usageTracker)
     {
         _logger = logger;
-        _usageTracker = usageTracker;
+        this.usageTracker = usageTracker;
 
         int minIntervalMs = int.TryParse(Environment.GetEnvironmentVariable("API_MIN_CALL_INTERVAL_MS"), out var ms)
             ? ms
             : 300;
-        _minCallInterval = TimeSpan.FromMilliseconds(minIntervalMs);
+        minCallInterval = TimeSpan.FromMilliseconds(minIntervalMs);
 
         var baseUrl = Environment.GetEnvironmentVariable("FOOTBALL_API_URL")
             ?? throw new InvalidOperationException("FOOTBALL_API_URL missing");
@@ -75,12 +75,12 @@ public class FootballApiClient
         var apiKey = Environment.GetEnvironmentVariable("FOOTBALL_API_KEY")
             ?? throw new InvalidOperationException("FOOTBALL_API_KEY missing");
 
-        _http = new HttpClient
+        http = new HttpClient
         {
             BaseAddress = new Uri(baseUrl)
         };
 
-        _http.DefaultRequestHeaders.Add("x-apisports-key", apiKey);
+        http.DefaultRequestHeaders.Add("x-apisports-key", apiKey);
     }
 
     public async Task<List<Match>> FetchMatchesByDateAsync(DateTime date)
@@ -112,9 +112,10 @@ public class FootballApiClient
             .FirstOrDefault();
     }
 
-    // Fetches all coupon fixtures in one call, returning match data, events, statistics and
-    // lineups together. Replaces the old live-overlay + per-fixture events/stats pattern:
-    // instead of ?live=all + N×?statistics + N×?events we pay for exactly 1 call per tick.
+    // Hämtar alla kupongens fixtures i ett enda anrop, och returnerar matchdata, events,
+    // statistik och lineups tillsammans. Ersätter det gamla mönstret med live-overlay +
+    // events/statistik per fixture: istället för ?live=all + N×?statistics + N×?events
+    // betalar vi för exakt 1 anrop per tick.
     public async Task<List<FixtureBatchResult>> FetchCouponFixturesBatchAsync(List<int> ids)
     {
         if (ids.Count == 0)
@@ -422,9 +423,9 @@ public class FootballApiClient
         return result;
     }
 
-    // Hits the /status endpoint, which does NOT count against the daily quota. Its response
-    // headers carry the same x-ratelimit-* values as every other call, so this lets us learn
-    // the account's real per-minute/daily limits before the startup burst even begins.
+    // Anropar /status-endpointen, som INTE räknas mot dagskvoten. Dess svarsheaders har
+    // samma x-ratelimit-*-värden som alla andra anrop, så det här låter oss lära kontots
+    // riktiga gräns per minut/dag innan uppstartsanropen ens har börjat.
     public async Task FetchAndApplyAccountStatusAsync()
     {
         try
@@ -439,12 +440,12 @@ public class FootballApiClient
             int current = GetInt(requests.GetProperty("current"));
             int limitDay = GetInt(requests.GetProperty("limit_day"));
 
-            _dailyLimit = limitDay;
-            _dailyRemaining = limitDay - current;
+            dailyLimit = limitDay;
+            dailyRemaining = limitDay - current;
 
             _logger.Log(
                 $"API status: {current}/{limitDay} requests used today" +
-                (_perMinuteLimit.HasValue ? $", {_perMinuteLimit}/min limit" : ""),
+                (perMinuteLimit.HasValue ? $", {perMinuteLimit}/min limit" : ""),
                 ConsoleColor.DarkCyan);
         }
         catch (Exception ex)
@@ -479,8 +480,9 @@ public class FootballApiClient
         if (fixtureElem.TryGetProperty("venue", out var venueElem))
             venueName = venueElem.TryGetProperty("name", out var vn) ? vn.GetString() : null;
 
-        // For AET/PEN matches the top-level goals field is the final score (including ET/shootout).
-        // score.fulltime is the score at 90 minutes, which is what the coupon cares about.
+        // För AET/PEN-matcher är fältet goals på toppnivå slutresultatet (inklusive
+        // förlängning/straffar). score.fulltime är resultatet efter 90 minuter, vilket är
+        // det kupongen bryr sig om.
         int homeGoals = GetInt(goalsElem.GetProperty("home"));
         int awayGoals = GetInt(goalsElem.GetProperty("away"));
         if ((statusShort == "AET" || statusShort == "PEN") &&
@@ -557,8 +559,8 @@ public class FootballApiClient
     {
         await ThrottleAsync();
 
-        _usageTracker.Record(endpoint);
-        using var response = await _http.GetAsync(url);
+        usageTracker.Record(endpoint);
+        using var response = await http.GetAsync(url);
         response.EnsureSuccessStatusCode();
 
         UpdateRateLimitState(response.Headers);
@@ -566,30 +568,31 @@ public class FootballApiClient
         return await response.Content.ReadAsStringAsync();
     }
 
-    // Reads the rate-limit headers every call sends back so the throttle can adapt to the
-    // account's *actual* limits instead of a guessed constant, and so the bot can slow itself
-    // down automatically as the daily quota runs low rather than just logging a warning.
+    // Läser rate-limit-headers som varje anrop skickar tillbaka så att throttlingen kan
+    // anpassa sig till kontots *faktiska* gränser istället för en gissad konstant, och så
+    // att boten kan sakta ner sig själv automatiskt när dagskvoten börjar ta slut istället
+    // för att bara logga en varning.
     private void UpdateRateLimitState(System.Net.Http.Headers.HttpResponseHeaders headers)
     {
         if (headers.TryGetValues("x-ratelimit-requests-limit", out var dailyLimitValues) &&
             int.TryParse(dailyLimitValues.FirstOrDefault(), out int dailyLimit))
         {
-            _dailyLimit = dailyLimit;
+            this.dailyLimit = dailyLimit;
         }
 
         if (headers.TryGetValues("x-ratelimit-requests-remaining", out var dailyRemainingValues) &&
             int.TryParse(dailyRemainingValues.FirstOrDefault(), out int dailyRemaining))
         {
-            _dailyRemaining = dailyRemaining;
+            this.dailyRemaining = dailyRemaining;
             if (dailyRemaining < 50)
                 _logger.Log($"⚠️ API daily quota low: {dailyRemaining} requests remaining", ConsoleColor.Red);
         }
 
         if (headers.TryGetValues("X-RateLimit-Limit", out var perMinuteLimitValues) &&
             int.TryParse(perMinuteLimitValues.FirstOrDefault(), out int perMinuteLimit) &&
-            perMinuteLimit != _perMinuteLimit)
+            perMinuteLimit != this.perMinuteLimit)
         {
-            _perMinuteLimit = perMinuteLimit;
+            this.perMinuteLimit = perMinuteLimit;
         }
 
         if (headers.TryGetValues("X-RateLimit-Remaining", out var minuteRemainingValues) &&
@@ -599,46 +602,47 @@ public class FootballApiClient
         }
     }
 
-    // Serializes calls and enforces a minimum gap between them so bursts (e.g. startup
-    // backfill/fixture lookups) can't trip the per-minute rate limit. The gap itself adapts:
-    // once the account's real per-minute limit is known (via response headers or /status) it
-    // replaces the guessed API_MIN_CALL_INTERVAL_MS default, and it's stretched further as the
-    // daily quota runs low so a slow afternoon doesn't get fully blocked before the day ends.
+    // Serialiserar anrop och tvingar fram ett minsta mellanrum mellan dem så att ryck
+    // (t.ex. backfill/fixture-uppslag vid uppstart) inte kan trigga per-minut-gränsen.
+    // Mellanrummet anpassar sig själv: så fort kontots riktiga per-minut-gräns är känd
+    // (via svarsheaders eller /status) ersätter den den gissade API_MIN_CALL_INTERVAL_MS,
+    // och den sträcks ut ytterligare när dagskvoten börjar ta slut så en lugn eftermiddag
+    // inte blockeras helt innan dagen är slut.
     private async Task ThrottleAsync()
     {
-        await _rateLimitGate.WaitAsync();
+        await rateLimitGate.WaitAsync();
         try
         {
             var interval = ComputeCallInterval();
-            var wait = interval - (DateTime.UtcNow - _lastCallUtc);
+            var wait = interval - (DateTime.UtcNow - lastCallUtc);
             if (wait > TimeSpan.Zero)
                 await Task.Delay(wait);
 
-            _lastCallUtc = DateTime.UtcNow;
+            lastCallUtc = DateTime.UtcNow;
         }
         finally
         {
-            _rateLimitGate.Release();
+            rateLimitGate.Release();
         }
     }
 
     private TimeSpan ComputeCallInterval()
     {
-        // 15% safety margin under the account's actual per-minute limit once known;
-        // falls back to the configured default until the first response teaches us the real value.
-        TimeSpan baseInterval = _perMinuteLimit is > 0
-            ? TimeSpan.FromMilliseconds(60_000.0 / _perMinuteLimit.Value * 1.15)
-            : _minCallInterval;
+        // 15% säkerhetsmarginal under kontots faktiska per-minut-gräns när den är känd;
+        // faller tillbaka på den konfigurerade standarden tills första svaret lär oss det riktiga värdet.
+        TimeSpan baseInterval = perMinuteLimit is > 0
+            ? TimeSpan.FromMilliseconds(60_000.0 / perMinuteLimit.Value * 1.15)
+            : minCallInterval;
 
-        double backoff = _dailyLimit is > 0 && _dailyRemaining.HasValue
-            ? GetDailyQuotaBackoffFactor((double)_dailyRemaining.Value / _dailyLimit.Value)
+        double backoff = dailyLimit is > 0 && dailyRemaining.HasValue
+            ? GetDailyQuotaBackoffFactor((double)dailyRemaining.Value / dailyLimit.Value)
             : 1.0;
 
         return baseInterval * backoff;
     }
 
-    // Stretches the remaining daily quota out instead of burning through it at full speed
-    // as it runs low — still keeps polling, just increasingly conservatively.
+    // Sträcker ut den kvarvarande dagskvoten istället för att bränna igenom den i full
+    // fart när den börjar ta slut — fortsätter ändå pollningen, bara allt mer försiktigt.
     private static double GetDailyQuotaBackoffFactor(double remainingFraction)
     {
         if (remainingFraction < 0.05) return 8.0;

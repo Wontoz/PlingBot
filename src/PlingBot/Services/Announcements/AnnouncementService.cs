@@ -8,12 +8,12 @@ using PlingBot.Utils;
 
 public class AnnouncementService
 {
-    private readonly TipsConfig _tipsConfig;
-    private readonly CouponEvaluator _evaluator;
+    private readonly TipsConfig tipsConfig;
+    private readonly CouponEvaluator evaluator;
     private readonly Logger _logger;
-    private readonly GoalAnnouncementService _goals;
-    private readonly CardAnnouncementService _cards;
-    private readonly PayoutScraperService _payoutScraper;
+    private readonly GoalAnnouncementService goals;
+    private readonly CardAnnouncementService cards;
+    private readonly PayoutScraperService payoutScraper;
 
     public AnnouncementService(
         TipsConfig tipsConfig,
@@ -23,16 +23,16 @@ public class AnnouncementService
         CardAnnouncementService cards,
         PayoutScraperService payoutScraper)
     {
-        _tipsConfig = tipsConfig;
-        _evaluator = evaluator;
+        this.tipsConfig = tipsConfig;
+        this.evaluator = evaluator;
         _logger = logger;
-        _goals = goals;
-        _cards = cards;
-        _payoutScraper = payoutScraper;
+        this.goals = goals;
+        this.cards = cards;
+        this.payoutScraper = payoutScraper;
     }
 
-    // events and stats are pre-fetched by the caller via a single batch API call —
-    // no internal API requests are made here any more.
+    // events och stats hämtas i förväg av anroparen via ett enda batch-API-anrop —
+    // inga interna API-anrop görs här längre.
     public async Task ProcessMatchUpdateAsync(
         IMessageChannel channel,
         TipsMatch tip,
@@ -41,37 +41,38 @@ public class AnnouncementService
     {
         var match = tip.Match ?? throw new ArgumentNullException(nameof(tip.Match));
 
-        bool isLive = IsLiveStatus(match.Status.Short);
+        bool isLive = MatchStatus.IsLive(match.Status.Short);
         bool isHalftime = match.Status.Short.Equals("HT", StringComparison.OrdinalIgnoreCase);
         bool scoreChanged = match.HomeGoals != tip.LastHomeGoals || match.AwayGoals != tip.LastAwayGoals;
 
-        // During halftime, data can still change (e.g. assists added by API) — allow storage
-        // updates but isLive remains false so Discord announcements are still suppressed.
+        // I halvtid kan datan fortfarande ändras (t.ex. assists som läggs till av API:et) —
+        // tillåt lagring av uppdateringar men isLive förblir false så Discord-annonser
+        // ändå hålls tillbaka.
         if (!scoreChanged && !isLive && !isHalftime)
             return;
 
         bool somethingHappened = false;
 
-        bool goalEventsHandled = await _goals.TryHandleNewGoalEventsAsync(channel, tip, match, matchEvents);
+        bool goalEventsHandled = await goals.TryHandleNewGoalEventsAsync(channel, tip, match, matchEvents);
         if (goalEventsHandled)
             somethingHappened = true;
 
-        bool cancelledGoalsHandled = await _goals.TryHandleCancelledGoalEventsAsync(channel, tip, match, matchEvents);
+        bool cancelledGoalsHandled = await goals.TryHandleCancelledGoalEventsAsync(channel, tip, match, matchEvents);
         if (cancelledGoalsHandled)
             somethingHappened = true;
 
         if (scoreChanged)
         {
             if (AnnouncementEventKeys.HasGoalBeenAdded(tip, match) && !goalEventsHandled)
-                await _goals.AnnounceScoreChangeFallbackAsync(channel, tip, match);
+                await goals.AnnounceScoreChangeFallbackAsync(channel, tip, match);
 
             UpdateScore(tip, match);
             ReEvaluateCoupon();
-            _payoutScraper.ScheduleUpdate();
+            payoutScraper.ScheduleUpdate();
             somethingHappened = true;
         }
 
-        if (isLive && await _cards.AnnounceRedCardsAsync(channel, tip, match, matchEvents))
+        if (isLive && await cards.AnnounceRedCardsAsync(channel, tip, match, matchEvents))
             somethingHappened = true;
 
         if (isLive && CaptureQuietEvents(tip, match, matchEvents))
@@ -86,21 +87,16 @@ public class AnnouncementService
         if (somethingHappened)
         {
             tip.LastUpdatedUtc = DateTime.UtcNow;
-            _tipsConfig.SaveToJson();
+            tipsConfig.SaveToJson();
         }
 
-        // Payouts are usually posted some time after the actual final whistle, not right after
-        // the last goal — so also kick off a fresh retry window the moment a match finishes,
-        // not just on score changes (this only fires once: ProcessTipAsync stops calling this
-        // method for the tip on the next poll, once IsFinished flips to true).
-        if (IsFinishedStatus(match.Status.Short))
-            _payoutScraper.ScheduleUpdate();
+        // Utdelning brukar postas en stund efter den faktiska slutsignalen, inte direkt efter
+        // sista målet — så starta även ett nytt retry-fönster i samma stund matchen tar slut,
+        // inte bara vid poängändring (detta triggas bara en gång: ProcessTipAsync slutar
+        // anropa den här metoden för tippet på nästa poll, när IsFinished väl blir true).
+        if (MatchStatus.IsFinished(match.Status.Short))
+            payoutScraper.ScheduleUpdate();
     }
-
-    private static bool IsFinishedStatus(string status) =>
-        status.Equals("FT", StringComparison.OrdinalIgnoreCase) ||
-        status.Equals("AET", StringComparison.OrdinalIgnoreCase) ||
-        status.Equals("PEN", StringComparison.OrdinalIgnoreCase);
 
     private static void UpdateScore(TipsMatch tip, Match match)
     {
@@ -110,33 +106,26 @@ public class AnnouncementService
         tip.AwayScore = match.AwayGoals;
     }
 
-    private static bool IsLiveStatus(string status)
-    {
-        return status.Equals("1H", StringComparison.OrdinalIgnoreCase) ||
-            status.Equals("2H", StringComparison.OrdinalIgnoreCase) ||
-            status.Equals("LIVE", StringComparison.OrdinalIgnoreCase);
-    }
-
     private void ReEvaluateCoupon()
     {
-        var (correct, evaluated) = _evaluator.Evaluate(_tipsConfig.TipsMatches);
-        _tipsConfig.Data.MetaData.TotalCorrect = correct;
+        var (correct, evaluated) = evaluator.Evaluate(tipsConfig.TipsMatches);
+        tipsConfig.Data.MetaData.TotalCorrect = correct;
         _logger.Log($"Re-evaluated coupon: {correct}/{evaluated} correct", ConsoleColor.Green);
     }
 
-    // How far apart (in Elapsed*100+Extra units) two entries may drift and still be treated as
-    // the same physical card/subst. The API can both nudge stoppage-time extra minutes by a
-    // tick or two (diff=1–2) AND shift the whole elapsed minute by 1–2 when the player name
-    // eventually resolves (diff=100–200). 300 covers up to 3 full minutes of elapsed drift.
+    // Hur mycket (i Elapsed*100+Extra-enheter) två poster får driva isär och ändå räknas
+    // som samma fysiska kort/byte. API:et kan både nudga tilläggstidsminuter en tick eller
+    // två (diff=1–2) OCH flytta hela den spelade minuten 1–2 när spelarnamnet väl slår in
+    // (diff=100–200). 300 täcker upp till 3 hela minuters drift.
     private const int QuietEventDriftTolerance = 300;
 
-    // Quietly stores substitutions and plain yellow cards for the web's per-match
-    // event tab — never announced to Discord and never shown in the curated live feed.
+    // Sparar tyst byten och vanliga gula kort för webbens per-match-flik —
+    // annonseras aldrig till Discord och visas aldrig i det kuraterade live-flödet.
     private bool CaptureQuietEvents(TipsMatch tip, Match match, List<MatchEvent> matchEvents)
     {
         bool added = false;
 
-        var existingForFixture = _tipsConfig.Data.Events
+        var existingForFixture = tipsConfig.Data.Events
             .Where(e => e.FixtureId == match.Id && (e.Type == "Card" || e.Type == "Substitution"))
             .ToList();
 
@@ -153,11 +142,12 @@ public class AnnouncementService
             if (ev.PlayerId > 0 && resolvedFingerprints.Contains($"{evType}|{ev.TeamId}|{ev.PlayerId}"))
                 continue;
 
-            // The API often reports a card/subst the instant it happens with no player attached
-            // yet ("Okänd"), then fills the name in (and can nudge the stoppage-time minute) a
-            // poll or two later. Keying strictly on player+minute treats that as a brand new
-            // event and produces a duplicate "Okänd" + named pair for the same physical card —
-            // reconcile against the nearest still-unresolved entry for the same team/type instead.
+            // API:et rapporterar ofta ett kort/byte i samma stund det sker utan spelare
+            // ("Okänd"), och fyller sedan i namnet (och kan nudga tilläggstidsminuten) en
+            // eller två pollningar senare. Att bara nyckla på spelare+minut skulle behandla
+            // det som ett helt nytt event och ge en dubblett av "Okänd" + namngiven för
+            // samma fysiska kort — stäm istället av mot den närmaste olösta posten för
+            // samma lag/typ.
             if (!string.IsNullOrWhiteSpace(ev.Player))
             {
                 int evScore = ev.Elapsed * 100 + ev.Extra;
@@ -192,7 +182,7 @@ public class AnnouncementService
 
             tip.AnnouncedEventKeys.Add(key);
             var couponEvent = BuildQuietCouponEvent(key, tip, match, ev);
-            _tipsConfig.Data.Events.Add(couponEvent);
+            tipsConfig.Data.Events.Add(couponEvent);
             existingForFixture.Add(couponEvent);
             if (!string.IsNullOrWhiteSpace(couponEvent.Player))
                 resolvedFingerprints.Add($"{couponEvent.Type}|{couponEvent.TeamId}|{couponEvent.PlayerId}");

@@ -12,12 +12,12 @@ using PlingBot.Utils;
 
 public class StatisticsBuilder
 {
-    private readonly TipsConfig _tipsConfig;
+    private readonly TipsConfig tipsConfig;
     private readonly FootballApiClient _api;
 
     public StatisticsBuilder(TipsConfig tipsConfig, FootballApiClient api)
     {
-        _tipsConfig = tipsConfig;
+        this.tipsConfig = tipsConfig;
         _api = api;
     }
 
@@ -29,7 +29,7 @@ public class StatisticsBuilder
             return;
         }
 
-        var tip = _tipsConfig.TipsMatches.FirstOrDefault(t => t.Number == tipNumber);
+        var tip = tipsConfig.TipsMatches.FirstOrDefault(t => t.Number == tipNumber);
         if (tip == null)
         {
             await message.Channel.SendMessageAsync($"Hittade ingen match #{tipNumber}.");
