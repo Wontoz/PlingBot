@@ -34,8 +34,6 @@ public class DashboardBuilder
         string date = tipsConfig.Data.MetaData.Date;
         string player = tipsConfig.Data.MetaData.Player;
 
-        if (game == "Europatipset") game = "VM-Tipset";
-
         sb.AppendLine($"{game} {date} - {player}");
 
         //if(!string.IsNullOrWhiteSpace(playerMessage)) sb.AppendLine(playerMessage);

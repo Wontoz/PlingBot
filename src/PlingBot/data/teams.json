@@ -200,6 +200,11 @@
     "Id": 56
   },
   {
+    "Name": "Bristol Rovers",
+    "ApiName": "Bristol Rovers",
+    "Id": 1334
+  },
+  {
     "Name": "Brommapojkarna",
     "ApiName": "IF Brommapojkarna",
     "Id": 371
@@ -358,6 +363,11 @@
     "Name": "Drogheda",
     "ApiName": "Drogheda United",
     "Id": 3850
+  },
+  {
+    "Name": "Dundee FC",
+    "ApiName": "Dundee",
+    "Id": 253
   },
   {
     "Name": "Ecuador",
@@ -1413,6 +1423,11 @@
     "Name": "Spanien",
     "ApiName": "Spain",
     "Id": 9
+  },
+  {
+    "Name": "St Johnstone",
+    "ApiName": "ST Johnstone",
+    "Id": 258
   },
   {
     "Name": "St. Mirren",

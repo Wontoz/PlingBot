@@ -38,6 +38,10 @@ public class LeagueInfo
         if (round == null) return null;
         var s = Regex.Replace(round, @"^Regular Season - (\d+)$", "Omgång $1");
         s = Regex.Replace(s, @" - (\d+)$", " - Omgång $1");
+        s = Regex.Replace(s, @"\bRound of 32\b", "Sextondelsfinal", RegexOptions.IgnoreCase);
+        s = Regex.Replace(s, @"\bQuarter\s*-?\s*Finals?\b", "Kvartsfinal", RegexOptions.IgnoreCase);
+        s = Regex.Replace(s, @"\bQuater\s*-?\s*Finals?\b", "Kvartsfinal", RegexOptions.IgnoreCase);
+        s = Regex.Replace(s, @"\bSemi\s*-?\s*Finals?\b", "Semifinal", RegexOptions.IgnoreCase);
         return s;
     }
 }

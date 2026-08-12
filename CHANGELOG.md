@@ -1,3 +1,8 @@
+## [3.1.6.1] - 2026-08-06
+- Added localization for some common league info descriptions
+
+---
+
 ## [3.1.6] - 2026-08-06
 - Improved logic when deciding which coupon to use
 
