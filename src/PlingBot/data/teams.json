@@ -250,6 +250,11 @@
     "Id": 538
   },
   {
+    "Name": "Charleroi",
+    "ApiName": "Charleroi",
+    "Id": 736
+  },
+  {
     "Name": "Charlton",
     "ApiName": "Charlton",
     "Id": 1335
@@ -370,6 +375,11 @@
     "Id": 253
   },
   {
+    "Name": "Dundee U",
+    "ApiName": "Dundee Utd",
+    "Id": 1386
+  },
+  {
     "Name": "Ecuador",
     "ApiName": "Ecuador",
     "Id": 2382
@@ -423,6 +433,11 @@
     "Name": "Falkenberg",
     "ApiName": "Falkenbergs FF",
     "Id": 812
+  },
+  {
+    "Name": "Falkirk",
+    "ApiName": "Falkirk",
+    "Id": 1389
   },
   {
     "Name": "FC Aarau",
@@ -615,6 +630,11 @@
     "Id": 766
   },
   {
+    "Name": "Ham-Kam",
+    "ApiName": "Ham-Kam",
+    "Id": 2159
+  },
+  {
     "Name": "Hammarby",
     "ApiName": "Hammarby FF",
     "Id": 363
@@ -653,6 +673,11 @@
     "Name": "HJK Helsingfors",
     "ApiName": "HJK Helsingfors",
     "Id": 649
+  },
+  {
+    "Name": "Horsens",
+    "ApiName": "AC Horsens",
+    "Id": 404
   },
   {
     "Name": "Huddersfield",
@@ -950,6 +975,11 @@
     "Id": 1102
   },
   {
+    "Name": "Luzern",
+    "ApiName": "FC Luzern",
+    "Id": 644
+  },
+  {
     "Name": "Lyngby",
     "ApiName": "Lyngby",
     "Id": 625
@@ -1035,6 +1065,11 @@
     "Id": 329
   },
   {
+    "Name": "Motherwell",
+    "ApiName": "Motherwell",
+    "Id": 256
+  },
+  {
     "Name": "MSK Zilina",
     "ApiName": "Žilina",
     "Id": 3554
@@ -1108,6 +1143,11 @@
     "Name": "Oddevold",
     "ApiName": "Oddevold",
     "Id": 11674
+  },
+  {
+    "Name": "OH Leuven",
+    "ApiName": "OH Leuven",
+    "Id": 260
   },
   {
     "Name": "Olympic",
@@ -1430,6 +1470,11 @@
     "Id": 258
   },
   {
+    "Name": "St. Gallen",
+    "ApiName": "FC ST. Gallen",
+    "Id": 1011
+  },
+  {
     "Name": "St. Mirren",
     "ApiName": "ST Mirren",
     "Id": 251
@@ -1520,6 +1565,11 @@
     "Id": 12660
   },
   {
+    "Name": "Thun",
+    "ApiName": "FC Thun",
+    "Id": 1012
+  },
+  {
     "Name": "Tjeckien",
     "ApiName": "Czechia",
     "Id": 770
@@ -1563,6 +1613,11 @@
     "Name": "Turkiet",
     "ApiName": "Türkiye",
     "Id": 777
+  },
+  {
+    "Name": "Twente",
+    "ApiName": "Twente",
+    "Id": 415
   },
   {
     "Name": "Tyskland",
