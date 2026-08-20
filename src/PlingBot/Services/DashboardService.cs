@@ -167,7 +167,7 @@ public class DashboardService
     {
         var existing = tipsConfig.Data.Events[index];
         bool textChanged = existing.Text != newEvent.Text;
-        // Assist kommer senare än själva målet — uppdatera även om texten är oförändrad
+        // Assist kommer senare än själva målet - uppdatera även om texten är oförändrad
         bool assistChanged = newEvent.Assist != null && existing.Assist != newEvent.Assist;
         if (!textChanged && !assistChanged)
             return false;

@@ -2,10 +2,19 @@ let leagueMap = {};
 let latestMatches = [];
 let latestEvents = [];
 let latestFixtureMap = {};
-let latestHasStarted = true;
+let hasStarted = true;
 let activeTab = 'live';
 let selectedMatchNumber = null;
 let lineupSubsExpanded = false;
+let preMatchDataUpdatedText = '';
+
+// De tre utfallen på en rad (hemmavinst / oavgjort / bortavinst) — delad källa så att
+// favoriter, streckvärde och live-insikter alla räknar på exakt samma sätt.
+const OUTCOME_KEYS = [
+  { sym: '1', pctKey: 'Percentage1', oddsKey: 'Odds1', teamFn: m => m.HomeTeam },
+  { sym: 'X', pctKey: 'PercentageX', oddsKey: 'OddsX', teamFn: () => 'Oavgjort' },
+  { sym: '2', pctKey: 'Percentage2', oddsKey: 'Odds2', teamFn: m => m.AwayTeam },
+];
 
 // ── Data fetching ─────────────────────────────────────────────────────────────
 
@@ -24,34 +33,47 @@ async function refresh() {
 // ── Top-level render ──────────────────────────────────────────────────────────
 
 function renderAll(data) {
-  const meta    = data.MetaData;
-  const matches = data.TipsData   || [];
-  const events  = data.Events     || [];
+  const meta = data.MetaData;
+  latestMatches = data.TipsData || [];
+  latestEvents  = data.Events   || [];
   leagueMap = meta.LeagueMap || {};
 
-  const _titleEl = document.getElementById('game-title');
-  const _logoMap = { stryktipset: 'stryktipset', europatipset: 'europatipset', topptipset: 'topptipset' };
-  const _logoKey = Object.keys(_logoMap).find(k => (meta.Game || '').toLowerCase().includes(k));
-  if (_logoKey) {
-    _titleEl.innerHTML = `<img class="game-logo" src="/assets/img/${_logoKey}.png" alt="${meta.Game}"><span class="header-date">${meta.Date}</span>`;
-  } else {
-    _titleEl.textContent = `${meta.Game} - ${meta.Date}`;
-  }
+  const gameHeader = document.querySelector('.game-header');
+  gameHeader.innerHTML = `<span class="game-name svenskaspel-lookalike-text">${meta.Game}</span><span class="game-date svenskaspel-lookalike-text">${meta.Date}</span>`;
   applyGameClass(meta.Game);
 
-  const fixtureMap  = buildFixtureMap(matches);
-  const hasStarted  = !meta.StartTime || new Date(meta.StartTime) <= new Date();
+  latestFixtureMap = buildFixtureMap(latestMatches);
+  hasStarted = !meta.StartTime || new Date(meta.StartTime) <= new Date();
 
-  latestMatches    = matches;
-  latestEvents     = events;
-  latestFixtureMap = fixtureMap;
-  latestHasStarted = hasStarted;
+  const footerDateOptions = {
+      year: 'numeric',
+      month: '2-digit',
+      day: '2-digit',
+      hour: '2-digit',
+      minute: '2-digit',
+      second: '2-digit'
+    };
+
+  // Visas till höger i "Inför omgången"-headern, bara innan avspark — försvinner
+  // automatiskt i live-läget eftersom hasStarted styr renderTabs().
+  preMatchDataUpdatedText = (!hasStarted && meta.DataLastUpdatedUtc)
+    ? `Uppdaterad ${new Date(meta.DataLastUpdatedUtc).toLocaleTimeString('sv-SE', footerDateOptions)}`
+    : '';
+
+  // Visas till höger i Spelstatistik-headern — när utdelningsscrapern senast
+  // hämtade hem ett resultat, dvs. datan bakom kr-summan i statistiken.
+  const statsUpdatedEl = document.getElementById('stats-updated');
+  if (statsUpdatedEl) {
+    statsUpdatedEl.textContent = meta.LastPayoutScrapedUtc
+      ? `Uppdaterad ${new Date(meta.LastPayoutScrapedUtc).toLocaleTimeString('sv-SE', footerDateOptions)}`
+      : '';
+  }
 
   renderMatchesList();
   const matchesEl = document.getElementById('matches');
   matchesEl.classList.add('matches-compact');
-  matchesEl.classList.toggle('matches-few', matches.length <= 8);
-  document.getElementById('stats-grid').innerHTML = renderStats(matches, events, meta.Payouts || []);
+  matchesEl.classList.toggle('matches-few', latestMatches.length <= 8);
+  document.getElementById('stats-grid').innerHTML = renderStats(latestMatches, latestEvents, meta.Payouts || []);
 
   const statsPanel = document.querySelector('.stats-panel');
   if (statsPanel) statsPanel.style.display = hasStarted ? '' : 'none';
@@ -59,16 +81,10 @@ function renderAll(data) {
   renderTabs();
   renderActiveTabContent();
 
+  const pollTimestamps = latestMatches.map(m => m.LastUpdatedUtc).filter(Boolean).map(t => new Date(t));
+  const lastPolled = pollTimestamps.length ? new Date(Math.max(...pollTimestamps)) : new Date();
   document.getElementById('poll-time').textContent =
-    'Uppdaterad ' + new Date().toLocaleTimeString('sv-SE', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
-
-  const dataTimeEl = document.getElementById('data-time');
-  if (!hasStarted && meta.DataLastUpdatedUtc) {
-    const t = new Date(meta.DataLastUpdatedUtc).toLocaleTimeString('sv-SE', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
-    dataTimeEl.textContent = ` · Data: ${t}`;
-  } else {
-    dataTimeEl.textContent = '';
-  }
+    'Senast uppdaterad ' + lastPolled.toLocaleString('sv-SE', footerDateOptions);
 }
 
 // ── Panel tabs (Live / per-match Statistik / Händelser) ────────────────────────
@@ -117,9 +133,9 @@ function pickMatchTab(tip) {
 }
 
 function renderTabs() {
-  const liveLabel  = latestHasStarted ? 'Live' : 'Inför omgången';
+  const liveLabel  = hasStarted ? 'Live' : 'Inför omgången';
   const liveEvents = filterLiveEvents(latestEvents);
-  const badge      = latestHasStarted && liveEvents.length ? `<span class="panel-badge">${liveEvents.length}</span>` : '';
+  const badge      = hasStarted && liveEvents.length ? `<span class="panel-badge">${liveEvents.length}</span>` : '';
 
   let html = `<button class="panel-tab ${activeTab === 'live' ? 'active' : ''}" data-tab="live">${liveLabel}${badge}</button>`;
 
@@ -134,8 +150,17 @@ function renderTabs() {
       html += `<button class="panel-tab ${activeTab === 'match-lineup' ? 'active' : ''}" data-tab="match-lineup"><span class="tab-full">Laginfo</span><span class="tab-short">Lag</span></button>`;
     if (hasMatchH2H(tip))
       html += `<button class="panel-tab ${activeTab === 'match-h2h' ? 'active' : ''}" data-tab="match-h2h">H2H</button>`;
-    html += `<button class="panel-tab-close" data-tab="close" title="Stäng">✕</button>`;
   }
+
+  const closeBtn = selectedMatchNumber != null
+    ? `<button class="panel-tab-close" data-tab="close" title="Stäng">✕</button>`
+    : '';
+  const dataUpdated = preMatchDataUpdatedText
+    ? `<span class="panel-data-updated">${preMatchDataUpdatedText}</span>`
+    : '';
+
+  if (closeBtn || dataUpdated)
+    html += `<div class="panel-tab-section-right">${dataUpdated}${closeBtn}</div>`;
 
   document.getElementById('panel-tabs').innerHTML = html;
 }
@@ -145,7 +170,7 @@ function renderActiveTabContent() {
   container.classList.toggle('events-list-scroll', activeTab === 'live');
 
   if (activeTab === 'live') {
-    container.innerHTML = latestHasStarted
+    container.innerHTML = hasStarted
       ? renderEventsList(filterLiveEvents(latestEvents), latestFixtureMap)
       : renderPreMatch(latestMatches);
     return;
@@ -272,7 +297,7 @@ function renderMatch(m) {
       ${leagueLogoCol}
       ${renderMatchStatus(m, status)}
       ${renderScoreBadge(m, status, result)}
-      ${renderTipButtons(m)}
+      ${renderTipButtons(m, status)}
     </div>`;
 }
 
@@ -309,7 +334,7 @@ function renderScoreBadge(m, status, result) {
   } else if (result === 'wrong') {
     cls = 'wrong';
   } else if (status === 'live') {
-    const liveOutcome = m.HomeScore > m.AwayScore ? '1' : m.HomeScore < m.AwayScore ? '2' : 'X';
+    const liveOutcome = scoreOutcome(m.HomeScore, m.AwayScore);
     const tips = m.Tip ? m.Tip.split('') : [];
     cls = tips.includes(liveOutcome) ? 'correct' : 'wrong';
   } else {
@@ -318,15 +343,12 @@ function renderScoreBadge(m, status, result) {
   return `<div class="score-badge ${cls}">${m.HomeScore} - ${m.AwayScore}</div>`;
 }
 
-function renderTipButtons(m) {
+function renderTipButtons(m, status) {
   const tips = m.Tip ? m.Tip.split('') : [];
   const pcts = [m.Percentage1, m.PercentageX, m.Percentage2];
   const hasPct = pcts.some(p => p != null);
 
-  const status = getStatus(m);
-  const liveOutcome = status === 'live'
-    ? (m.HomeScore > m.AwayScore ? '1' : m.HomeScore < m.AwayScore ? '2' : 'X')
-    : null;
+  const liveOutcome = status === 'live' ? scoreOutcome(m.HomeScore, m.AwayScore) : null;
   const currentOutcome = m.Outcome || liveOutcome;
 
   const btns = ['1', 'X', '2'].map((opt) => {
@@ -359,10 +381,7 @@ function classifyGoalEvent(e, match) {
   const newAway = parseInt(parts[1], 10);
   if (isNaN(newHome) || isNaN(newAway)) return '';
 
-  const isOwnGoal = e.Detail === 'Own Goal';
-  const scorerIsHome = e.TeamId ? e.TeamId === match.HomeTeamId : e.Team === match.HomeTeam;
-  const outcome = (h, a) => h > a ? '1' : h < a ? '2' : 'X';
-  const newOutcome = outcome(newHome, newAway);
+  const newOutcome = scoreOutcome(newHome, newAway);
   const tip = match.Tip || '';
 
   return tip.includes(newOutcome) ? 'ev-good' : 'ev-bad';
@@ -708,13 +727,8 @@ function renderPreMatch(matches) {
   const worst = bets.filter(v => v.value < 0).slice(-10).reverse();
 
   const favs = [];
-  const opts = [
-    { oddsKey: 'Odds1', pctKey: 'Percentage1', teamFn: m => m.HomeTeam },
-    { oddsKey: 'OddsX', pctKey: 'PercentageX', teamFn: () => 'Oavgjort' },
-    { oddsKey: 'Odds2', pctKey: 'Percentage2', teamFn: m => m.AwayTeam },
-  ];
   for (const m of matches) {
-    for (const o of opts) {
+    for (const o of OUTCOME_KEYS) {
       const odds = m[o.oddsKey];
       const pct  = m[o.pctKey];
       if (odds != null) {
@@ -724,12 +738,6 @@ function renderPreMatch(matches) {
   }
   favs.sort((a, b) => a.odds - b.odds);
   const topFavs = favs.slice(0, 3);
-
-  const renderSection = (title, rows, renderRow, tooltip = '') => {
-    if (!rows.length) return '';
-    const tip = tooltip ? ` title="${tooltip}"` : '';
-    return `<div class="value-section"><div class="value-title"${tip}>${title}</div>${rows.map(renderRow).join('')}</div>`;
-  };
 
   const valueRow = (v, positive) => `
     <div class="value-row">
@@ -841,15 +849,10 @@ function renderPayoutSection(payouts) {
 
 function calcValueBets(matches) {
   const result = [];
-  const opts = [
-    { pctKey: 'Percentage1', oddsKey: 'Odds1', teamFn: m => m.HomeTeam },
-    { pctKey: 'PercentageX', oddsKey: 'OddsX', teamFn: () => 'Oavgjort' },
-    { pctKey: 'Percentage2', oddsKey: 'Odds2', teamFn: m => m.AwayTeam },
-  ];
   for (const m of matches) {
     const o1 = parseFloat(m.Odds1), oX = parseFloat(m.OddsX), o2 = parseFloat(m.Odds2);
     const total = (o1 > 0 ? 1/o1 : 0) + (oX > 0 ? 1/oX : 0) + (o2 > 0 ? 1/o2 : 0);
-    for (const o of opts) {
+    for (const o of OUTCOME_KEYS) {
       const pct  = m[o.pctKey];
       const odds = parseFloat(m[o.oddsKey]);
       if (pct != null && odds > 0 && total > 0) {
@@ -862,31 +865,32 @@ function calcValueBets(matches) {
   return result.sort((a, b) => b.value - a.value);
 }
 
+// Delad wrapper: en titlad sektion av rader, tom sträng om det inte finns något att visa.
+function renderSection(title, rows, renderRow, tooltip = '') {
+  if (!rows.length) return '';
+  const tip = tooltip ? ` title="${tooltip}"` : '';
+  return `<div class="value-section"><div class="value-title"${tip}>${title}</div>${rows.map(renderRow).join('')}</div>`;
+}
+
 function renderValueSection(title, items, positive) {
-  if (!items.length) return '';
   const cls = positive === null ? 'amber' : positive ? 'green' : 'red';
-  const rows = items.map(v => `
+  return renderSection(title, items, v => `
     <div class="value-row">
       <span class="value-num">#${v.num}</span>
       <span class="value-team">${v.team}</span>
       <span class="value-pct ${cls}">${v.value}%</span>
-    </div>`).join('');
-  return `<div class="value-section"><div class="value-title">${title}</div>${rows}</div>`;
+    </div>`);
 }
 
 // ── Live insights (post-kickoff) ────────────────────────────────────────────
 
 function getOutcomeSymbol(m) {
   if (m.IsFinished && m.Outcome) return m.Outcome;
-  return m.HomeScore > m.AwayScore ? '1' : m.HomeScore < m.AwayScore ? '2' : 'X';
+  return scoreOutcome(m.HomeScore, m.AwayScore);
 }
 
 function outcomeOptions(m) {
-  return [
-    { sym: '1', pct: m.Percentage1, team: m.HomeTeam },
-    { sym: 'X', pct: m.PercentageX, team: 'Oavgjort' },
-    { sym: '2', pct: m.Percentage2, team: m.AwayTeam },
-  ];
+  return OUTCOME_KEYS.map(o => ({ sym: o.sym, pct: m[o.pctKey], team: o.teamFn(m) }));
 }
 
 // Matches where we're currently correct with the least-backed sign — our best differentiators.
@@ -933,9 +937,13 @@ function calcSurprises(matches) {
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 
+function scoreOutcome(home, away) {
+  return home > away ? '1' : home < away ? '2' : 'X';
+}
+
 function isCorrect(m) {
   if (m.IsFinished) return m.Outcome && m.Tip && m.Tip.includes(m.Outcome);
-  const lo = m.HomeScore > m.AwayScore ? '1' : m.HomeScore < m.AwayScore ? '2' : 'X';
+  const lo = scoreOutcome(m.HomeScore, m.AwayScore);
   return m.Tip && m.Tip.includes(lo);
 }
 

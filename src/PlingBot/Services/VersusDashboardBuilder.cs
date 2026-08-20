@@ -64,29 +64,7 @@ public class VersusDashboardBuilder
         sb.AppendLine();
         sb.AppendLine(BuildScoreLine(allPlayers, tips));
 
-        if (events is { Count: > 0 })
-        {
-            var eventLines = events
-                .Where(e => e.Type is "Goal" or "CancelledGoal" ||
-                            (e.Type == "Card" && !string.Equals(e.Detail, "Yellow Card", StringComparison.OrdinalIgnoreCase)))
-                .Select(e => e.Text.Replace("**", "")).Reverse().ToList();
-            int baseLen = sb.Length + "\n\nHändelser:\n".Length;
-            int totalLen = eventLines.Sum(s => s.Length + 1);
-            int keep = eventLines.Count;
-            while (keep > 0 && baseLen + totalLen > 1900)
-            {
-                keep--;
-                totalLen -= eventLines[keep].Length + 1;
-            }
-            int skipped = eventLines.Count - keep;
-
-            sb.AppendLine();
-            sb.AppendLine("Händelser:");
-            foreach (var ev in eventLines.Take(keep))
-                sb.AppendLine(ev);
-            if (skipped > 0)
-                sb.AppendLine($"(+{skipped} äldre händelser)");
-        }
+        AppendEventsSection(sb, events);
 
         return $"```{sb}```";
     }

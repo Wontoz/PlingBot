@@ -1,5 +1,12 @@
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
 
+@font-face {
+  font-family: 'Futura XBlk BT';
+  src: url('assets/fonts/Futura XBlk BT Extra Black.ttf') format('truetype');
+  font-weight: 800;
+  font-display: swap;
+}
+
 /* ── Tokens ──────────────────────────────────────────────────────────────── */
 
 :root {
@@ -15,6 +22,8 @@
   --red:           #f85149;
   --amber:         #d29922;
   --radius:        6px;
+  --select-bg:       rgba(117, 117, 117, 0.12);
+  --select-bg-hover: rgba(54, 54, 54, 0.527);
 
   /* Colors associated with each support gamemode, default svenskaspel-red for other games */
   --color-stryktipset:  #004077;
@@ -52,8 +61,6 @@
 :root[data-theme="light"] .match-row:nth-child(odd)        { background: var(--surface); }
 :root[data-theme="light"] .match-row:nth-child(even)       { background: var(--bg); }
 :root[data-theme="light"] .match-row:hover                 { background: var(--surface-alt); }
-:root[data-theme="light"] .match-row.row-selected          { background: rgba(47, 129, 247, 0.12); }
-:root[data-theme="light"] .match-row.row-selected:hover    { background: rgba(47, 129, 247, 0.18); }
 
 /* ── Header game-type colors (theme-independent) ─────────────────────────── */
 
@@ -114,43 +121,62 @@ header {
   z-index: 100;
   display: flex;
   align-items: center;
-  gap: 14px;
+  justify-content: space-between;
   padding: 10px 10px 10px 30px;
   background: var(--surface);
 }
 
 .header-left {
-  flex: 1;
-  min-width: 0;
+  display: flex;
+  flex-direction: row;
+  justify-content: flex-start;
+}
+.header-right{
+  display: flex;
+  flex-direction: row;
+}
+.svenskaspel-lookalike-text {
+  font-family: 'Futura XBlk BT', 'Inter', Arial, sans-serif;
+  font-size: 1.75rem;
+  font-weight: 700;
+  letter-spacing: -0.03em;
+  text-transform: uppercase;
+}
+
+/* Specialare för att göra fonten mer lik svenska spels logotyper. */
+.game-header,
+#plingbot-text,
+.bot-name {
+  transform: scaleX(0.85);
+  transform-origin: left center;
+}
+
+.game-header {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 15px;
 }
 
+/* Kompenserar tomrummet scaleX lämnar efter "PlingBot" innan copyright-texten i footern. */
+.bot-name {
+  margin-right: -20px;
+}
 
-#game-title {
+#plingbot-text {
   display: flex;
   align-items: center;
-  gap: 8px;
-  font-size: 0.95rem;
-  font-weight: 700;
 }
 
-.game-logo {
-  height: 30px;
-  width: auto;
-  object-fit: contain;
-  display: block;
+.game-name {
+  padding: 2px 10px;
+  color: #FFFFFF
 }
+.game-date { color: var(--text);}
 
-.header-date {
-  padding: 2.75px 1px 1px 1px;
-  font-size: 1.1rem;
-  font-weight: 700;
-  color: var(--text);
-  letter-spacing: 0.07em;
-}
-
+.game-stryktipset  .game-name { background-color: var(--color-stryktipset); }
+.game-europatipset .game-name { background-color: var(--color-europatipset); }
+.game-topptipset   .game-name { background-color: var(--color-topptipset); }
+.game-annat        .game-name { background-color: var(--color-annat); }
 
 /* ── Main: flex row, fills the 1fr grid row ──────────────────────────────── */
 
@@ -178,8 +204,6 @@ header {
   border-radius: var(--radius);
 }
 
-.c-r { display: flex; justify-content: center; align-items: center; }
-
 #matches {
   display: flex;
   flex-direction: column;
@@ -201,15 +225,17 @@ header {
 .match-row:last-child { border-bottom: none; }
 .match-row:hover      { background: var(--surface-alt); }
 
-.match-row.row-selected         { background: rgba(47, 129, 247, 0.12); }
-.match-row.row-selected:hover   { background: rgba(47, 129, 247, 0.18); }
+.match-row.row-selected         { background: var(--select-bg); }
+.match-row.row-selected:hover   { background: var(--select-bg-hover); }
 
 
-.game-stryktipset  .match-row.row-selected  { border-left-color: var(--color-stryktipset); }
-.game-europatipset .match-row.row-selected  { border-left-color: var(--color-europatipset); }
-.game-topptipset   .match-row.row-selected  { border-left-color: var(--color-topptipset); }
-.game-annat        .match-row.row-selected { border-left-color: var(--color-annat); }
+.game-stryktipset  .row-selected { border-left-color: var(--color-stryktipset); }
+.game-europatipset .row-selected { border-left-color: var(--color-europatipset); }
+.game-topptipset   .row-selected { border-left-color: var(--color-topptipset); }
+.game-annat        .row-selected { border-left-color: var(--color-annat); }
 
+/* Samma specificitet (två klasser) som raderna ovan, men kommer senare i filen —
+   så utfallsfärgen vinner över speltypsfärgen när en rad är både vald och avgjord. */
 .match-row.row-correct { border-left-color: var(--green); }
 .match-row.row-wrong   { border-left-color: var(--red); }
 .match-row.row-live    { border-left-color: var(--amber); }
@@ -337,8 +363,8 @@ header {
 }
 
 .match-league-logo {
-  max-width: 32px;
-  max-height: 32px;
+  max-width: 40px;
+  max-height: 40px;
   width: auto;
   height: auto;
   object-fit: contain;
@@ -427,6 +453,7 @@ header {
   gap: 3px;
   justify-content: center;
   width: 100%;
+  margin-top: 4px;
 }
 
 .tip-pcts-row:not(.tip-odds-row) { top: calc(100% + 4px); }
@@ -478,8 +505,6 @@ header {
   gap: 3px;
   justify-content: center;
 }
-
-.tip-pcts-row { margin-top: 4px; }
 
 .tip-pct {
   width: 26px;
@@ -579,15 +604,31 @@ header {
 
 .panel-tab .panel-badge { margin-left: 0; }
 
+.panel-tab-section-right {
+  margin-left: auto;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
 .panel-tab-close {
   appearance: none;
   background: none;
   border: none;
-  margin-left: auto;
   padding: 7px 12px;
   color: var(--muted);
   cursor: pointer;
   font-size: 0.7rem;
+}
+
+.panel-data-updated {
+  margin-left: auto;
+  padding-right: 4px;
+  font-size: 0.62rem;
+  font-weight: 400;
+  text-transform: none;
+  letter-spacing: normal;
+  color: var(--muted);
+  white-space: nowrap;
 }
 
 .panel-tab-close:hover { color: var(--red); }
@@ -1124,9 +1165,6 @@ header {
 .payout-row .value-rows {
   text-align: center;
 }
-.payout-row .value-pct {
-  text-align: right;
-}
 
 .value-label {
   font-size: 0.72rem;
@@ -1168,15 +1206,23 @@ header {
   text-align: center;
 }
 
-#updated {
+footer {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  font-size: 0.6rem;
+  font-size: 0.9rem;
   color: var(--muted);
-  padding: 1px 14px 3px;
-  opacity: 0.75;
+  padding: 10px 30px;
 }
+
+.footer-left {
+  display:flex;
+  flex-direction: row;
+  justify-content: flex-start;
+  align-items: center;
+  gap: 16px;
+}
+
 
 /* ── Compact match list (always applied — odds on top, tight row spacing) ── */
 
@@ -1227,8 +1273,10 @@ header {
 
   /* ── Header ── */
   header      { flex-wrap: nowrap; gap: 8px; padding: 8px 12px 8px 24px; }
-  #game-title { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; font-size: 0.85rem; }
-  .game-logo  { height: 22px; }
+  .game-header, #plingbot-text  { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .game-header .game-name,
+  .game-header .game-date,
+  #plingbot-text                { font-size: 1.3rem; }
 
   /* ── Lagnamn: grid med logo | namn per rad ── */
   .match-teams {
@@ -1293,13 +1341,23 @@ header {
   /* Only the Live feed gets its own scroll box on mobile — Statistik/Händelser stay
      full-height so the page itself scrolls and nothing gets clipped. */
   .events-list.events-list-scroll { height: 20vh; overflow-y: auto; }
+
+  /* ── Footer ── */
+  footer        { padding: 10px 16px; flex-wrap: wrap; gap: 6px; }
+  .footer-left  { gap: 10px; }
+  /* .bot-name äger texten direkt (ingen wrapper-bugg som i .game-header), så
+     font-size här räcker — men marginalen som kompenserar scaleX-tomrummet
+     måste krympa proportionerligt med fontstorleken, annars blir den för stark. */
+  .bot-name     { font-size: 1.1rem; margin-right: -13px; }
+  .copyright-text, #poll-time { font-size: 0.62rem; }
 }
 
 @media (max-width: 492px) {
   .match-teams     { flex-direction: column; align-items: flex-start; gap: 2px; }
   .team-sep        { display: none; }
   #matches         { height: auto; }
-  .match-row       { flex: none; min-height: 52px; }
+  .match-row      { flex: none; min-height: 52px; }
+  #plingbot-text  {display: none;}
 }
 
 @media (max-width: 820px) {

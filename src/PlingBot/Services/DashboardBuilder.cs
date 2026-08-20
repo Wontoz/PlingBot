@@ -2,7 +2,6 @@ namespace PlingBot.Services;
 
 using System;
 using System.Collections.Generic;
-using System.Linq;
 using System.Text;
 using PlingBot.Config;
 using PlingBot.Models;
@@ -28,7 +27,7 @@ public class DashboardBuilder
 
         var sb = new StringBuilder();
 
-        var (correct, evaluated) = evaluator.Evaluate(tips);
+        var (correct, _) = evaluator.Evaluate(tips);
 
         string game = tipsConfig.Data.MetaData.Game;
         string date = tipsConfig.Data.MetaData.Date;
@@ -60,29 +59,7 @@ public class DashboardBuilder
         sb.AppendLine();
         sb.AppendLine($"Antal rätt: {correct}");
 
-        if (events is { Count: > 0 })
-        {
-            var eventLines = events
-                .Where(e => e.Type is "Goal" or "CancelledGoal" ||
-                            (e.Type == "Card" && !string.Equals(e.Detail, "Yellow Card", StringComparison.OrdinalIgnoreCase)))
-                .Select(e => e.Text.Replace("**", "")).Reverse().ToList();
-            int baseLen = sb.Length + "\n\nHändelser:\n".Length;
-            int totalLen = eventLines.Sum(s => s.Length + 1);
-            int keep = eventLines.Count;
-            while (keep > 0 && baseLen + totalLen > 1900)
-            {
-                keep--;
-                totalLen -= eventLines[keep].Length + 1;
-            }
-            int skipped = eventLines.Count - keep;
-
-            sb.AppendLine();
-            sb.AppendLine("Händelser:");
-            foreach (var ev in eventLines.Take(keep))
-                sb.AppendLine(ev);
-            if (skipped > 0)
-                sb.AppendLine($"(+{skipped} äldre händelser)");
-        }
+        AppendEventsSection(sb, events);
 
         return $"```{sb}```";
     }

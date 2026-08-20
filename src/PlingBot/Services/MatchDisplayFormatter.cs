@@ -4,6 +4,7 @@ using System;
 using System.Collections.Generic;
 using System.Globalization;
 using System.Linq;
+using System.Text;
 using PlingBot.Models;
 using PlingBot.Utils;
 
@@ -12,9 +13,40 @@ internal static class MatchDisplayFormatter
     internal const int StatusColumnWidth = 5;
     internal const int ScoreColumnWidth = 8;
     internal const int StatusAndScoreColumnWidth = StatusColumnWidth + 1 + ScoreColumnWidth;
+    private const int DiscordMessageBudget = 1900;
 
     internal static string FormatSymbolBox(string symbol, string? currentSymbol) =>
         symbol == currentSymbol ? symbol + " " : "  ";
+
+    // Delad av DashboardBuilder och VersusDashboardBuilder — lägger till en "Händelser:"-lista
+    // sist i dashboarden, trunkerad så hela meddelandet ryms inom Discords teckengräns.
+    internal static void AppendEventsSection(StringBuilder sb, IReadOnlyList<CouponEvent>? events)
+    {
+        if (events is not { Count: > 0 })
+            return;
+
+        var eventLines = events
+            .Where(e => e.Type is "Goal" or "CancelledGoal" ||
+                        (e.Type == "Card" && !string.Equals(e.Detail, "Yellow Card", StringComparison.OrdinalIgnoreCase)))
+            .Select(e => e.Text.Replace("**", "")).Reverse().ToList();
+
+        int baseLen = sb.Length + "\n\nHändelser:\n".Length;
+        int totalLen = eventLines.Sum(s => s.Length + 1);
+        int keep = eventLines.Count;
+        while (keep > 0 && baseLen + totalLen > DiscordMessageBudget)
+        {
+            keep--;
+            totalLen -= eventLines[keep].Length + 1;
+        }
+        int skipped = eventLines.Count - keep;
+
+        sb.AppendLine();
+        sb.AppendLine("Händelser:");
+        foreach (var ev in eventLines.Take(keep))
+            sb.AppendLine(ev);
+        if (skipped > 0)
+            sb.AppendLine($"(+{skipped} äldre händelser)");
+    }
 
     internal static string FormatPercentages(TipsMatch tip)
     {

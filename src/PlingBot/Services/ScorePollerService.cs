@@ -13,8 +13,6 @@ using PlingBot.Utils;
 public class ScorePollerService
 {
     private static readonly TimeSpan PollInterval = TimeSpan.FromSeconds(15);
-    private static readonly string ChannelEnvKey =
-        $"DISCORD_CHANNEL_ID_{(Environment.GetEnvironmentVariable("CHANNEL_MODE") ?? "TEST").ToUpper()}";
 
     private readonly FootballApiClient _api;
     private readonly AnnouncementService announcer;
@@ -352,15 +350,14 @@ public class ScorePollerService
 
     private IMessageChannel? GetChannel(DiscordSocketClient client)
     {
-        var channelIdRaw = Environment.GetEnvironmentVariable(ChannelEnvKey);
-
-        if (!ulong.TryParse(channelIdRaw, out var channelId))
+        var channelId = DiscordChannel.ResolveAllowedChannelId();
+        if (channelId == null)
         {
-            _logger.Error($"{ChannelEnvKey} missing or invalid");
+            _logger.Error($"{DiscordChannel.EnvKey} missing or invalid");
             return null;
         }
 
-        var channel = client.GetChannel(channelId) as IMessageChannel;
+        var channel = client.GetChannel(channelId.Value) as IMessageChannel;
 
         if (channel == null)
         {

@@ -54,6 +54,7 @@ public class MetaData
     public int TotalCorrect { get; set; }
     public DateTime? StartTime { get; set; }
     public DateTime? DataLastUpdatedUtc { get; set; }
+    public DateTime? LastPayoutScrapedUtc { get; set; }
     public List<PayoutRow> Payouts { get; set; } = [];
     public Dictionary<int, LeagueInfo> LeagueMap { get; set; } = [];
 }

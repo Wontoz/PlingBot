@@ -73,9 +73,11 @@
 
     <header>
       <div class="header-left">
-        <span id="game-title">Laddar...</span>
+        <div class="game-header">Laddar...</div>
       </div>
+      <div class="header-right">
       <button id="theme-toggle" onclick="toggleTheme()">☀</button>
+      </div>
     </header>
 
     <div class="main-layout">
@@ -97,7 +99,10 @@
         </div>
 
         <div class="panel-card stats-panel">
-          <div class="panel-title">Spelstatistik</div>
+          <div class="panel-title">
+            Spelstatistik
+            <span id="stats-updated" class="panel-data-updated"></span>
+          </div>
           <div id="stats-grid" class="stats-grid"></div>
         </div>
 
@@ -106,10 +111,15 @@
     </div>
 
     <div id="error" style="display:none">Kunde inte hämta data. Försöker igen...</div>
-    <div id="updated">
-      <span id="copyright">© 2026 PlingBot</span>
-      <span><span id="poll-time"></span><span id="data-time"></span></span>
-    </div>
+    <footer>
+      <div class="footer-left">
+        <div class="bot-name svenskaspel-lookalike-text"><span>PlingBot</span></div>
+        <div class="copyright-text">© 2026 All rights reserved</div>
+      </div>
+      <div class="footer-right">
+        <div id="poll-time"></div>
+      </div>
+    </footer>
 
   </div>
   <script src="app.js?v=102"></script>

@@ -61,9 +61,8 @@ public class MessageHandler
     {
         if (message.Author.IsBot) return;
 
-        string channelEnvKey = $"DISCORD_CHANNEL_ID_{(Environment.GetEnvironmentVariable("CHANNEL_MODE") ?? "TEST").ToUpper()}";
-        if (!ulong.TryParse(Environment.GetEnvironmentVariable(channelEnvKey), out var allowedChannelId)
-            || message.Channel.Id != allowedChannelId)
+        var allowedChannelId = DiscordChannel.ResolveAllowedChannelId();
+        if (allowedChannelId == null || message.Channel.Id != allowedChannelId.Value)
             return;
 
         if (!allowedUsers.Contains(message.Author.Id))
@@ -170,22 +169,16 @@ public class MessageHandler
                 }     
             
             case "sync":
-                if (message.Author.Id != williamId)
-                {
-                    await message.Channel.SendMessageAsync("He");
+                if (await DenyIfNotWilliamAsync(message))
                     return;
-                }
 
                 var (matchesChecked, eventsSynced) = await syncService.SyncAsync(message.Channel);
                 await message.Channel.SendMessageAsync($"Sync klar: kollade {matchesChecked} matcher, synkade {eventsSynced} händelsegrupper.");
             break;
 
             case "updatemeta":
-                if (message.Author.Id != williamId)
-                {
-                    await message.Channel.SendMessageAsync("He");
+                if (await DenyIfNotWilliamAsync(message))
                     return;
-                }
 
                 var (correctMeta, evaluatedMeta) = evaluator.Evaluate(tipsConfig.TipsMatches);
                 tipsConfig.Data.MetaData.TotalCorrect = correctMeta;
@@ -195,6 +188,15 @@ public class MessageHandler
                     $"Metadata updated: {correctMeta}/{evaluatedMeta} correct | Player: {tipsConfig.Data.MetaData.Player} | Date: {tipsConfig.Data.MetaData.Date}");
             break;
         }
+    }
+
+    private async Task<bool> DenyIfNotWilliamAsync(SocketMessage message)
+    {
+        if (message.Author.Id == williamId)
+            return false;
+
+        await message.Channel.SendMessageAsync("He");
+        return true;
     }
 
     private static string FormatH2H(int tipNumber, PlingBot.Models.TipsMatch tip)

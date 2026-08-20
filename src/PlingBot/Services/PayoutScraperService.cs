@@ -120,6 +120,7 @@ public class PayoutScraperService
                 }).ToList();
 
                 tipsConfig.Data.MetaData.Payouts = payouts;
+                tipsConfig.Data.MetaData.LastPayoutScrapedUtc = DateTime.UtcNow;
                 tipsConfig.SaveToJson();
                 _logger.Log(
                     $"Payouts saved: {string.Join(", ", payouts.Select(p => $"{p.Correct} rätt = {p.Amount}"))}",

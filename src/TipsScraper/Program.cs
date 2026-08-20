@@ -333,6 +333,9 @@ class Program
                 Percentage1 = percentages.One,
                 PercentageX = percentages.X,
                 Percentage2 = percentages.Two,
+                Odds1 = percentages.Odds1,
+                OddsX = percentages.OddsX,
+                Odds2 = percentages.Odds2,
                 LastUpdatedUtc = null,
                 LastRedCardCheckUtc = null,
                 AnnouncedEventKeys = new HashSet<string>(),
@@ -362,15 +365,29 @@ class Program
                     .map(cell => cell.textContent.trim()))
             """);
 
+        var rawOdds = await page.EvaluateAsync<string[][]>(
+            """
+            () => Array.from(document.querySelectorAll('[data-testid="coupon-row-tips-info-odds"]'))
+                .map(row => Array.from(row.querySelectorAll('td div.stat-trend'))
+                    .slice(0, 3)
+                    .map(el => el.textContent.trim()))
+            """);
+
         var rows = new List<CouponPercentages>();
 
-        foreach (var rawRow in rawRows)
+        for (int i = 0; i < rawRows.Length; i++)
         {
+            var rawRow = rawRows[i];
+            var oddsRow = rawOdds.Length > i ? rawOdds[i] : [];
+
             rows.Add(new CouponPercentages
             {
                 One = rawRow.Length > 0 ? ParsePercentage(rawRow[0]) : null,
                 X = rawRow.Length > 1 ? ParsePercentage(rawRow[1]) : null,
-                Two = rawRow.Length > 2 ? ParsePercentage(rawRow[2]) : null
+                Two = rawRow.Length > 2 ? ParsePercentage(rawRow[2]) : null,
+                Odds1 = oddsRow.Length > 0 ? ParseOdds(oddsRow[0]) : null,
+                OddsX = oddsRow.Length > 1 ? ParseOdds(oddsRow[1]) : null,
+                Odds2 = oddsRow.Length > 2 ? ParseOdds(oddsRow[2]) : null
             });
         }
 
@@ -381,6 +398,16 @@ class Program
     {
         value = value.Trim().TrimEnd('%').Trim();
         return int.TryParse(value, out int percentage) ? percentage : null;
+    }
+
+    private static decimal? ParseOdds(string value)
+    {
+        value = value.Trim();
+        if (decimal.TryParse(value, NumberStyles.Any, new CultureInfo("sv-SE"), out decimal odds))
+            return odds;
+        if (decimal.TryParse(value, NumberStyles.Any, CultureInfo.InvariantCulture, out decimal oddsEn))
+            return oddsEn;
+        return null;
     }
 
     private static DateTime GetCouponDate(DateTime? startTimeUtc)
@@ -490,6 +517,9 @@ public class CouponPercentages
     public int? One { get; set; }
     public int? X { get; set; }
     public int? Two { get; set; }
+    public decimal? Odds1 { get; set; }
+    public decimal? OddsX { get; set; }
+    public decimal? Odds2 { get; set; }
     public bool HasAllValues => One.HasValue && X.HasValue && Two.HasValue;
 }
 
@@ -570,6 +600,9 @@ public class TipsMatchJson
     public int? Percentage1 { get; set; }
     public int? PercentageX { get; set; }
     public int? Percentage2 { get; set; }
+    public decimal? Odds1 { get; set; }
+    public decimal? OddsX { get; set; }
+    public decimal? Odds2 { get; set; }
 
     public DateTime? LastUpdatedUtc { get; set; }
     public DateTime? LastRedCardCheckUtc { get; set; }

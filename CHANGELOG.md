@@ -1,3 +1,16 @@
+## [3.1.7] - 2026-08-22
+- Added new font in order to look like Svenska Spels own typography.
+  - Along with some CSS-magic in order to make font further look-alike.
+- Header now shows game type as a colored badge next to the date
+- Added "last updated" timestamps for pre-match odds/percentage data and payout data
+- Added Swedish translations for more cup round names
+- TipsScraper now fetches odds at coupon creation instead of waiting for the bot's first refresh
+- Fixed selected match row border color being overridden by game-type color
+- Fixed mobile layout for header and footer
+- General CSS/JS cleanup and simplification
+
+---
+
 ## [3.1.6.1] - 2026-08-06
 - Added localization for some common league info descriptions
 
