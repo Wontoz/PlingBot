@@ -16,6 +16,13 @@ const OUTCOME_KEYS = [
   { sym: '2', pctKey: 'Percentage2', oddsKey: 'Odds2', teamFn: m => m.AwayTeam },
 ];
 
+// Ersätter bara containerns barn som faktiskt ändrats istället för att riva ner och
+// bygga om hela subträdet varje poll — annars tappar t.ex. devtools sin markerade
+// nod var 5:e sekund, och scroll/öppna dropdowns/pågående animationer nollställs.
+function morph(el, html) {
+  Idiomorph.morph(el, html, { morphStyle: 'innerHTML' });
+}
+
 // ── Data fetching ─────────────────────────────────────────────────────────────
 
 async function refresh() {
@@ -39,7 +46,7 @@ function renderAll(data) {
   leagueMap = meta.LeagueMap || {};
 
   const gameHeader = document.querySelector('.game-header');
-  gameHeader.innerHTML = `<span class="game-name svenskaspel-lookalike-text">${meta.Game}</span><span class="game-date svenskaspel-lookalike-text">${meta.Date}</span>`;
+  morph(gameHeader, `<span class="game-name svenskaspel-lookalike-text">${meta.Game}</span><span class="game-date svenskaspel-lookalike-text">${meta.Date}</span>`);
   applyGameClass(meta.Game);
 
   latestFixtureMap = buildFixtureMap(latestMatches);
@@ -73,7 +80,7 @@ function renderAll(data) {
   const matchesEl = document.getElementById('matches');
   matchesEl.classList.add('matches-compact');
   matchesEl.classList.toggle('matches-few', latestMatches.length <= 8);
-  document.getElementById('stats-grid').innerHTML = renderStats(latestMatches, latestEvents, meta.Payouts || []);
+  morph(document.getElementById('stats-grid'), renderStats(latestMatches, latestEvents, meta.Payouts || []));
 
   const statsPanel = document.querySelector('.stats-panel');
   if (statsPanel) statsPanel.style.display = hasStarted ? '' : 'none';
@@ -162,7 +169,7 @@ function renderTabs() {
   if (closeBtn || dataUpdated)
     html += `<div class="panel-tab-section-right">${dataUpdated}${closeBtn}</div>`;
 
-  document.getElementById('panel-tabs').innerHTML = html;
+  morph(document.getElementById('panel-tabs'), html);
 }
 
 function renderActiveTabContent() {
@@ -170,9 +177,9 @@ function renderActiveTabContent() {
   container.classList.toggle('events-list-scroll', activeTab === 'live');
 
   if (activeTab === 'live') {
-    container.innerHTML = hasStarted
+    morph(container, hasStarted
       ? renderEventsList(filterLiveEvents(latestEvents), latestFixtureMap)
-      : renderPreMatch(latestMatches);
+      : renderPreMatch(latestMatches));
     return;
   }
 
@@ -187,18 +194,18 @@ function renderActiveTabContent() {
 
   if (activeTab === 'match-events') {
     const matchEvents = latestEvents.filter(e => e.FixtureId === tip.FixtureId);
-    container.innerHTML = renderMatchEventsList(matchEvents, latestFixtureMap);
+    morph(container, renderMatchEventsList(matchEvents, latestFixtureMap));
   } else if (activeTab === 'match-stats') {
-    container.innerHTML = renderMatchStatsTable(tip);
+    morph(container, renderMatchStatsTable(tip));
   } else if (activeTab === 'match-lineup') {
-    container.innerHTML = renderMatchLineupList(tip);
+    morph(container, renderMatchLineupList(tip));
   } else if (activeTab === 'match-h2h') {
-    container.innerHTML = renderMatchH2HList(tip);
+    morph(container, renderMatchH2HList(tip));
   }
 }
 
 function renderMatchesList() {
-  document.getElementById('matches').innerHTML = latestMatches.map(renderMatch).join('');
+  morph(document.getElementById('matches'), latestMatches.map(renderMatch).join(''));
 }
 
 function toggleLineupSubs() {
@@ -281,7 +288,7 @@ function renderMatch(m) {
   const leagueLogoCol = `<div class="match-league-logo-col">${leagueLogoUrl ? `<img class="match-league-logo" src="${leagueLogoUrl}" alt="">` : ''}</div>`;
 
   return `
-    <div class="match-row ${rowClass} ${selectedClass}" data-num="${m.Number}">
+    <div id="match-${m.Number}" class="match-row ${rowClass} ${selectedClass}" data-num="${m.Number}">
       <div class="match-num">${m.Number}</div>
       <div class="match-info-col">
         <div class="match-teams">

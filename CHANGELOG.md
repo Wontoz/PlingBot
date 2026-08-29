@@ -1,3 +1,8 @@
+## [3.1.8] - 2026-08-22
+- Web app now uses DOM morphing instead of full re-renders on each poll
+
+---
+
 ## [3.1.7] - 2026-08-22
 - Added new font in order to look like Svenska Spels own typography.
   - Along with some CSS-magic in order to make font further look-alike.
