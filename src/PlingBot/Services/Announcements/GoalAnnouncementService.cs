@@ -314,42 +314,20 @@ public class GoalAnnouncementService
 
     private static CouponEvent BuildGoalCouponEvent(GoalEventInfo goal)
     {
-        return new CouponEvent
-        {
-            Key = goal.Key,
-            Type = "Goal",
-            FixtureId = goal.Event.FixtureId,
-            Detail = goal.Event.Detail,
-            TeamId = goal.Event.TeamId,
-            Team = goal.TeamName,
-            Elapsed = goal.Event.Elapsed,
-            Extra = goal.Event.Extra,
-            Score = $"{goal.HomeGoals}-{goal.AwayGoals}",
-            Text = goal.Message,
-            PlayerId = goal.Event.PlayerId,
-            Player = goal.Player,
-            AssistId = goal.Event.AssistId,
-            Assist = goal.Event.Assist,
-            CreatedUtc = DateTime.UtcNow
-        };
+        return CouponEvent.Create(
+            "Goal", goal.Message,
+            key: goal.Key, fixtureId: goal.Event.FixtureId, detail: goal.Event.Detail, teamId: goal.Event.TeamId,
+            team: goal.TeamName, elapsed: goal.Event.Elapsed, extra: goal.Event.Extra, score: $"{goal.HomeGoals}-{goal.AwayGoals}",
+            playerId: goal.Event.PlayerId, player: goal.Player, assistId: goal.Event.AssistId, assist: goal.Event.Assist);
     }
 
     private static CouponEvent BuildScoreFallbackGoalEvent(TipsMatch tip, Match match, bool isHome, string message)
     {
-        return new CouponEvent
-        {
-            Key = AnnouncementEventKeys.BuildGoalKey(match.Id, match.HomeGoals + match.AwayGoals - 1),
-            Type = "Goal",
-            FixtureId = match.Id,
-            Detail = "Score Fallback",
-            TeamId = isHome ? match.HomeTeamId : match.AwayTeamId,
-            Team = isHome ? tip.HomeTeam : tip.AwayTeam,
-            Elapsed = match.Elapsed,
-            Extra = match.Extra,
-            Score = match.Score,
-            Text = message,
-            CreatedUtc = DateTime.UtcNow
-        };
+        return CouponEvent.Create(
+            "Goal", message,
+            key: AnnouncementEventKeys.BuildGoalKey(match.Id, match.HomeGoals + match.AwayGoals - 1),
+            fixtureId: match.Id, detail: "Score Fallback", teamId: isHome ? match.HomeTeamId : match.AwayTeamId,
+            team: isHome ? tip.HomeTeam : tip.AwayTeam, elapsed: match.Elapsed, extra: match.Extra, score: match.Score);
     }
 
     private static void RemoveScoreFallbackKeyForGoal(TipsMatch tip, GoalEventInfo goal)
@@ -424,22 +402,11 @@ public class GoalAnnouncementService
         string message = BuildVarMessage(tip, match, isHome, ev, player);
         string team = isHome ? tip.HomeTeam : tip.AwayTeam;
 
-        var sentMessage = await discord.AnnounceAsync(channel, message, ConsoleColor.Red, "Cancelled goal announced", couponEvent: new CouponEvent
-        {
-            Key = key,
-            Type = "CancelledGoal",
-            FixtureId = match.Id,
-            Detail = ev.Detail,
-            TeamId = ev.TeamId,
-            Team = team,
-            Elapsed = ev.Elapsed,
-            Extra = ev.Extra,
-            Score = match.Score,
-            Text = message,
-            PlayerId = ev.PlayerId,
-            Player = ev.Player,
-            CreatedUtc = DateTime.UtcNow
-        });
+        var sentMessage = await discord.AnnounceAsync(channel, message, ConsoleColor.Red, "Cancelled goal announced", couponEvent: CouponEvent.Create(
+            "CancelledGoal", message,
+            key: key, fixtureId: match.Id, detail: ev.Detail, teamId: ev.TeamId, team: team,
+            elapsed: ev.Elapsed, extra: ev.Extra, score: match.Score,
+            playerId: ev.PlayerId, player: ev.Player));
 
         if (player == null)
             discord.TrackGoalMessage(key, sentMessage);
@@ -465,22 +432,11 @@ public class GoalAnnouncementService
             ? oldText.Replace(marker, marker + playerPart)
             : oldText + playerPart;
 
-        var updatedEvent = new CouponEvent
-        {
-            Key = stored.Key,
-            Type = stored.Type,
-            FixtureId = stored.FixtureId,
-            Detail = ev.Detail,
-            TeamId = stored.TeamId,
-            Team = stored.Team,
-            Elapsed = stored.Elapsed,
-            Extra = stored.Extra,
-            Score = stored.Score,
-            Text = newText,
-            PlayerId = ev.PlayerId,
-            Player = ev.Player,
-            CreatedUtc = stored.CreatedUtc
-        };
+        var updatedEvent = CouponEvent.Create(
+            stored.Type, newText,
+            key: stored.Key, fixtureId: stored.FixtureId, detail: ev.Detail, teamId: stored.TeamId, team: stored.Team,
+            elapsed: stored.Elapsed, extra: stored.Extra, score: stored.Score,
+            playerId: ev.PlayerId, player: ev.Player, createdUtc: stored.CreatedUtc);
 
         bool dashboardUpdated = dashboardService.UpdateEventByKey(key, updatedEvent);
         bool discordUpdated = await discord.TryUpdateGoalMessageAsync(

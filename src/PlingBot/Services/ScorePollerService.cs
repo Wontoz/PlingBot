@@ -92,12 +92,11 @@ public class ScorePollerService
         var channel = GetChannel(client);
         if (channel != null)
         {
-            // Ta bort ev. gammalt dashboard-meddelande och posta ett nytt vid uppstart,
-            // precis som !refresh gör — annars blir det kvar högre upp i kanalen istället
-            // för att hamna längst ner igen.
+            // Posta bara om dashboarden vid uppstart om den inte redan är kanalens senaste
+            // meddelande — annars blir den kvar högre upp i kanalen istället för att hamna
+            // längst ner igen. Ligger den redan sist räcker det att redigera den på plats.
             string message = statusMessageService.Generate(tipsConfig.Data.MetaData.Player);
-            await dashboardService.DeletePreviousDashboardsAsync(channel);
-            await dashboardService.CreateOrUpdateAsync(channel, message);
+            await dashboardService.RepostIfNotLastAsync(channel, message);
         }
 
     }
@@ -167,20 +166,10 @@ public class ScorePollerService
                 string text = $"🩹 {statusText}: {injury.PlayerName}" +
                               (injury.Reason != null ? $" ({injury.Reason})" : "");
 
-                return new CouponEvent
-                {
-                    Key       = $"injury|{injury.FixtureId}|{injury.PlayerId}",
-                    Type      = "Injury",
-                    FixtureId = injury.FixtureId,
-                    Detail    = injury.PlayerType,
-                    TeamId    = injury.TeamId,
-                    Team      = teamName,
-                    PlayerId  = injury.PlayerId,
-                    Player    = injury.PlayerName,
-                    Comments  = injury.Reason,
-                    Text      = text,
-                    CreatedUtc = DateTime.UtcNow
-                };
+                return CouponEvent.Create(
+                    "Injury", text,
+                    key: $"injury|{injury.FixtureId}|{injury.PlayerId}", fixtureId: injury.FixtureId, detail: injury.PlayerType,
+                    teamId: injury.TeamId, team: teamName, playerId: injury.PlayerId, player: injury.PlayerName, comments: injury.Reason);
             }).ToList();
         }
 
@@ -196,9 +185,7 @@ public class ScorePollerService
             if (!tip.HomeTeamId.HasValue || !tip.AwayTeamId.HasValue)
                 continue;
 
-            // Hämta om igen om den saknas eller om cachad data är från innan lag-ID stöddes (alla ID:n är 0)
-            bool needsFetch = tip.H2H == null || tip.H2H.All(f => f.HomeTeamId == 0 && f.AwayTeamId == 0);
-            if (!needsFetch) continue;
+            if (tip.H2HChecked) continue;
 
             _logger.Log($"H2H #{tip.Number}: {tip.HomeTeam} vs {tip.AwayTeam}", ConsoleColor.DarkCyan);
             var fixtures = await _api.FetchHeadToHeadAsync(tip.HomeTeamId.Value, tip.AwayTeamId.Value);
@@ -214,6 +201,7 @@ public class ScorePollerService
             }
 
             tip.H2H = fixtures;
+            tip.H2HChecked = true;
             any = true;
         }
         if (any) tipsConfig.SaveToJson();

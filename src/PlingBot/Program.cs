@@ -53,7 +53,6 @@ class Program
 
         services.AddSingleton<Logger>();
         services.AddSingleton<TeamRepository>();
-        services.AddSingleton<ApiUsageTracker>();
         services.AddSingleton<FootballApiClient>();
         services.AddSingleton<DiscordAnnouncementService>();
         services.AddSingleton<GoalAnnouncementService>();

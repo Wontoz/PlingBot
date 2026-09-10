@@ -25,12 +25,7 @@ public class DiscordAnnouncementService
         TimeSpan? deleteDelay = null,
         CouponEvent? couponEvent = null)
     {
-        dashboardService.AddEvent(couponEvent ?? new CouponEvent
-        {
-            Type = "Message",
-            Text = message,
-            CreatedUtc = DateTime.UtcNow
-        });
+        dashboardService.AddEvent(couponEvent ?? CouponEvent.Create("Message", message));
 
         var sentMessage = await channel.SendMessageAsync(message);
         _logger.Log($"{logPrefix}: {message}", logColor);

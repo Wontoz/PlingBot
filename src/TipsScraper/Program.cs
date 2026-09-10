@@ -1,14 +1,15 @@
 using System;
 using System.Collections.Generic;
-using System.Globalization;
 using System.IO;
 using System.Text;
 using System.Text.Encodings.Web;
 using System.Text.Json;
 using System.Text.Json.Serialization;
-using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using Microsoft.Playwright;
+using PlingBot.Config;
+using PlingBot.Services;
+using PlingBot.Utils;
 
 class Program
 {
@@ -193,7 +194,7 @@ class Program
 
     private static async Task UpdatePayoutsOnlyAsync(GameType game, string[] args)
     {
-        string date = GetArgValue(args, "--date") ?? GetStockholmNow().ToString("yyyy-MM-dd");
+        string date = GetArgValue(args, "--date") ?? SwedishTime.Now().ToString("yyyy-MM-dd");
         string jsonDir = ResolvePlingBotJsonFolder(args);
         string fileName = $"{game.FilePrefix}_{date}.json";
         string filePath = Path.Combine(jsonDir, fileName);
@@ -237,7 +238,7 @@ class Program
             Console.WriteLine($"  {p.Correct} rätt — {p.Amount} ({p.Rows})");
     }
 
-    private static async Task<List<PayoutRowJson>> ScrapePayoutsAsync(GameType game, string date)
+    private static async Task<List<PayoutRow>> ScrapePayoutsAsync(GameType game, string date)
     {
         using var playwright = await Playwright.CreateAsync();
         await using var browser = await playwright.Chromium.LaunchAsync(new BrowserTypeLaunchOptions { Headless = true });
@@ -262,7 +263,7 @@ class Program
 
             return rows
                 .Where(r => r.Length == 3 && !string.IsNullOrEmpty(r[0]))
-                .Select(r => new PayoutRowJson { Correct = r[0], Amount = r[1], Rows = r[2] })
+                .Select(r => new PayoutRow { Correct = r[0], Amount = r[1], Rows = r[2] })
                 .ToList();
         }
         catch (Exception ex)
@@ -352,7 +353,7 @@ class Program
             return null;
 
         string closeText = await closeElement.InnerTextAsync();
-        return ParseSwedishStartTimeUtc(closeText, GetStockholmNow());
+        return SwedishTipsParsing.ParseSwedishStartTimeUtc(closeText, SwedishTime.Now());
     }
 
     private static async Task<List<CouponPercentages>> ScrapePercentageRowsAsync(IPage page)
@@ -382,32 +383,16 @@ class Program
 
             rows.Add(new CouponPercentages
             {
-                One = rawRow.Length > 0 ? ParsePercentage(rawRow[0]) : null,
-                X = rawRow.Length > 1 ? ParsePercentage(rawRow[1]) : null,
-                Two = rawRow.Length > 2 ? ParsePercentage(rawRow[2]) : null,
-                Odds1 = oddsRow.Length > 0 ? ParseOdds(oddsRow[0]) : null,
-                OddsX = oddsRow.Length > 1 ? ParseOdds(oddsRow[1]) : null,
-                Odds2 = oddsRow.Length > 2 ? ParseOdds(oddsRow[2]) : null
+                One = rawRow.Length > 0 ? SwedishTipsParsing.ParsePercentage(rawRow[0]) : null,
+                X = rawRow.Length > 1 ? SwedishTipsParsing.ParsePercentage(rawRow[1]) : null,
+                Two = rawRow.Length > 2 ? SwedishTipsParsing.ParsePercentage(rawRow[2]) : null,
+                Odds1 = oddsRow.Length > 0 ? SwedishTipsParsing.ParseOdds(oddsRow[0]) : null,
+                OddsX = oddsRow.Length > 1 ? SwedishTipsParsing.ParseOdds(oddsRow[1]) : null,
+                Odds2 = oddsRow.Length > 2 ? SwedishTipsParsing.ParseOdds(oddsRow[2]) : null
             });
         }
 
         return rows;
-    }
-
-    private static int? ParsePercentage(string value)
-    {
-        value = value.Trim().TrimEnd('%').Trim();
-        return int.TryParse(value, out int percentage) ? percentage : null;
-    }
-
-    private static decimal? ParseOdds(string value)
-    {
-        value = value.Trim();
-        if (decimal.TryParse(value, NumberStyles.Any, new CultureInfo("sv-SE"), out decimal odds))
-            return odds;
-        if (decimal.TryParse(value, NumberStyles.Any, CultureInfo.InvariantCulture, out decimal oddsEn))
-            return oddsEn;
-        return null;
     }
 
     private static DateTime GetCouponDate(DateTime? startTimeUtc)
@@ -415,113 +400,11 @@ class Program
         if (!startTimeUtc.HasValue)
             return DateTime.Today;
 
-        return TimeZoneInfo.ConvertTimeFromUtc(startTimeUtc.Value, GetStockholmTimeZone()).Date;
-    }
-
-    private static DateTime? ParseSwedishStartTimeUtc(string value, DateTime nowLocal)
-    {
-        var match = Regex.Match(
-            value,
-            @"(?:(?<day>idag|i dag|imorgon|i morgon|måndag|tisdag|onsdag|torsdag|fredag|lördag|söndag|\d{4}-\d{2}-\d{2}|\d{1,2}/\d{1,2})\s+)?(?<time>\d{1,2}:\d{2})",
-            RegexOptions.IgnoreCase | RegexOptions.CultureInvariant);
-
-        if (!match.Success)
-            return null;
-
-        if (!TimeOnly.TryParseExact(match.Groups["time"].Value, "H:mm", CultureInfo.InvariantCulture, DateTimeStyles.None, out var time))
-            return null;
-
-        string rawDay = match.Groups["day"].Value;
-        DateOnly date = ResolveSwedishDate(rawDay, nowLocal);
-        var localStart = date.ToDateTime(time, DateTimeKind.Unspecified);
-
-        if (IsSwedishWeekday(rawDay) && localStart <= nowLocal)
-            localStart = localStart.AddDays(7);
-
-        return TimeZoneInfo.ConvertTimeToUtc(localStart, GetStockholmTimeZone());
-    }
-
-    private static DateOnly ResolveSwedishDate(string rawDay, DateTime nowLocal)
-    {
-        if (string.IsNullOrWhiteSpace(rawDay))
-            return DateOnly.FromDateTime(nowLocal);
-
-        string day = rawDay.Trim().ToLower(new CultureInfo("sv-SE"));
-
-        if (day is "idag" or "i dag")
-            return DateOnly.FromDateTime(nowLocal);
-
-        if (day is "imorgon" or "i morgon")
-            return DateOnly.FromDateTime(nowLocal.AddDays(1));
-
-        if (DateTime.TryParseExact(day, "yyyy-MM-dd", CultureInfo.InvariantCulture, DateTimeStyles.None, out var exactDate))
-            return DateOnly.FromDateTime(exactDate);
-
-        if (DateTime.TryParseExact(day, "d/M", CultureInfo.InvariantCulture, DateTimeStyles.None, out var shortDate))
-            return new DateOnly(nowLocal.Year, shortDate.Month, shortDate.Day);
-
-        DayOfWeek? weekday = ParseSwedishWeekday(day);
-        if (!weekday.HasValue)
-            return DateOnly.FromDateTime(nowLocal);
-
-        int daysForward = ((int)weekday.Value - (int)nowLocal.DayOfWeek + 7) % 7;
-        return DateOnly.FromDateTime(nowLocal.AddDays(daysForward));
-    }
-
-    private static DayOfWeek? ParseSwedishWeekday(string value)
-    {
-        return value switch
-        {
-            "måndag" => DayOfWeek.Monday,
-            "tisdag" => DayOfWeek.Tuesday,
-            "onsdag" => DayOfWeek.Wednesday,
-            "torsdag" => DayOfWeek.Thursday,
-            "fredag" => DayOfWeek.Friday,
-            "lördag" => DayOfWeek.Saturday,
-            "söndag" => DayOfWeek.Sunday,
-            _ => null
-        };
-    }
-
-    private static bool IsSwedishWeekday(string value)
-    {
-        if (string.IsNullOrWhiteSpace(value))
-            return false;
-
-        string day = value.Trim().ToLower(new CultureInfo("sv-SE"));
-        return ParseSwedishWeekday(day).HasValue;
-    }
-
-    private static TimeZoneInfo GetStockholmTimeZone()
-    {
-        try
-        {
-            return TimeZoneInfo.FindSystemTimeZoneById("Europe/Stockholm");
-        }
-        catch (TimeZoneNotFoundException)
-        {
-            return TimeZoneInfo.FindSystemTimeZoneById("W. Europe Standard Time");
-        }
-    }
-
-    private static DateTime GetStockholmNow()
-    {
-        return TimeZoneInfo.ConvertTimeFromUtc(DateTime.UtcNow, GetStockholmTimeZone());
+        return SwedishTime.ToLocal(startTimeUtc.Value).Date;
     }
 }
 
 public sealed record CouponScrapeResult(List<TipsMatchJson> Tips, DateTime? StartTime);
-
-public class CouponPercentages
-{
-    public int? One { get; set; }
-    public int? X { get; set; }
-    public int? Two { get; set; }
-    public decimal? Odds1 { get; set; }
-    public decimal? OddsX { get; set; }
-    public decimal? Odds2 { get; set; }
-    public bool HasAllValues => One.HasValue && X.HasValue && Two.HasValue;
-}
 
 public sealed class GameType
 {
@@ -557,24 +440,6 @@ public class StryktipsetJson
     public MetaData MetaData { get; set; } = new MetaData();
     public List<TipsMatchJson> TipsData { get; set; } = new List<TipsMatchJson>();
     public List<CouponEventJson> Events { get; set; } = new List<CouponEventJson>();
-}
-
-public class MetaData
-{
-    public string Player { get; set; } = "";
-    public string Date { get; set; } = "";
-    public int TotalCorrect { get; set; }
-    public string Game { get; set; } = "";
-    public DateTime? StartTime { get; set; }
-    public DateTime? DataLastUpdatedUtc { get; set; }
-    public List<PayoutRowJson> Payouts { get; set; } = new();
-}
-
-public class PayoutRowJson
-{
-    public string Correct { get; set; } = "";
-    public string Amount { get; set; } = "";
-    public string Rows { get; set; } = "";
 }
 
 public class TipsMatchJson

@@ -22,6 +22,42 @@ public class CouponEvent
     public string? Assist { get; set; }
     public string? Comments { get; set; }
     public DateTime CreatedUtc { get; set; } = DateTime.UtcNow;
+
+    public static CouponEvent Create(
+        string type,
+        string text,
+        string key = "",
+        int fixtureId = 0,
+        string? detail = null,
+        int? teamId = null,
+        string team = "",
+        int elapsed = 0,
+        int extra = 0,
+        string score = "",
+        int? playerId = null,
+        string? player = null,
+        int? assistId = null,
+        string? assist = null,
+        string? comments = null,
+        DateTime? createdUtc = null) => new CouponEvent
+        {
+            Key = key,
+            Type = type,
+            FixtureId = fixtureId,
+            Detail = detail,
+            TeamId = teamId,
+            Team = team,
+            Elapsed = elapsed,
+            Extra = extra,
+            Score = score,
+            Text = text,
+            PlayerId = playerId,
+            Player = player,
+            AssistId = assistId,
+            Assist = assist,
+            Comments = comments,
+            CreatedUtc = createdUtc ?? DateTime.UtcNow
+        };
 }
 
 public class CouponEventJsonConverter : JsonConverter<CouponEvent>

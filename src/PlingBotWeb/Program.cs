@@ -21,7 +21,7 @@ app.UseStaticFiles(new StaticFileOptions
     }
 });
 
-app.MapGet("/api/coupon", () =>
+app.MapGet("/api/coupon", async () =>
 {
     var jsonDir = ResolveJsonDirectory();
     var path = FindLatestCouponJson(jsonDir);
@@ -29,10 +29,10 @@ app.MapGet("/api/coupon", () =>
     if (path == null)
         return Results.NotFound("Ingen kupong hittad.");
 
-    return Results.Content(File.ReadAllText(path), "application/json");
+    return Results.Content(await File.ReadAllTextAsync(path), "application/json");
 });
 
-app.MapGet("/api/admin/coupon", (HttpContext ctx) =>
+app.MapGet("/api/admin/coupon", async (HttpContext ctx) =>
 {
     if (!IsAuthorized(ctx, adminPassword))
         return Results.Unauthorized();
@@ -43,7 +43,7 @@ app.MapGet("/api/admin/coupon", (HttpContext ctx) =>
     if (path == null)
         return Results.NotFound("Ingen kupong hittad.");
 
-    return Results.Content(File.ReadAllText(path), "application/json");
+    return Results.Content(await File.ReadAllTextAsync(path), "application/json");
 });
 
 app.MapPost("/api/admin/save", async (HttpContext ctx) =>

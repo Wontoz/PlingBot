@@ -29,7 +29,6 @@ public class FootballApiClient
 {
     private readonly HttpClient http;
     private readonly Logger _logger;
-    private readonly ApiUsageTracker usageTracker;
     private readonly SemaphoreSlim rateLimitGate = new(1, 1);
     private readonly TimeSpan minCallInterval;
     private DateTime lastCallUtc = DateTime.MinValue;
@@ -59,10 +58,9 @@ public class FootballApiClient
         ["LIVE"] = ("In Play", "Fixture in progress, elapsed time not available")
     };
 
-    public FootballApiClient(Logger logger, ApiUsageTracker usageTracker)
+    public FootballApiClient(Logger logger)
     {
         _logger = logger;
-        this.usageTracker = usageTracker;
 
         int minIntervalMs = int.TryParse(Environment.GetEnvironmentVariable("API_MIN_CALL_INTERVAL_MS"), out var ms)
             ? ms
@@ -86,7 +84,7 @@ public class FootballApiClient
     public async Task<List<Match>> FetchMatchesByDateAsync(DateTime date)
     {
         string dateString = date.ToString("yyyy-MM-dd");
-        string json = await GetApiJsonAsync($"fixtures?date={dateString}", "fixtures/date");
+        string json = await GetApiJsonAsync($"fixtures?date={dateString}");
         using var doc = JsonDocument.Parse(json);
 
         if (TryLogApiErrors(doc.RootElement, $"fixtures date={dateString}"))
@@ -100,7 +98,7 @@ public class FootballApiClient
 
     public async Task<Match?> FetchFixtureByIdAsync(int fixtureId)
     {
-        string json = await GetApiJsonAsync($"fixtures?id={fixtureId}", "fixtures/id");
+        string json = await GetApiJsonAsync($"fixtures?id={fixtureId}");
         using var doc = JsonDocument.Parse(json);
 
         if (TryLogApiErrors(doc.RootElement, $"fixtures id={fixtureId}"))
@@ -122,7 +120,7 @@ public class FootballApiClient
             return [];
 
         string idsParam = string.Join("-", ids);
-        string json = await GetApiJsonAsync($"fixtures?ids={idsParam}", "fixtures/batch");
+        string json = await GetApiJsonAsync($"fixtures?ids={idsParam}");
         using var doc = JsonDocument.Parse(json);
 
         if (TryLogApiErrors(doc.RootElement, "fixtures/batch"))
@@ -333,7 +331,7 @@ public class FootballApiClient
 
     public async Task<List<H2HFixture>> FetchHeadToHeadAsync(int homeTeamId, int awayTeamId)
     {
-        string json = await GetApiJsonAsync($"fixtures/headtohead?h2h={homeTeamId}-{awayTeamId}&last=5", "fixtures/h2h");
+        string json = await GetApiJsonAsync($"fixtures/headtohead?h2h={homeTeamId}-{awayTeamId}&last=5");
         using var doc = JsonDocument.Parse(json);
 
         if (TryLogApiErrors(doc.RootElement, $"fixtures/h2h {homeTeamId}-{awayTeamId}"))
@@ -393,7 +391,7 @@ public class FootballApiClient
         if (fixtureIds.Count == 0) return [];
 
         string idsParam = string.Join("-", fixtureIds);
-        string json = await GetApiJsonAsync($"injuries?ids={idsParam}", "injuries/batch");
+        string json = await GetApiJsonAsync($"injuries?ids={idsParam}");
         using var doc = JsonDocument.Parse(json);
 
         if (TryLogApiErrors(doc.RootElement, "injuries/batch"))
@@ -430,7 +428,7 @@ public class FootballApiClient
     {
         try
         {
-            string json = await GetApiJsonAsync("status", "status");
+            string json = await GetApiJsonAsync("status");
             using var doc = JsonDocument.Parse(json);
 
             if (TryLogApiErrors(doc.RootElement, "status"))
@@ -555,11 +553,10 @@ public class FootballApiClient
         return null;
     }
 
-    private async Task<string> GetApiJsonAsync(string url, string endpoint)
+    private async Task<string> GetApiJsonAsync(string url)
     {
         await ThrottleAsync();
 
-        usageTracker.Record(endpoint);
         using var response = await http.GetAsync(url);
         response.EnsureSuccessStatusCode();
 

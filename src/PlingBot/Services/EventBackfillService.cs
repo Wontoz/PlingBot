@@ -140,24 +140,12 @@ public class EventBackfillService
                 string detail = isOwnGoal ? " (Självmål)" : isPenalty ? " (Straff)" : "";
                 string player = !string.IsNullOrWhiteSpace(e.Player) ? $" - {e.Player}{detail}" : detail;
 
-                couponEvent = new CouponEvent
-                {
-                    Key        = $"{e.FixtureId}-Goal-{e.Elapsed}-{e.Extra}-{e.PlayerId}",
-                    Type       = "Goal",
-                    FixtureId  = e.FixtureId,
-                    Detail     = e.Detail,
-                    TeamId     = e.TeamId,
-                    Team       = scorerIsHome ? tip.HomeTeam : tip.AwayTeam,
-                    Elapsed    = e.Elapsed,
-                    Extra      = e.Extra,
-                    Score      = $"{home}-{away}",
-                    Text       = $"⚽ {symbol} Mål! {tip.HomeTeam} {score} {tip.AwayTeam} {minute}{player}",
-                    PlayerId   = e.PlayerId,
-                    Player     = e.Player,
-                    AssistId   = e.AssistId,
-                    Assist     = e.Assist,
-                    CreatedUtc = approxTime
-                };
+                couponEvent = CouponEvent.Create(
+                    "Goal", $"⚽ {symbol} Mål! {tip.HomeTeam} {score} {tip.AwayTeam} {minute}{player}",
+                    key: $"{e.FixtureId}-Goal-{e.Elapsed}-{e.Extra}-{e.PlayerId}", fixtureId: e.FixtureId, detail: e.Detail,
+                    teamId: e.TeamId, team: scorerIsHome ? tip.HomeTeam : tip.AwayTeam, elapsed: e.Elapsed, extra: e.Extra,
+                    score: $"{home}-{away}", playerId: e.PlayerId, player: e.Player, assistId: e.AssistId, assist: e.Assist,
+                    createdUtc: approxTime);
             }
             else if (e.Type == "Card")
             {
@@ -170,23 +158,11 @@ public class EventBackfillService
                 string cardEmoji = isYellow ? "🟨" : "🟥";
                 string cardLabel = isYellow ? "Gult kort!" : "Rött kort!";
 
-                couponEvent = new CouponEvent
-                {
-                    Key        = $"{e.FixtureId}-Card-{e.Elapsed}-{e.Extra}-{e.PlayerId}",
-                    Type       = "Card",
-                    FixtureId  = e.FixtureId,
-                    Detail     = e.Detail,
-                    TeamId     = e.TeamId,
-                    Team       = team,
-                    Elapsed    = e.Elapsed,
-                    Extra      = e.Extra,
-                    Score      = "",
-                    Text       = $"{cardEmoji} {symbol} {cardLabel} {team}{player} {minute}",
-                    PlayerId   = e.PlayerId,
-                    Player     = e.Player,
-                    Comments   = e.Comments,
-                    CreatedUtc = approxTime
-                };
+                couponEvent = CouponEvent.Create(
+                    "Card", $"{cardEmoji} {symbol} {cardLabel} {team}{player} {minute}",
+                    key: $"{e.FixtureId}-Card-{e.Elapsed}-{e.Extra}-{e.PlayerId}", fixtureId: e.FixtureId, detail: e.Detail,
+                    teamId: e.TeamId, team: team, elapsed: e.Elapsed, extra: e.Extra,
+                    playerId: e.PlayerId, player: e.Player, comments: e.Comments, createdUtc: approxTime);
             }
             else if (string.Equals(e.Type, "subst", StringComparison.OrdinalIgnoreCase))
             {
@@ -195,24 +171,11 @@ public class EventBackfillService
                 string playerOut = e.Player ?? "?";
                 string playerIn  = e.Assist ?? "?";
 
-                couponEvent = new CouponEvent
-                {
-                    Key        = $"{e.FixtureId}-Subst-{e.Elapsed}-{e.Extra}-{e.PlayerId}",
-                    Type       = "Substitution",
-                    FixtureId  = e.FixtureId,
-                    Detail     = e.Detail,
-                    TeamId     = e.TeamId,
-                    Team       = team,
-                    Elapsed    = e.Elapsed,
-                    Extra      = e.Extra,
-                    Score      = $"{home}-{away}",
-                    Text       = $"🔄 Byte: {team} · UT {playerOut} IN {playerIn} {minute}",
-                    PlayerId   = e.PlayerId,
-                    Player     = e.Player,
-                    AssistId   = e.AssistId,
-                    Assist     = e.Assist,
-                    CreatedUtc = approxTime
-                };
+                couponEvent = CouponEvent.Create(
+                    "Substitution", $"🔄 Byte: {team} · UT {playerOut} IN {playerIn} {minute}",
+                    key: $"{e.FixtureId}-Subst-{e.Elapsed}-{e.Extra}-{e.PlayerId}", fixtureId: e.FixtureId, detail: e.Detail,
+                    teamId: e.TeamId, team: team, elapsed: e.Elapsed, extra: e.Extra, score: $"{home}-{away}",
+                    playerId: e.PlayerId, player: e.Player, assistId: e.AssistId, assist: e.Assist, createdUtc: approxTime);
             }
             else if (e.Type == "Var")
             {
@@ -223,23 +186,11 @@ public class EventBackfillService
                 string score  = Helpers.FormatScore(home, away, isHome);
                 string player = !string.IsNullOrWhiteSpace(e.Player) ? $" - {e.Player}" : "";
 
-                couponEvent = new CouponEvent
-                {
-                    Key        = $"{e.FixtureId}-Var-{e.Elapsed}-{e.Extra}-{e.PlayerId}",
-                    Type       = "CancelledGoal",
-                    FixtureId  = e.FixtureId,
-                    Detail     = e.Detail,
-                    TeamId     = e.TeamId,
-                    Team       = team,
-                    Elapsed    = e.Elapsed,
-                    Extra      = e.Extra,
-                    Score      = $"{home}-{away}",
-                    Text       = $"⚠️ {symbol} Mål bortdömt! {tip.HomeTeam} {score} {tip.AwayTeam} {minute}{player}",
-                    PlayerId   = e.PlayerId,
-                    Player     = e.Player,
-                    Comments   = e.Comments,
-                    CreatedUtc = approxTime
-                };
+                couponEvent = CouponEvent.Create(
+                    "CancelledGoal", $"⚠️ {symbol} Mål bortdömt! {tip.HomeTeam} {score} {tip.AwayTeam} {minute}{player}",
+                    key: $"{e.FixtureId}-Var-{e.Elapsed}-{e.Extra}-{e.PlayerId}", fixtureId: e.FixtureId, detail: e.Detail,
+                    teamId: e.TeamId, team: team, elapsed: e.Elapsed, extra: e.Extra, score: $"{home}-{away}",
+                    playerId: e.PlayerId, player: e.Player, comments: e.Comments, createdUtc: approxTime);
             }
 
             if (couponEvent != null)

@@ -134,6 +134,13 @@ const fixtureIds = {};
 
 function getPassword() { return sessionStorage.getItem('admin_pwd') || ''; }
 
+function fetchCoupon(pwd) {
+  return fetch('/api/admin/coupon', {
+    cache: 'no-store',
+    headers: { 'X-Admin-Password': pwd }
+  });
+}
+
 async function doLogin() {
   const input = document.getElementById('pwd-input');
   const pwd = input.value.trim();
@@ -143,10 +150,7 @@ async function doLogin() {
   msg.className = 'msg';
 
   try {
-    const res = await fetch('/api/admin/coupon', {
-      cache: 'no-store',
-      headers: { 'X-Admin-Password': pwd }
-    });
+    const res = await fetchCoupon(pwd);
     if (res.status === 401) { showMsg(msg, 'Fel lösenord', 'err'); return; }
     if (!res.ok)            { showMsg(msg, 'Serverfel ' + res.status, 'err'); return; }
     sessionStorage.setItem('admin_pwd', pwd);
@@ -160,10 +164,7 @@ async function tryAutoLogin() {
   const pwd = getPassword();
   if (!pwd) return;
   try {
-    const res = await fetch('/api/admin/coupon', {
-      cache: 'no-store',
-      headers: { 'X-Admin-Password': pwd }
-    });
+    const res = await fetchCoupon(pwd);
     if (!res.ok) { sessionStorage.removeItem('admin_pwd'); return; }
     showAdmin(await res.json());
   } catch {}

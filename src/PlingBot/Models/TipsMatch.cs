@@ -43,6 +43,7 @@ public record class TipsMatch
     public bool BackfillComplete { get; set; }
 
     public List<H2HFixture>? H2H { get; set; }
+    public bool H2HChecked { get; set; }
 
     [JsonIgnore]
     public Match? Match { get; set; }

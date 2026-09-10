@@ -1,3 +1,7 @@
+## [3.2] - 2026-09-10
+- Refactored alot of code in order to reduce loc and simplify the application
+- Discord dashboard now only re-renders when it's not at the bottom of the active channel.
+
 ## [3.1.8] - 2026-08-22
 - Web app now uses DOM morphing instead of full re-renders on each poll
 

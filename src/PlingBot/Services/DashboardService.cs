@@ -95,12 +95,38 @@ public class DashboardService
     public async Task DeletePreviousDashboardsAsync(IMessageChannel channel)
     {
         var messages = await channel.GetMessagesAsync(50).FlattenAsync();
+        await DeleteDashboardMessagesAsync(messages);
+    }
 
-        var dashboards = messages
-            .Where(message =>
-                message.Author.IsBot &&
-                message.Content.StartsWith("```"))
-            .Take(3);
+    // Körs vid bot-uppstart/omstart. Om dashboarden redan är kanalens senaste meddelande
+    // finns ingen anledning att posta om den - då räcker det att redigera den på plats
+    // (eller låta den vara om innehållet redan stämmer). Bara om något annat meddelande
+    // (t.ex. en måltrigger) hamnat efter den behöver den tas bort och läggas längst ner igen.
+    public async Task RepostIfNotLastAsync(IMessageChannel channel, string? extraMessage = null)
+    {
+        var messages = (await channel.GetMessagesAsync(50).FlattenAsync()).ToList();
+        var lastMessage = messages.FirstOrDefault();
+        var existingDashboard = messages.FirstOrDefault(IsDashboardMessage);
+
+        if (existingDashboard != null && lastMessage != null && existingDashboard.Id == lastMessage.Id)
+        {
+            channelId = channel.Id;
+            messageId = existingDashboard.Id;
+            lastContent = existingDashboard.Content;
+            await CreateOrUpdateAsync(channel, extraMessage);
+            return;
+        }
+
+        await DeleteDashboardMessagesAsync(messages);
+        await CreateOrUpdateAsync(channel, extraMessage);
+    }
+
+    private static bool IsDashboardMessage(IMessage message) =>
+        message.Author.IsBot && message.Content.StartsWith("```");
+
+    private async Task DeleteDashboardMessagesAsync(IEnumerable<IMessage> messages)
+    {
+        var dashboards = messages.Where(IsDashboardMessage).Take(3);
 
         foreach (var dashboard in dashboards)
         {

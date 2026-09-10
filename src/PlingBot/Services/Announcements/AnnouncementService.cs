@@ -205,42 +205,17 @@ public class AnnouncementService
 
         if (string.Equals(ev.Type, "subst", StringComparison.OrdinalIgnoreCase))
         {
-            return new CouponEvent
-            {
-                Key = key,
-                Type = "Substitution",
-                FixtureId = match.Id,
-                Detail = ev.Detail,
-                TeamId = ev.TeamId,
-                Team = team,
-                Elapsed = ev.Elapsed,
-                Extra = ev.Extra,
-                Score = match.Score,
-                Text = $"🔄 Byte: {team} · UT {ev.Player ?? "?"} IN {ev.Assist ?? "?"} {minute}",
-                PlayerId = ev.PlayerId,
-                Player = ev.Player,
-                AssistId = ev.AssistId,
-                Assist = ev.Assist,
-                CreatedUtc = DateTime.UtcNow
-            };
+            return CouponEvent.Create(
+                "Substitution", $"🔄 Byte: {team} · UT {ev.Player ?? "?"} IN {ev.Assist ?? "?"} {minute}",
+                key: key, fixtureId: match.Id, detail: ev.Detail, teamId: ev.TeamId, team: team,
+                elapsed: ev.Elapsed, extra: ev.Extra, score: match.Score,
+                playerId: ev.PlayerId, player: ev.Player, assistId: ev.AssistId, assist: ev.Assist);
         }
 
-        return new CouponEvent
-        {
-            Key = key,
-            Type = "Card",
-            FixtureId = match.Id,
-            Detail = "Yellow Card",
-            TeamId = ev.TeamId,
-            Team = team,
-            Elapsed = ev.Elapsed,
-            Extra = ev.Extra,
-            Score = match.Score,
-            Text = $"🟨 Gult kort! {team} - {ev.Player ?? "Okänd spelare"} {minute}",
-            PlayerId = ev.PlayerId,
-            Player = ev.Player,
-            Comments = ev.Comments,
-            CreatedUtc = DateTime.UtcNow
-        };
+        return CouponEvent.Create(
+            "Card", $"🟨 Gult kort! {team} - {ev.Player ?? "Okänd spelare"} {minute}",
+            key: key, fixtureId: match.Id, detail: "Yellow Card", teamId: ev.TeamId, team: team,
+            elapsed: ev.Elapsed, extra: ev.Extra, score: match.Score,
+            playerId: ev.PlayerId, player: ev.Player, comments: ev.Comments);
     }
 }

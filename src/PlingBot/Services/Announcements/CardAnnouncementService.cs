@@ -52,23 +52,11 @@ public class CardAnnouncementService
         string player = string.IsNullOrEmpty(evt?.Player) ? "Okänd spelare" : evt.Player;
         string message = $"🟥 {symbol} Rött kort! {team} - {player} {(evt != null ? Helpers.GetMinute(evt) : Helpers.GetMinute(match))}";
 
-        await discord.AnnounceAsync(channel, message, ConsoleColor.DarkRed, "Red card announced", couponEvent: new CouponEvent
-        {
-            Key = key,
-            Type = "Card",
-            FixtureId = match.Id,
-            Detail = evt?.Detail,
-            TeamId = evt?.TeamId,
-            Team = team,
-            Elapsed = evt?.Elapsed ?? match.Elapsed,
-            Extra = evt?.Extra ?? match.Extra,
-            Score = match.Score,
-            Text = message,
-            PlayerId = evt?.PlayerId,
-            Player = evt?.Player,
-            Comments = evt?.Comments,
-            CreatedUtc = DateTime.UtcNow
-        });
+        await discord.AnnounceAsync(channel, message, ConsoleColor.DarkRed, "Red card announced", couponEvent: CouponEvent.Create(
+            "Card", message,
+            key: key, fixtureId: match.Id, detail: evt?.Detail, teamId: evt?.TeamId, team: team,
+            elapsed: evt?.Elapsed ?? match.Elapsed, extra: evt?.Extra ?? match.Extra, score: match.Score,
+            playerId: evt?.PlayerId, player: evt?.Player, comments: evt?.Comments));
     }
 
     private static bool IsRedCardEvent(MatchEvent ev)
