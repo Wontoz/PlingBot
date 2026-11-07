@@ -20,6 +20,11 @@
     "Id": 27669
   },
   {
+    "Name": "Aguilas",
+    "ApiName": "Águilas Doradas",
+    "Id": 1144
+  },
+  {
     "Name": "AIK",
     "ApiName": "AIK Stockholm",
     "Id": 377
@@ -28,6 +33,11 @@
     "Name": "Akranes",
     "ApiName": "IA Akranes",
     "Id": 827
+  },
+  {
+    "Name": "Alavés",
+    "ApiName": "Alaves",
+    "Id": 542
   },
   {
     "Name": "Albanien",
@@ -48,6 +58,11 @@
     "Name": "Aluminij Kidricevo",
     "ApiName": "Aluminij",
     "Id": 4358
+  },
+  {
+    "Name": "América De Cali",
+    "ApiName": "America de Cali",
+    "Id": 1138
   },
   {
     "Name": "Anderlecht",
@@ -73,6 +88,11 @@
     "Name": "Aston Villa",
     "ApiName": "Aston Villa",
     "Id": 66
+  },
+  {
+    "Name": "Atalanta",
+    "ApiName": "Atalanta",
+    "Id": 499
   },
   {
     "Name": "Atert Bissen",
@@ -113,6 +133,11 @@
     "Name": "Basel",
     "ApiName": "FC Basel 1893",
     "Id": 551
+  },
+  {
+    "Name": "Bayer Leverkusen",
+    "ApiName": "Bayer Leverkusen",
+    "Id": 168
   },
   {
     "Name": "Belgien",
@@ -201,8 +226,8 @@
   },
   {
     "Name": "Brighton",
-    "ApiName": "Brighton",
-    "Id": 51
+    "ApiName": "Everton",
+    "Id": 45
   },
   {
     "Name": "Bristol City",
@@ -275,6 +300,11 @@
     "Id": 49
   },
   {
+    "Name": "Cheltenham",
+    "ApiName": "Cheltenham",
+    "Id": 1372
+  },
+  {
     "Name": "Chesterfield",
     "ApiName": "Chesterfield",
     "Id": 1345
@@ -288,6 +318,11 @@
     "Name": "Club Brügge",
     "ApiName": "Club Brugge KV",
     "Id": 569
+  },
+  {
+    "Name": "Colchester",
+    "ApiName": "Colchester",
+    "Id": 1361
   },
   {
     "Name": "Colombia",
@@ -318,6 +353,11 @@
     "Name": "Cremonese",
     "ApiName": "Cremonese",
     "Id": 520
+  },
+  {
+    "Name": "Crewe",
+    "ApiName": "Crewe",
+    "Id": 1363
   },
   {
     "Name": "Criciúma",
@@ -490,6 +530,11 @@
     "Id": 2075
   },
   {
+    "Name": "Fiorentina",
+    "ApiName": "Fiorentina",
+    "Id": 502
+  },
+  {
     "Name": "FK Borac Banja Luka",
     "ApiName": "Borac Banja Luka",
     "Id": 3364
@@ -558,6 +603,11 @@
     "Name": "Fredrikstad FK",
     "ApiName": "Fredrikstad",
     "Id": 2149
+  },
+  {
+    "Name": "Freiburg",
+    "ApiName": "SC Freiburg",
+    "Id": 160
   },
   {
     "Name": "Fulham",
@@ -965,6 +1015,11 @@
     "Id": 667
   },
   {
+    "Name": "Linecoln",
+    "ApiName": "Lincoln",
+    "Id": 1379
+  },
+  {
     "Name": "Liverpool",
     "ApiName": "Liverpool",
     "Id": 40
@@ -1058,6 +1113,11 @@
     "Name": "Midtjylland",
     "ApiName": "FC Midtjylland",
     "Id": 397
+  },
+  {
+    "Name": "Milan",
+    "ApiName": "AC Milan",
+    "Id": 489
   },
   {
     "Name": "Millwall",
@@ -1210,6 +1270,11 @@
     "Id": 134
   },
   {
+    "Name": "Paris FC",
+    "ApiName": "Paris FC",
+    "Id": 114
+  },
+  {
     "Name": "Paris Saint-Germain",
     "ApiName": "Paris Saint Germain",
     "Id": 85
@@ -1300,6 +1365,11 @@
     "Id": 543
   },
   {
+    "Name": "Real Salt Lake",
+    "ApiName": "Real Salt Lake",
+    "Id": 1606
+  },
+  {
     "Name": "Real Sociedad",
     "ApiName": "Real Sociedad",
     "Id": 548
@@ -1315,6 +1385,11 @@
     "Id": 22855
   },
   {
+    "Name": "Rochdale",
+    "ApiName": "Rochdale",
+    "Id": 1339
+  },
+  {
     "Name": "Roma",
     "ApiName": "AS Roma",
     "Id": 497
@@ -1328,6 +1403,11 @@
     "Name": "Rosengård",
     "ApiName": "Rosengård",
     "Id": 6694
+  },
+  {
+    "Name": "Rotherham",
+    "ApiName": "Rotherham",
+    "Id": 73
   },
   {
     "Name": "Royale Union SG",
@@ -1385,6 +1465,11 @@
     "Id": 15
   },
   {
+    "Name": "Seattle Sounders",
+    "ApiName": "Seattle Sounders",
+    "Id": 1595
+  },
+  {
     "Name": "Senegal",
     "ApiName": "Senegal",
     "Id": 13
@@ -1428,6 +1513,11 @@
     "Name": "Shelbourne",
     "ApiName": "Shelbourne",
     "Id": 3854
+  },
+  {
+    "Name": "Shrewsbury",
+    "ApiName": "Shrewsbury",
+    "Id": 1352
   },
   {
     "Name": "Silkeborg",
@@ -1498,6 +1588,11 @@
     "Name": "St. Patricks",
     "ApiName": "St Patrick's Athl.",
     "Id": 3843
+  },
+  {
+    "Name": "St. Pölten",
+    "ApiName": "St. Pölten W",
+    "Id": 10227
   },
   {
     "Name": "St. Truidense",
@@ -1738,6 +1833,11 @@
     "Name": "Wales",
     "ApiName": "Wales",
     "Id": 767
+  },
+  {
+    "Name": "Walsall",
+    "ApiName": "Walsall",
+    "Id": 1342
   },
   {
     "Name": "Waterford",

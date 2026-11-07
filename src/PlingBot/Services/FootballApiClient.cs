@@ -35,6 +35,15 @@ public class FootballApiClient
     private int? perMinuteLimit;
     private int? dailyLimit;
     private int? dailyRemaining;
+
+    // Avgör om boten pollar/hämtar H2H/skador (paid) eller sparar in på anrop (free).
+    // Sätts av FetchAndApplyAccountStatusAsync från kontots faktiska plan, om inte
+    // FOOTBALL_API_TIER tvingar ett specifikt läge.
+    public bool IsFreeTier { get; private set; }
+
+    // Uppdateras löpande via UpdateRateLimitState (varje anropssvar), inte bara vid
+    // startup-statuskollen — så free-tier-pollningen kan räkna med aktuell kvot.
+    public int? DailyRemaining => dailyRemaining;
     private static readonly Dictionary<string, (string Type, string Description)> StatusMetadata = new(StringComparer.OrdinalIgnoreCase)
     {
         ["TBD"] = ("Scheduled", "Scheduled but date and time are not known"),
@@ -434,22 +443,44 @@ public class FootballApiClient
             if (TryLogApiErrors(doc.RootElement, "status"))
                 return;
 
-            var requests = doc.RootElement.GetProperty("response").GetProperty("requests");
+            var response = doc.RootElement.GetProperty("response");
+            var requests = response.GetProperty("requests");
             int current = GetInt(requests.GetProperty("current"));
             int limitDay = GetInt(requests.GetProperty("limit_day"));
 
             dailyLimit = limitDay;
             dailyRemaining = limitDay - current;
+            ApplyTier(response);
 
             _logger.Log(
                 $"API status: {current}/{limitDay} requests used today" +
-                (perMinuteLimit.HasValue ? $", {perMinuteLimit}/min limit" : ""),
+                (perMinuteLimit.HasValue ? $", {perMinuteLimit}/min limit" : "") +
+                $", tier={(IsFreeTier ? "Free" : "Paid")}",
                 ConsoleColor.DarkCyan);
         }
         catch (Exception ex)
         {
             _logger.Log($"Could not fetch API status: {ex.Message}", ConsoleColor.DarkYellow);
         }
+    }
+
+    // FOOTBALL_API_TIER låter William tvinga fram ett läge (t.ex. för att testa
+    // free-tier-beteendet på ett betalkonto) — annars avgörs det av kontots faktiska plan.
+    private void ApplyTier(JsonElement response)
+    {
+        string? tierOverride = Environment.GetEnvironmentVariable("FOOTBALL_API_TIER");
+        if (!string.IsNullOrWhiteSpace(tierOverride))
+        {
+            IsFreeTier = string.Equals(tierOverride, "Free", StringComparison.OrdinalIgnoreCase);
+            return;
+        }
+
+        string? plan = response.TryGetProperty("subscription", out var sub) &&
+                       sub.TryGetProperty("plan", out var planElem)
+            ? planElem.GetString()
+            : null;
+
+        IsFreeTier = string.Equals(plan, "Free", StringComparison.OrdinalIgnoreCase);
     }
 
     private static Match CreateMatchFromJson(JsonElement element)

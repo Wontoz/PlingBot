@@ -1,3 +1,10 @@
+## [3.2.1] - 2026-11-07
+- Added free tier mode for API-Football: auto-detected from account status, skips H2H/injury lookups and paces polling dynamically based on remaining daily quota
+- Cloudflare tunnel now starts automatically alongside the web app
+- Red card announcements now include the referee's comment (e.g. reason for the card) when available
+- Removed unused Linux shell scripts now that the bot no longer runs on a VPS
+- Updated team name mappings with newly seen teams
+
 ## [3.2] - 2026-09-10
 - Refactored alot of code in order to reduce loc and simplify the application
 - Discord dashboard now only re-renders when it's not at the bottom of the active channel.

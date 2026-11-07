@@ -12,7 +12,10 @@ using PlingBot.Utils;
 
 public class ScorePollerService
 {
-    private static readonly TimeSpan PollInterval = TimeSpan.FromSeconds(15);
+    private static readonly TimeSpan PaidPollInterval = TimeSpan.FromSeconds(15);
+    private static readonly TimeSpan MinFreeTierInterval = TimeSpan.FromSeconds(60);
+    private static readonly TimeSpan MaxFreeTierInterval = TimeSpan.FromMinutes(10);
+    private const int FreeTierReserveCalls = 10;
 
     private readonly FootballApiClient _api;
     private readonly AnnouncementService announcer;
@@ -55,10 +58,63 @@ public class ScorePollerService
     {
         await InitializeAsync(client);
 
-        using var timer = new PeriodicTimer(PollInterval);
+        if (_api.IsFreeTier)
+            await RunFreeTierPollingLoopAsync(client);
+        else
+            await RunFixedIntervalPollingLoopAsync(client);
+    }
+
+    private async Task RunFixedIntervalPollingLoopAsync(DiscordSocketClient client)
+    {
+        using var timer = new PeriodicTimer(PaidPollInterval);
 
         while (await timer.WaitForNextTickAsync())
             await RunPollTickAsync(client);
+    }
+
+    // Det finns inga webhooks/push för mål på API-Footballs gratisnivå — varje "kolla om
+    // något hänt" är ett anrop i sig, så vi kan inte bli notifierade utan att redan ha
+    // förbrukat anropet. Det smartaste vi kan göra istället för en gissad konstant är att
+    // sprida dagens kvarvarande kvot över den tid som faktiskt återstår av matcherna: kort
+    // intervall när det finns gott om kvot kvar och matcherna snart är klara, längre när
+    // kvoten börjar ta slut eller matcherna drar ut på tiden.
+    private async Task RunFreeTierPollingLoopAsync(DiscordSocketClient client)
+    {
+        while (true)
+        {
+            await Task.Delay(ComputeFreeTierDelay());
+            await RunPollTickAsync(client);
+        }
+    }
+
+    private TimeSpan ComputeFreeTierDelay()
+    {
+        var remainingWindow = EstimateRemainingLiveWindow();
+        int budget = Math.Max((_api.DailyRemaining ?? 20) - FreeTierReserveCalls, 1);
+
+        var interval = remainingWindow / budget;
+        if (interval < MinFreeTierInterval) return MinFreeTierInterval;
+        if (interval > MaxFreeTierInterval) return MaxFreeTierInterval;
+        return interval;
+    }
+
+    // Uppskattar hur länge dagens ännu inte avslutade matcher rimligen har kvar, baserat på
+    // kickoff + en generös buffer (ordinarie tid + tilläggstid + marginal för ev. förlängning/
+    // straffar). Golvas så intervallet inte rusar mot noll om en match drar ut extra länge.
+    private TimeSpan EstimateRemainingLiveWindow()
+    {
+        var now = DateTime.UtcNow;
+        var estimatedFinishes = tipsConfig.TipsMatches
+            .Where(t => t.FixtureId.HasValue && !t.IsFinished && t.KickoffUtc.HasValue)
+            .Select(t => t.KickoffUtc!.Value.AddMinutes(150))
+            .Where(finish => finish > now)
+            .ToList();
+
+        if (estimatedFinishes.Count == 0)
+            return MinFreeTierInterval;
+
+        var remaining = estimatedFinishes.Max() - now;
+        return remaining < TimeSpan.FromMinutes(10) ? TimeSpan.FromMinutes(10) : remaining;
     }
 
     private async Task InitializeAsync(DiscordSocketClient client)
@@ -66,8 +122,17 @@ public class ScorePollerService
         await _api.FetchAndApplyAccountStatusAsync();
         await fixtureMapper.InitializeFixtureIdsAsync();
         await eventBackfill.BackfillMissingEventsAsync();
-        await FetchAndStoreInjuriesAsync();
-        await FetchAndStoreH2HAsync();
+
+        if (_api.IsFreeTier)
+        {
+            _logger.Log("Free tier: hoppar över H2H och skador, bara matchanrop görs", ConsoleColor.DarkCyan);
+        }
+        else
+        {
+            await FetchAndStoreInjuriesAsync();
+            await FetchAndStoreH2HAsync();
+        }
+
         await couponPercentageService.RefreshIfDueAsync();
         await SyncInitialScoresAsync();
 

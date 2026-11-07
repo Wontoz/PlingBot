@@ -157,9 +157,10 @@ public class EventBackfillService
                 bool isYellow = string.Equals(e.Detail, "Yellow Card", StringComparison.OrdinalIgnoreCase);
                 string cardEmoji = isYellow ? "🟨" : "🟥";
                 string cardLabel = isYellow ? "Gult kort!" : "Rött kort!";
+                string comment = !isYellow && !string.IsNullOrWhiteSpace(e.Comments) ? $" - {e.Comments}" : "";
 
                 couponEvent = CouponEvent.Create(
-                    "Card", $"{cardEmoji} {symbol} {cardLabel} {team}{player} {minute}",
+                    "Card", $"{cardEmoji} {symbol} {cardLabel} {team}{player} {minute}{comment}",
                     key: $"{e.FixtureId}-Card-{e.Elapsed}-{e.Extra}-{e.PlayerId}", fixtureId: e.FixtureId, detail: e.Detail,
                     teamId: e.TeamId, team: team, elapsed: e.Elapsed, extra: e.Extra,
                     playerId: e.PlayerId, player: e.Player, comments: e.Comments, createdUtc: approxTime);

@@ -50,7 +50,8 @@ public class CardAnnouncementService
             : Helpers.GetEventSymbol(tip, match.Symbol, match.AwayTeam, isHomeEvent: false, isBadEvent: true);
 
         string player = string.IsNullOrEmpty(evt?.Player) ? "Okänd spelare" : evt.Player;
-        string message = $"🟥 {symbol} Rött kort! {team} - {player} {(evt != null ? Helpers.GetMinute(evt) : Helpers.GetMinute(match))}";
+        string comment = string.IsNullOrWhiteSpace(evt?.Comments) ? "" : $" - {evt.Comments}";
+        string message = $"🟥 {symbol} Rött kort! {team} - {player} {(evt != null ? Helpers.GetMinute(evt) : Helpers.GetMinute(match))}{comment}";
 
         await discord.AnnounceAsync(channel, message, ConsoleColor.DarkRed, "Red card announced", couponEvent: CouponEvent.Create(
             "Card", message,
