@@ -1247,7 +1247,7 @@ footer {
 
 #matches.matches-compact .tip-btns     { flex-direction: column; gap: 1px; padding-left: 10px; }
 #matches.matches-compact .tip-pcts-row { position: static; width: auto; }
-#matches.matches-compact .match-row    { padding-top: 3px; padding-bottom: 3px; flex: none; }
+#matches.matches-compact .match-row    { padding-top: 3px; padding-bottom: 3px; flex: none; min-height: 69px; }
 
 @media (min-width: 821px) {
   #matches.matches-compact .tip-odds-row                         { margin-bottom: 6px; }
