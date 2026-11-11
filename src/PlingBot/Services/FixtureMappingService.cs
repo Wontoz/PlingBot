@@ -63,6 +63,9 @@ public class FixtureMappingService
                 tip.Match = match;
                 LeagueInfoWriter.Store(tipsConfig, match);
 
+                tip.HomeTeam = ApplyWomensSuffix(tip.HomeTeam, match.HomeTeam);
+                tip.AwayTeam = ApplyWomensSuffix(tip.AwayTeam, match.AwayTeam);
+
                 teamRepo.Upsert(tip.HomeTeam, match.HomeTeam, match.HomeTeamId);
                 teamRepo.Upsert(tip.AwayTeam, match.AwayTeam, match.AwayTeamId);
 
@@ -124,6 +127,20 @@ public class FixtureMappingService
             return null;
 
         return TryResolveByKeys(matchesForDate, homeApi, awayApi, out wasFuzzy);
+    }
+
+    // API-Football suffixar damlagens namn med " W" (t.ex. "Malmoe FF W"). Döper om
+    // kupongens eget (scrapade) namn till "<namn> D" istället — annars skulle ett dam- och
+    // ett herrlag med samma svenska visningsnamn krocka i TeamRepository, som nycklar på
+    // visningsnamnet. Idempotent: lägger inte till suffixet igen vid en omstart.
+    private static string ApplyWomensSuffix(string displayName, string apiName)
+    {
+        if (!apiName.EndsWith(" W", StringComparison.Ordinal))
+            return displayName;
+
+        return displayName.EndsWith(" D", StringComparison.Ordinal)
+            ? displayName
+            : displayName + " D";
     }
 
     private static Match? TryResolveByKeys(List<Match> matches, string home, string away, out bool wasFuzzy)

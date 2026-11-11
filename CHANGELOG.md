@@ -1,4 +1,6 @@
 
+## [3.3.1] - 2026-11-08
+- Women teams on the coupon now has the suffix " D" in match rows.
 ## [3.3] - 2026-11-08
 - Bot now once again is hosted on an VPS. Thus, sh-scripts for launcing bot was re-added
 - Added placeholder-screen for website when bot is not running
