@@ -279,10 +279,11 @@ header {
 .game-annat        .match-num { background: var(--color-annat); }
 
 .match-info-col {
-  position: relative;
   display: flex;
-  align-items: center;
+  flex-direction: column;
+  justify-content: center;
   align-self: stretch;
+  gap: 2px;
   min-width: 0;
   overflow: hidden;
 }
@@ -299,10 +300,6 @@ header {
 }
 
 .match-league {
-  position: absolute;
-  top: calc(50% + 15px);
-  left: 0;
-  right: 0;
   display: flex;
   align-items: center;
   gap: 3px;
