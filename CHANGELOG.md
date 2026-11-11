@@ -1,3 +1,7 @@
+
+## [3.3] - 2026-11-08
+- Bot now once again is hosted on an VPS. Thus, sh-scripts for launcing bot was re-added
+- Added placeholder-screen for website when bot is not running
 ## [3.2.1] - 2026-11-07
 - Added free tier mode for API-Football: auto-detected from account status, skips H2H/injury lookups and paces polling dynamically based on remaining daily quota
 - Cloudflare tunnel now starts automatically alongside the web app

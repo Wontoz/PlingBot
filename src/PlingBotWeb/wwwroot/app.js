@@ -7,6 +7,8 @@ let activeTab = 'live';
 let selectedMatchNumber = null;
 let lineupSubsExpanded = false;
 let preMatchDataUpdatedText = '';
+let isIdle = false;
+const MAIN_LAYOUT_TEMPLATE = document.querySelector('.main-layout').innerHTML;
 
 // De tre utfallen på en rad (hemmavinst / oavgjort / bortavinst) — delad källa så att
 // favoriter, streckvärde och live-insikter alla räknar på exakt samma sätt.
@@ -27,14 +29,44 @@ function morph(el, html) {
 
 async function refresh() {
   try {
-    const res = await fetch('/api/coupon');
-    if (!res.ok) throw new Error(res.status);
-    const data = await res.json();
-    renderAll(data);
+    const [couponRes, statusRes] = await Promise.all([fetch('/api/coupon'), fetch('/api/status')]);
+    if (!couponRes.ok) throw new Error(couponRes.status);
+    const data = await couponRes.json();
+
+    // Om statuskollen själv strular: visa hellre senaste kända data än att svartna
+    // skärmen på grund av ett extra, fristående anrop.
+    const botAlive = statusRes.ok ? (await statusRes.json()).BotAlive : true;
+
+    if (!botAlive) {
+      renderIdle();
+    } else {
+      if (isIdle) restoreMainLayout();
+      renderAll(data);
+    }
     document.getElementById('error').style.display = 'none';
   } catch {
     document.getElementById('error').style.display = 'block';
   }
+}
+
+// Visas när boten inte kör (ingen färsk heartbeat) — håller kvar header/footer men
+// byter ut kupong + sidopanel mot en platshållare istället för att visa kvarliggande
+// data från senaste gången boten kördes.
+function renderIdle() {
+  if (isIdle) return;
+  isIdle = true;
+
+  morph(document.querySelector('.game-header'), `<span class="game-name svenskaspel-lookalike-text">PlingBot</span>`);
+  morph(document.querySelector('.main-layout'), `
+    <div class="idle-state">
+      <div class="idle-title">Ingen aktiv omgång just nu</div>
+    </div>`);
+  document.getElementById('poll-time').textContent = '';
+}
+
+function restoreMainLayout() {
+  morph(document.querySelector('.main-layout'), MAIN_LAYOUT_TEMPLATE);
+  isIdle = false;
 }
 
 // ── Top-level render ──────────────────────────────────────────────────────────

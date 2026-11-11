@@ -54,14 +54,29 @@ public class ScorePollerService
         this.eventBackfill = eventBackfill;
     }
 
+    private static readonly TimeSpan HeartbeatInterval = TimeSpan.FromSeconds(20);
+
     public async Task StartPollingAsync(DiscordSocketClient client)
     {
         await InitializeAsync(client);
+
+        _ = Task.Run(RunHeartbeatLoopAsync);
 
         if (_api.IsFreeTier)
             await RunFreeTierPollingLoopAsync(client);
         else
             await RunFixedIntervalPollingLoopAsync(client);
+    }
+
+    // Skild från själva match-pollningen så att webben kan avgöra att boten kör även
+    // under free-tier-lägets långa tysta intervaller mellan matchkontroller.
+    private async Task RunHeartbeatLoopAsync()
+    {
+        using var timer = new PeriodicTimer(HeartbeatInterval);
+        do
+        {
+            tipsConfig.WriteHeartbeat();
+        } while (await timer.WaitForNextTickAsync());
     }
 
     private async Task RunFixedIntervalPollingLoopAsync(DiscordSocketClient client)

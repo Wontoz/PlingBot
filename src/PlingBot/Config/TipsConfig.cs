@@ -23,8 +23,11 @@ public class TipsConfig
 
     private readonly Logger _logger;
     private readonly string jsonPath;
+    private readonly string jsonDir;
 
     private readonly string jsonFileName;
+
+    private const string HeartbeatFileName = "heartbeat.txt";
 
     private const int MaxLookbackDays = 30;
     private const int MaxLookaheadDays = 14;
@@ -34,7 +37,7 @@ public class TipsConfig
         _logger = logger;
 
         string filePrefix = GetFilePrefix(game);
-        string jsonDir = ResolveJsonDirectory();
+        jsonDir = ResolveJsonDirectory();
         Directory.CreateDirectory(jsonDir);
 
         DateOnly selectedDate = couponDate ?? ResolveCouponDate(jsonDir, filePrefix);
@@ -190,4 +193,13 @@ public class TipsConfig
     }
 
     public List<TipsMatch> TipsMatches => Data.TipsData;
+
+    // Lämnar ett "jag lever"-spår åt PlingBotWeb, oberoende av hur sällan
+    // ScorePollerService faktiskt kollar matcher (free-tier-intervallet kan vara upp
+    // till 10 minuter) — webben ska kunna skilja på "boten väntar" och "boten kör inte".
+    // Filnamnet matchar inte *.json så den aldrig misstas för en kupongfil.
+    public void WriteHeartbeat()
+    {
+        File.WriteAllText(Path.Combine(jsonDir, HeartbeatFileName), DateTime.UtcNow.ToString("o"));
+    }
 }

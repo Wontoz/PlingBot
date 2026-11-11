@@ -187,6 +187,23 @@ header {
   padding: 0 10px 6px;
 }
 
+.idle-state {
+  flex: 1 1 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  min-height: 320px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 40px 20px;
+  text-align: center;
+}
+
+.idle-title { font-size: clamp(1.2rem, 4vw, 1.8rem); font-weight: 600; color: var(--text); }
+
 /* ── Coupon panel (left) ─────────────────────────────────────────────────── */
 
 .coupon-panel {

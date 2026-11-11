@@ -32,6 +32,15 @@ app.MapGet("/api/coupon", async () =>
     return Results.Content(await File.ReadAllTextAsync(path), "application/json");
 });
 
+app.MapGet("/api/status", () =>
+{
+    var heartbeatPath = Path.Combine(ResolveJsonDirectory(), "heartbeat.txt");
+    bool botAlive = File.Exists(heartbeatPath) &&
+        DateTime.UtcNow - File.GetLastWriteTimeUtc(heartbeatPath) < TimeSpan.FromSeconds(60);
+
+    return Results.Json(new { BotAlive = botAlive });
+});
+
 app.MapGet("/api/admin/coupon", async (HttpContext ctx) =>
 {
     if (!IsAuthorized(ctx, adminPassword))
