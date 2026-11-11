@@ -35,7 +35,7 @@ async function refresh() {
 
     // Om statuskollen själv strular: visa hellre senaste kända data än att svartna
     // skärmen på grund av ett extra, fristående anrop.
-    const botAlive = statusRes.ok ? (await statusRes.json()).BotAlive : true;
+    const botAlive = statusRes.ok ? (await statusRes.json()).botAlive : true;
 
     if (!botAlive) {
       renderIdle();
