@@ -1115,7 +1115,7 @@ function setTheme(mode, evt) {
   document.startViewTransition(run).ready.then(() => {
     document.documentElement.animate(
       { clipPath: [`circle(0px at ${x}px ${y}px)`, `circle(${radius}px at ${x}px ${y}px)`] },
-      { duration: 550, easing: 'ease-in-out', pseudoElement: '::view-transition-new(root)' }
+      { duration: 550, easing: 'ease-in-out', pseudoElement: '::view-transition-new(root)', fill: 'forwards' }
     );
   });
 }

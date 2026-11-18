@@ -1,5 +1,8 @@
 
 
+## [4.0.1] - 2026-11-18
+- Fixed bug with theme switch animation
+
 ## [4.0] - 2026-11-18
 - Major visual redesign of the web dashboard: removed card/box borders throughout, replaced heavy dividers with subtle hairlines, and flattened panel backgrounds to match the page
 - New light/dark/system theme switcher with an animated circular reveal transition

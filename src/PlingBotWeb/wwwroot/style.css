@@ -101,7 +101,7 @@
   border-radius: 50%;
   background: var(--surface);
   box-shadow: 0 1px 3px rgba(0,0,0,0.2);
-  transition: transform 0.25s cubic-bezier(.4,0,.2,1);
+  transition: transform 0.25s cubic-bezier(.4,0,.2,1) 0.07s;
   z-index: 0;
 }
 
@@ -134,7 +134,12 @@
   mix-blend-mode: normal;
 }
 ::view-transition-old(root) { z-index: 0; }
-::view-transition-new(root) { z-index: 1; }
+::view-transition-new(root) {
+  z-index: 1;
+  /* Startläge innan JS:s animate()-anrop hunnit köra — annars hinner den nya
+     ofärgade ytan synas odold ett par ms, vilket syns som en blixt. */
+  clip-path: circle(0% at 50% 50%);
+}
 
 /* ── Reset ───────────────────────────────────────────────────────────────── */
 
