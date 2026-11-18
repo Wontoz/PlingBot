@@ -180,29 +180,14 @@ public class FootballApiClient
 
     private static TeamLineup ParseTeamLineup(JsonElement element)
     {
-        string teamName = element.TryGetProperty("team", out var team) &&
-                          team.TryGetProperty("name", out var name)
-            ? name.GetString() ?? ""
-            : "";
-
-        string? formation = element.TryGetProperty("formation", out var formationElem)
-            ? formationElem.GetString()
-            : null;
-
-        string? coachName = null;
-        string? coachPhoto = null;
-        if (element.TryGetProperty("coach", out var coachElem))
-        {
-            coachName = coachElem.TryGetProperty("name", out var coachNameElem) ? coachNameElem.GetString() : null;
-            coachPhoto = coachElem.TryGetProperty("photo", out var coachPhotoElem) ? coachPhotoElem.GetString() : null;
-        }
+        element.TryGetProperty("coach", out var coachElem);
 
         return new TeamLineup
         {
-            TeamName = teamName,
-            Formation = formation,
-            CoachName = coachName,
-            CoachPhoto = coachPhoto,
+            TeamName = GetNestedStringOrNull(element, "team", "name") ?? "",
+            Formation = GetStringOrNull(element, "formation"),
+            CoachName = GetStringOrNull(coachElem, "name"),
+            CoachPhoto = GetStringOrNull(coachElem, "photo"),
             StartXI = ParseLineupPlayers(element, "startXI"),
             Substitutes = ParseLineupPlayers(element, "substitutes")
         };
@@ -221,10 +206,10 @@ public class FootballApiClient
 
             result.Add(new LineupPlayer
             {
-                Id = p.TryGetProperty("id", out var idElem) ? GetInt(idElem) : 0,
-                Name = p.TryGetProperty("name", out var nameElem) ? nameElem.GetString() ?? "" : "",
-                Number = p.TryGetProperty("number", out var numElem) ? GetNullableInt(numElem) : null,
-                Position = p.TryGetProperty("pos", out var posElem) ? posElem.GetString() : null
+                Id = GetNestedInt(p, "id"),
+                Name = GetStringOrNull(p, "name") ?? "",
+                Number = GetNestedNullableInt(p, "number"),
+                Position = GetStringOrNull(p, "pos")
             });
         }
         return result;
@@ -232,10 +217,7 @@ public class FootballApiClient
 
     private static TeamStatistics ParseTeamStatistics(JsonElement element)
     {
-        string teamName = element.TryGetProperty("team", out var team) &&
-                          team.TryGetProperty("name", out var name)
-            ? name.GetString() ?? ""
-            : "";
+        string teamName = GetNestedStringOrNull(element, "team", "name") ?? "";
 
         var stats = new Dictionary<string, string?>(StringComparer.OrdinalIgnoreCase);
 
@@ -290,46 +272,23 @@ public class FootballApiClient
             var playerElem = e.TryGetProperty("player", out var p) ? p : default;
             var assistElem = e.TryGetProperty("assist", out var a) ? a : default;
 
-            int elapsed = timeElem.TryGetProperty("elapsed", out var elapsedElem)
-                ? GetInt(elapsedElem)
-                : 0;
-
-            int extra = timeElem.TryGetProperty("extra", out var extraElem)
-                ? GetInt(extraElem)
-                : 0;
+            int elapsed = GetNestedInt(timeElem, "elapsed");
+            int extra = GetNestedInt(timeElem, "extra");
 
             return new MatchEvent
             {
                 FixtureId = fixtureId,
-                Type = e.TryGetProperty("type", out var typeElem) ? typeElem.GetString() : null,
-                Detail = e.TryGetProperty("detail", out var detailElem) ? detailElem.GetString() : null,
-                PlayerId = playerElem.ValueKind != JsonValueKind.Undefined &&
-                         playerElem.TryGetProperty("id", out var playerIdElem)
-                    ? GetNullableInt(playerIdElem)
-                    : null,
-                Player = playerElem.ValueKind != JsonValueKind.Undefined &&
-                         playerElem.TryGetProperty("name", out var nameElem)
-                    ? nameElem.GetString()
-                    : null,
-                Team = teamElem.TryGetProperty("name", out var teamNameElem)
-                    ? teamNameElem.GetString()
-                    : null,
-                TeamId = teamElem.TryGetProperty("id", out var teamIdElem)
-                    ? GetNullableInt(teamIdElem)
-                    : null,
-                AssistId = assistElem.ValueKind != JsonValueKind.Undefined &&
-                    assistElem.TryGetProperty("id", out var assistIdElem)
-                    ? GetNullableInt(assistIdElem)
-                    : null,
-                Assist = assistElem.ValueKind != JsonValueKind.Undefined &&
-                    assistElem.TryGetProperty("name", out var assistNameElem)
-                    ? assistNameElem.GetString()
-                    : null,
+                Type = GetStringOrNull(e, "type"),
+                Detail = GetStringOrNull(e, "detail"),
+                PlayerId = GetNestedNullableInt(playerElem, "id"),
+                Player = GetStringOrNull(playerElem, "name"),
+                Team = GetStringOrNull(teamElem, "name"),
+                TeamId = GetNestedNullableInt(teamElem, "id"),
+                AssistId = GetNestedNullableInt(assistElem, "id"),
+                Assist = GetStringOrNull(assistElem, "name"),
                 Elapsed = elapsed,
                 Extra = extra,
-                Comments = e.TryGetProperty("comments", out var commentsElem)
-                    ? commentsElem.GetString()
-                    : null
+                Comments = GetStringOrNull(e, "comments")
             };
         }
         catch
@@ -357,7 +316,7 @@ public class FootballApiClient
                 var status  = fixture.GetProperty("status");
                 var league  = item.TryGetProperty("league", out var lg) ? lg : (JsonElement?)null;
 
-                string statusShort = status.TryGetProperty("short", out var ss) ? ss.GetString() ?? "" : "";
+                string statusShort = GetStringOrNull(status, "short") ?? "";
                 int homeGoals = GetInt(goals.GetProperty("home"));
                 int awayGoals = GetInt(goals.GetProperty("away"));
 
@@ -377,17 +336,17 @@ public class FootballApiClient
                 {
                     FixtureId    = GetInt(fixture.GetProperty("id")),
                     Date         = fixture.GetProperty("date").GetDateTime(),
-                    HomeTeamId   = home.TryGetProperty("id",   out var hid) ? GetInt(hid) : 0,
-                    HomeTeam     = home.TryGetProperty("name", out var hn)  ? hn.GetString() ?? "" : "",
-                    HomeTeamLogo = home.TryGetProperty("logo", out var hl)  ? hl.GetString() : null,
+                    HomeTeamId   = GetNestedInt(home, "id"),
+                    HomeTeam     = GetStringOrNull(home, "name") ?? "",
+                    HomeTeamLogo = GetStringOrNull(home, "logo"),
                     HomeGoals    = homeGoals,
-                    AwayTeamId   = away.TryGetProperty("id",   out var aid) ? GetInt(aid) : 0,
-                    AwayTeam     = away.TryGetProperty("name", out var an)  ? an.GetString() ?? "" : "",
-                    AwayTeamLogo = away.TryGetProperty("logo", out var al)  ? al.GetString() : null,
+                    AwayTeamId   = GetNestedInt(away, "id"),
+                    AwayTeam     = GetStringOrNull(away, "name") ?? "",
+                    AwayTeamLogo = GetStringOrNull(away, "logo"),
                     AwayGoals    = awayGoals,
                     StatusShort  = statusShort,
-                    LeagueName   = league?.TryGetProperty("name", out var ln) == true ? ln.GetString() : null,
-                    LeagueLogo   = league?.TryGetProperty("logo", out var ll) == true ? ll.GetString() : null,
+                    LeagueName   = league.HasValue ? GetStringOrNull(league.Value, "name") : null,
+                    LeagueLogo   = league.HasValue ? GetStringOrNull(league.Value, "logo") : null,
                 });
             }
             catch { }
@@ -414,14 +373,13 @@ public class FootballApiClient
                 !item.TryGetProperty("fixture", out var fixtureElem))
                 continue;
 
-            int fixtureId = fixtureElem.TryGetProperty("id",   out var fid)   ? fid.GetInt32()          : 0;
-            int playerId  = playerElem.TryGetProperty("id",    out var pid)   ? pid.GetInt32()          : 0;
-            string name   = playerElem.TryGetProperty("name",  out var pname) ? pname.GetString() ?? "" : "";
-            string type   = playerElem.TryGetProperty("type",  out var ptype) ? ptype.GetString() ?? "" : "";
-            string? reason = playerElem.TryGetProperty("reason", out var pr) && pr.ValueKind != JsonValueKind.Null
-                ? pr.GetString() : null;
-            int teamId    = teamElem.TryGetProperty("id",   out var tid)   ? tid.GetInt32()          : 0;
-            string team   = teamElem.TryGetProperty("name", out var tname) ? tname.GetString() ?? "" : "";
+            int fixtureId = GetNestedInt(fixtureElem, "id");
+            int playerId  = GetNestedInt(playerElem, "id");
+            string name   = GetStringOrNull(playerElem, "name") ?? "";
+            string type   = GetStringOrNull(playerElem, "type") ?? "";
+            string? reason = GetStringOrNull(playerElem, "reason");
+            int teamId    = GetNestedInt(teamElem, "id");
+            string team   = GetStringOrNull(teamElem, "name") ?? "";
 
             if (fixtureId > 0 && playerId > 0)
                 result.Add(new InjuryInfo(fixtureId, playerId, name, type, reason, teamId, team));
@@ -493,21 +451,14 @@ public class FootballApiClient
         string statusShort = statusElem.GetProperty("short").GetString() ?? "UNK";
         string statusLong = statusElem.GetProperty("long").GetString() ?? "Unknown";
 
-        string? leagueName = null;
-        string? leagueFlag = null;
-        string? leagueLogo = null;
-        string? leagueRound = null;
-        if (element.TryGetProperty("league", out var leagueElem))
-        {
-            leagueName = leagueElem.TryGetProperty("name", out var ln) ? ln.GetString() : null;
-            leagueFlag = leagueElem.TryGetProperty("flag", out var lf) ? lf.GetString() : null;
-            leagueLogo = leagueElem.TryGetProperty("logo", out var ll) ? ll.GetString() : null;
-            leagueRound = leagueElem.TryGetProperty("round", out var lr) ? lr.GetString() : null;
-        }
+        element.TryGetProperty("league", out var leagueElem);
+        string? leagueName = GetStringOrNull(leagueElem, "name");
+        string? leagueFlag = GetStringOrNull(leagueElem, "flag");
+        string? leagueLogo = GetStringOrNull(leagueElem, "logo");
+        string? leagueRound = GetStringOrNull(leagueElem, "round");
 
-        string? venueName = null;
-        if (fixtureElem.TryGetProperty("venue", out var venueElem))
-            venueName = venueElem.TryGetProperty("name", out var vn) ? vn.GetString() : null;
+        fixtureElem.TryGetProperty("venue", out var venueElem);
+        string? venueName = GetStringOrNull(venueElem, "name");
 
         // För AET/PEN-matcher är fältet goals på toppnivå slutresultatet (inklusive
         // förlängning/straffar). score.fulltime är resultatet efter 90 minuter, vilket är
@@ -559,16 +510,7 @@ public class FootballApiClient
         return new Status(statusShort, statusLong, metadata.Type, metadata.Description);
     }
 
-    private static int GetInt(JsonElement el)
-    {
-        if (el.ValueKind == JsonValueKind.Number)
-            return el.GetInt32();
-
-        if (el.ValueKind == JsonValueKind.String && int.TryParse(el.GetString(), out int v))
-            return v;
-
-        return 0;
-    }
+    private static int GetInt(JsonElement el) => GetNullableInt(el) ?? 0;
 
     private static int? GetNullableInt(JsonElement el)
     {
@@ -583,6 +525,21 @@ public class FootballApiClient
 
         return null;
     }
+
+    // Säkra mot att `el` själv är default/Undefined (t.ex. ett fält som inte fanns i svaret
+    // och därför aldrig tilldelades via TryGetProperty) — annars kastar TryGetProperty.
+    private static string? GetStringOrNull(JsonElement el, string prop) =>
+        el.ValueKind == JsonValueKind.Object && el.TryGetProperty(prop, out var v) ? v.GetString() : null;
+
+    private static string? GetNestedStringOrNull(JsonElement el, string outerProp, string innerProp) =>
+        el.ValueKind == JsonValueKind.Object && el.TryGetProperty(outerProp, out var outer)
+            ? GetStringOrNull(outer, innerProp)
+            : null;
+
+    private static int? GetNestedNullableInt(JsonElement el, string prop) =>
+        el.ValueKind == JsonValueKind.Object && el.TryGetProperty(prop, out var v) ? GetNullableInt(v) : null;
+
+    private static int GetNestedInt(JsonElement el, string prop) => GetNestedNullableInt(el, prop) ?? 0;
 
     private async Task<string> GetApiJsonAsync(string url)
     {

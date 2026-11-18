@@ -115,9 +115,19 @@
     "Id": 530
   },
   {
+    "Name": "Augsburg",
+    "ApiName": "FC Augsburg",
+    "Id": 170
+  },
+  {
     "Name": "Australien",
     "ApiName": "Australia",
     "Id": 20
+  },
+  {
+    "Name": "Bahia",
+    "ApiName": "Bahia",
+    "Id": 118
   },
   {
     "Name": "Barnet",
@@ -173,6 +183,11 @@
     "Name": "Bolivia",
     "ApiName": "Bolivia",
     "Id": 2381
+  },
+  {
+    "Name": "Bologna",
+    "ApiName": "Bologna",
+    "Id": 500
   },
   {
     "Name": "Bolton",
@@ -285,6 +300,11 @@
     "Id": 538
   },
   {
+    "Name": "Chapecoense",
+    "ApiName": "Chapecoense-sc",
+    "Id": 132
+  },
+  {
     "Name": "Charleroi",
     "ApiName": "Charleroi",
     "Id": 736
@@ -298,6 +318,11 @@
     "Name": "Chelsea",
     "ApiName": "Chelsea",
     "Id": 49
+  },
+  {
+    "Name": "Chelsea D",
+    "ApiName": "Chelsea W",
+    "Id": 1853
   },
   {
     "Name": "Cheltenham",
@@ -335,6 +360,11 @@
     "Id": 895
   },
   {
+    "Name": "Corinthians",
+    "ApiName": "Corinthians",
+    "Id": 131
+  },
+  {
     "Name": "Coritiba",
     "ApiName": "Coritiba",
     "Id": 147
@@ -363,6 +393,11 @@
     "Name": "Criciúma",
     "ApiName": "Criciuma",
     "Id": 140
+  },
+  {
+    "Name": "Cruzeiro",
+    "ApiName": "Cruzeiro",
+    "Id": 135
   },
   {
     "Name": "Crystal Palace",
@@ -610,6 +645,11 @@
     "Id": 160
   },
   {
+    "Name": "Frosinone",
+    "ApiName": "Frosinone",
+    "Id": 512
+  },
+  {
     "Name": "Fulham",
     "ApiName": "Fulham",
     "Id": 36
@@ -628,6 +668,11 @@
     "Name": "Gefle",
     "ApiName": "Gefle IF",
     "Id": 813
+  },
+  {
+    "Name": "Genoa",
+    "ApiName": "Genoa",
+    "Id": 495
   },
   {
     "Name": "Gent",
@@ -665,6 +710,11 @@
     "Id": 1117
   },
   {
+    "Name": "Gremio",
+    "ApiName": "Gremio",
+    "Id": 130
+  },
+  {
     "Name": "Grimsby",
     "ApiName": "Grimsby",
     "Id": 1365
@@ -693,6 +743,11 @@
     "Name": "Ham-Kam",
     "ApiName": "Ham-Kam",
     "Id": 2159
+  },
+  {
+    "Name": "Hamburg",
+    "ApiName": "Hamburger SV",
+    "Id": 175
   },
   {
     "Name": "Hammarby",
@@ -875,6 +930,11 @@
     "Id": 496
   },
   {
+    "Name": "Juventus D",
+    "ApiName": "Juventus W",
+    "Id": 1886
+  },
+  {
     "Name": "Järfälla",
     "ApiName": "Järfälla",
     "Id": 16598
@@ -1053,6 +1113,11 @@
     "Name": "Lyngby",
     "ApiName": "Lyngby",
     "Id": 625
+  },
+  {
+    "Name": "Mainz",
+    "ApiName": "FSV Mainz 05",
+    "Id": 164
   },
   {
     "Name": "Malmö",
@@ -1235,6 +1300,16 @@
     "Id": 4007
   },
   {
+    "Name": "Osasuna",
+    "ApiName": "Osasuna",
+    "Id": 727
+  },
+  {
+    "Name": "Oud-Heverlee Leuven D",
+    "ApiName": "OH Leuven W",
+    "Id": 1790
+  },
+  {
     "Name": "Oulu",
     "ApiName": "AC Oulu",
     "Id": 2077
@@ -1253,6 +1328,11 @@
     "Name": "Pafos FC",
     "ApiName": "Pafos",
     "Id": 3403
+  },
+  {
+    "Name": "Palmeiras",
+    "ApiName": "Palmeiras",
+    "Id": 121
   },
   {
     "Name": "Panama",
@@ -1278,6 +1358,11 @@
     "Name": "Paris Saint-Germain",
     "ApiName": "Paris Saint Germain",
     "Id": 85
+  },
+  {
+    "Name": "Paris Saint-Germain D",
+    "ApiName": "Paris Saint Germain W",
+    "Id": 1667
   },
   {
     "Name": "Partick Thistle",
@@ -1345,6 +1430,11 @@
     "Id": 72
   },
   {
+    "Name": "Racing Santander",
+    "ApiName": "Racing Santander",
+    "Id": 4665
+  },
+  {
     "Name": "Randers",
     "ApiName": "Randers FC",
     "Id": 401
@@ -1373,6 +1463,11 @@
     "Name": "Real Sociedad",
     "ApiName": "Real Sociedad",
     "Id": 548
+  },
+  {
+    "Name": "Remo",
+    "ApiName": "Remo",
+    "Id": 1198
   },
   {
     "Name": "Rennes",
@@ -1450,9 +1545,19 @@
     "Id": 6697
   },
   {
+    "Name": "Santos",
+    "ApiName": "Santos",
+    "Id": 128
+  },
+  {
     "Name": "Sarpsborg",
     "ApiName": "Sarpsborg 08 FF",
     "Id": 333
+  },
+  {
+    "Name": "Sassuolo",
+    "ApiName": "Sassuolo",
+    "Id": 488
   },
   {
     "Name": "Saudiarabien",
@@ -1740,6 +1845,11 @@
     "Id": 25
   },
   {
+    "Name": "Udinese",
+    "ApiName": "Udinese",
+    "Id": 494
+  },
+  {
     "Name": "Uruguay",
     "ApiName": "Uruguay",
     "Id": 7
@@ -1848,6 +1958,11 @@
     "Name": "Watford",
     "ApiName": "Watford",
     "Id": 38
+  },
+  {
+    "Name": "Werder Bremen",
+    "ApiName": "Werder Bremen",
+    "Id": 162
   },
   {
     "Name": "West Bromwich",

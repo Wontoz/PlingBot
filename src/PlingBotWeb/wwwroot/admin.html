@@ -15,6 +15,16 @@
       padding: 12px 12px 90px;
     }
 
+    #admin-section {
+      max-width: 520px;
+      margin: 0 auto;
+    }
+
+    #footer-inner {
+      max-width: 520px;
+      margin: 0 auto;
+    }
+
     h1 { font-size: 1rem; font-weight: 600; color: #fff; margin-bottom: 2px; }
     .subtitle { font-size: 0.72rem; color: #555; margin-bottom: 16px; }
 
@@ -46,24 +56,25 @@
       padding: 7px 10px;
       margin-bottom: 5px;
     }
-    .match-meta {
-      display: flex; justify-content: space-between; align-items: baseline;
-      margin-bottom: 2px;
-    }
-    .match-num { font-size: 0.58rem; color: #555; font-weight: 600; text-transform: uppercase; letter-spacing: 0.04em; }
-    .match-kickoff { font-size: 0.58rem; color: #444; }
-    .match-teams { font-size: 0.83rem; font-weight: 500; color: #ddd; margin-bottom: 6px; }
-
-    .fixture-row {
+    .match-top-row {
       display: flex; align-items: center; gap: 6px; margin-bottom: 6px;
     }
-    .fixture-label { font-size: 0.62rem; color: #555; white-space: nowrap; }
+    .match-num { font-size: 0.62rem; color: #555; font-weight: 600; text-transform: uppercase; letter-spacing: 0.04em; flex-shrink: 0; }
+    .match-teams {
+      font-size: 0.83rem; font-weight: 500; color: #ddd;
+      flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+    }
+    .match-kickoff { font-size: 0.58rem; color: #444; flex-shrink: 0; white-space: nowrap; }
+
     .fixture-input {
-      width: 90px; padding: 3px 6px; border-radius: 4px;
+      width: 64px; flex-shrink: 0; padding: 3px 6px; border-radius: 4px;
       border: 1px solid #2a2a2a; background: #111; color: #777;
       font-size: 0.72rem; font-family: monospace; outline: none;
     }
     .fixture-input:focus { border-color: #444; color: #aaa; }
+    .fixture-input::-webkit-outer-spin-button,
+    .fixture-input::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
+    .fixture-input { -moz-appearance: textfield; appearance: textfield; }
 
     .tip-buttons { display: flex; gap: 6px; }
     .tip-btn {
@@ -123,8 +134,10 @@
   <div id="file-label"></div>
   <div id="matches-list"></div>
   <div id="footer">
-    <button class="btn-save" id="save-btn" onclick="saveTips()">Spara</button>
-    <div id="save-msg" class="msg"></div>
+    <div id="footer-inner">
+      <button class="btn-save" id="save-btn" onclick="saveTips()">Spara</button>
+      <div id="save-msg" class="msg"></div>
+    </div>
   </div>
 </div>
 
@@ -191,16 +204,13 @@ function showAdmin(data) {
       : '';
     return `
       <div class="match-card">
-        <div class="match-meta">
-          <span class="match-num">Match ${m.Number}</span>
-          <span class="match-kickoff">${kickoff}</span>
-        </div>
-        <div class="match-teams">${m.HomeTeam} – ${m.AwayTeam}</div>
-        <div class="fixture-row">
-          <span class="fixture-label">Fixture ID</span>
+        <div class="match-top-row">
+          <span class="match-num">#${m.Number}</span>
+          <span class="match-teams">${m.HomeTeam} – ${m.AwayTeam}</span>
           <input class="fixture-input" type="number" value="${m.FixtureId ?? ''}"
-                 placeholder="–"
+                 placeholder="ID"
                  oninput="fixtureIds[${m.Number}] = this.value ? parseInt(this.value) : null">
+          <span class="match-kickoff">${kickoff}</span>
         </div>
         <div class="tip-buttons">
           ${['1', 'X', '2'].map(t => `

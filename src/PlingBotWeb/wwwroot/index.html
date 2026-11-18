@@ -76,7 +76,18 @@
         <div class="game-header">Laddar...</div>
       </div>
       <div class="header-right">
-      <button id="theme-toggle" onclick="toggleTheme()">☀</button>
+      <div class="theme-switch" role="group" aria-label="Färgtema">
+        <button class="theme-switch-btn" data-mode="light" onclick="setTheme('light', event)" title="Ljust tema" aria-label="Ljust tema">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="4.5"/><path d="M12 2.5v2.5M12 19v2.5M4.6 4.6l1.8 1.8M17.6 17.6l1.8 1.8M2.5 12h2.5M19 12h2.5M4.6 19.4l1.8-1.8M17.6 6.4l1.8-1.8"/></svg>
+        </button>
+        <button class="theme-switch-btn" data-mode="dark" onclick="setTheme('dark', event)" title="Mörkt tema" aria-label="Mörkt tema">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 14.5A8.5 8.5 0 1 1 9.5 4a6.5 6.5 0 0 0 10.5 10.5Z"/></svg>
+        </button>
+        <button class="theme-switch-btn" data-mode="system" onclick="setTheme('system', event)" title="Följ system" aria-label="Följ system">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4.5" width="18" height="12" rx="1.5"/><path d="M8.5 20h7M12 16.5V20"/></svg>
+        </button>
+        <span class="theme-switch-thumb"></span>
+      </div>
       </div>
     </header>
 
@@ -114,7 +125,10 @@
     <footer>
       <div class="footer-left">
         <div class="bot-name svenskaspel-lookalike-text"><span>PlingBot</span></div>
-        <div class="copyright-text">© 2026 All rights reserved</div>
+        <div class="footer-copyright">
+          <div class="copyright-text">© 2026 Alla rättigheter förbehållna.</div>
+          <div class="disclaimer-text">Ej anknutet till Svenska Spel. Logotyper och varumärken tillhör sina respektive ägare.</div>
+        </div>
       </div>
       <div class="footer-right">
         <div id="poll-time"></div>

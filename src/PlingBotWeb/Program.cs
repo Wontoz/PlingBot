@@ -34,6 +34,9 @@ app.MapGet("/api/coupon", async () =>
 
 app.MapGet("/api/status", () =>
 {
+    if (Environment.GetEnvironmentVariable("DISABLE_IDLE_SCREEN") == "true")
+        return Results.Json(new { BotAlive = true });
+
     var heartbeatPath = Path.Combine(ResolveJsonDirectory(), "heartbeat.txt");
     bool botAlive = File.Exists(heartbeatPath) &&
         DateTime.UtcNow - File.GetLastWriteTimeUtc(heartbeatPath) < TimeSpan.FromSeconds(60);

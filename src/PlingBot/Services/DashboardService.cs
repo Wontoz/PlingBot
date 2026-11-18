@@ -19,10 +19,6 @@ public class DashboardService
     private ulong? messageId;
     private string? lastContent;
 
-    // Variabler som tillhör random meddelandet
-    private string? currentExtraMessage;
-    private DateTime lastExtraMessageChangedUtc = DateTime.MinValue;
-    private static readonly TimeSpan ExtraMessageInterval = TimeSpan.FromMinutes(10);
     public DashboardService(
         TipsConfig tipsConfig,
         DashboardBuilder dashboardBuilder,
@@ -39,9 +35,9 @@ public class DashboardService
         _logger = logger;
     }
 
-    public async Task CreateOrUpdateAsync(IMessageChannel channel, string? extraMessage = null)
+    public async Task CreateOrUpdateAsync(IMessageChannel channel)
     {
-        string content = BuildContent(extraMessage);
+        string content = BuildContent();
 
         if (content == lastContent)
             return;
@@ -102,7 +98,7 @@ public class DashboardService
     // finns ingen anledning att posta om den - då räcker det att redigera den på plats
     // (eller låta den vara om innehållet redan stämmer). Bara om något annat meddelande
     // (t.ex. en måltrigger) hamnat efter den behöver den tas bort och läggas längst ner igen.
-    public async Task RepostIfNotLastAsync(IMessageChannel channel, string? extraMessage = null)
+    public async Task RepostIfNotLastAsync(IMessageChannel channel)
     {
         var messages = (await channel.GetMessagesAsync(50).FlattenAsync()).ToList();
         var lastMessage = messages.FirstOrDefault();
@@ -113,12 +109,12 @@ public class DashboardService
             channelId = channel.Id;
             messageId = existingDashboard.Id;
             lastContent = existingDashboard.Content;
-            await CreateOrUpdateAsync(channel, extraMessage);
+            await CreateOrUpdateAsync(channel);
             return;
         }
 
         await DeleteDashboardMessagesAsync(messages);
-        await CreateOrUpdateAsync(channel, extraMessage);
+        await CreateOrUpdateAsync(channel);
     }
 
     private static bool IsDashboardMessage(IMessage message) =>
@@ -205,30 +201,11 @@ public class DashboardService
         return true;
     }
 
-    private string BuildContent(string? extraMessage = null)
+    private string BuildContent()
     {
-        if (extraMessage != null)
-        {
-            currentExtraMessage = extraMessage;
-            lastExtraMessageChangedUtc = DateTime.UtcNow;
-        }
-
         if (options.IsVersusMode)
             return versusDashboardBuilder.Build(tipsConfig, versusConfig, tipsConfig.Data.Events);
 
-        return dashboardBuilder.Build(tipsConfig, currentExtraMessage, tipsConfig.Data.Events);
-    }
-
-    public bool RefreshExtraMessageIfNeeded(PlayerMessageService statusMessageService)
-    {
-        if (DateTime.UtcNow - lastExtraMessageChangedUtc < ExtraMessageInterval)
-            return false;
-
-        string player = tipsConfig.Data.MetaData.Player;
-        currentExtraMessage = statusMessageService.Generate(player);
-        lastExtraMessageChangedUtc = DateTime.UtcNow;
-
-        _logger.Log($"Dashboard message changed: {currentExtraMessage}", ConsoleColor.Cyan);
-        return true;
+        return dashboardBuilder.Build(tipsConfig, tipsConfig.Data.Events);
     }
 }

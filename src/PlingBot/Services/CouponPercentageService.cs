@@ -14,8 +14,7 @@ public class CouponPercentageService
     private readonly BotOptions options;
     private readonly Logger _logger;
     private DateTime? lastRefreshUtc;
-    private IPlaywright? playwright;
-    private IBrowser? browser;
+    private readonly PlaywrightBrowser browser = new();
 
     public CouponPercentageService(TipsConfig tipsConfig, BotOptions options, Logger logger)
     {
@@ -134,13 +133,6 @@ public class CouponPercentageService
 
     private async Task<CouponSnapshot> FetchCouponSnapshotAsync(string url)
     {
-        if (browser == null || !browser.IsConnected)
-        {
-            playwright?.Dispose();
-            playwright = await Playwright.CreateAsync();
-            browser = await playwright.Chromium.LaunchAsync(new BrowserTypeLaunchOptions { Headless = true });
-        }
-
         var page = await browser.NewPageAsync();
         try
         {

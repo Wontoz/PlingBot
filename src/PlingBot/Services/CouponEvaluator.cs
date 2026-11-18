@@ -36,7 +36,7 @@ public class CouponEvaluator
         return GetSymbolFromScores(tip.HomeScore, tip.AwayScore);
     }
 
-    private static string GetSymbolFromScores(int homeScore, int awayScore)
+    internal static string GetSymbolFromScores(int homeScore, int awayScore)
     {
         if (homeScore > awayScore) return "1";
         if (homeScore < awayScore) return "2";

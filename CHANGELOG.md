@@ -1,5 +1,21 @@
 
 
+## [4.0] - 2026-11-18
+- Major visual redesign of the web dashboard: removed card/box borders throughout, replaced heavy dividers with subtle hairlines, and flattened panel backgrounds to match the page
+- New light/dark/system theme switcher with an animated circular reveal transition
+- Updated dark theme background color
+- Fixed idle placeholder screen keeping a stale game-type color and card background
+- Fixed bug where the idle placeholder always showed due to a JSON casing mismatch (`BotAlive`)
+- Pre-match odds for every match moved to a dedicated "Odds" section instead of inline on each row
+- Match rows now have a consistent height regardless of how much data is available
+- Improved mobile readability: larger team names, tip buttons, score badges and kickoff times
+- Improved text wrapping/alignment for team names, league names and venue names
+- Reworked footer layout across all screen sizes, with a non-affiliation disclaimer added
+- Fixed a layout shift when selecting a match
+- Admin page redesigned to be usable on desktop, with a more compact per-match layout
+- Removed the unused message feature from the Discord dashboard
+- General backend cleanup and deduplication (API response parsing, Playwright browser startup)
+
 ## [3.3.2] - 2026-11-08
 - CSS bugfix
 

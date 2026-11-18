@@ -12,7 +12,6 @@ public class MessageHandler
     private readonly CouponEvaluator evaluator;
     private readonly Logger _logger;
     private readonly DashboardService dashboardService;
-    private readonly PlayerMessageService statusMessageService;
     private readonly CouponEventSyncService syncService;
     private readonly StatisticsBuilder statsBuilder;
     private readonly EventsBuilder eventsBuilder;
@@ -20,14 +19,12 @@ public class MessageHandler
     private readonly BotOptions options;
     private readonly HashSet<ulong> allowedUsers;
     private readonly ulong williamId;
-    private string player = "";
 
     public MessageHandler(
         TipsConfig tipsConfig,
         CouponEvaluator evaluator,
         Logger logger,
         DashboardService dashboardService,
-        PlayerMessageService statusMessageService,
         CouponEventSyncService syncService,
         StatisticsBuilder statsBuilder,
         EventsBuilder eventsBuilder,
@@ -38,7 +35,6 @@ public class MessageHandler
         this.evaluator = evaluator;
         _logger = logger;
         this.dashboardService = dashboardService;
-        this.statusMessageService = statusMessageService;
         this.syncService = syncService;
         this.statsBuilder = statsBuilder;
         this.eventsBuilder = eventsBuilder;
@@ -53,8 +49,6 @@ public class MessageHandler
             ulong.Parse(Environment.GetEnvironmentVariable("DISCORD_USER_ID_WIBB") ?? "0"),
             ulong.Parse(Environment.GetEnvironmentVariable("DISCORD_USER_ID_JONAS") ?? "0")
         };
-
-        player = this.tipsConfig.Data.MetaData.Player;
     }
 
     public async Task HandleMessageAsync(SocketMessage message)
@@ -120,10 +114,8 @@ public class MessageHandler
             break;
 
             case "refresh":
-                string extraMessage = statusMessageService.Generate(player);
-
                 await dashboardService.DeletePreviousDashboardsAsync(message.Channel);
-                await dashboardService.CreateOrUpdateAsync(message.Channel, extraMessage);
+                await dashboardService.CreateOrUpdateAsync(message.Channel);
             break;
 
             case "stats":
@@ -160,10 +152,7 @@ public class MessageHandler
                 else
                 {
                     var (correct, evaluated) = evaluator.Evaluate(tipsConfig.TipsMatches);
-                    string suffix = statusMessageService.Generate(player);
-
                     string statusMsg = $"Just nu har vi {correct}/{evaluated} rätt!";
-                    statusMsg += $"\n{suffix}";
                     await message.Channel.SendMessageAsync(statusMsg);
                     break;
                 }     

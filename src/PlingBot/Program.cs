@@ -66,7 +66,6 @@ class Program
         services.AddSingleton<MessageHandler>();
         services.AddSingleton<ScorePollerService>();
         services.AddSingleton<DashboardService>();
-        services.AddSingleton<PlayerMessageService>();
         services.AddSingleton<CouponPercentageService>();
         services.AddSingleton<PayoutScraperService>();
         services.AddSingleton<FixtureMappingService>();

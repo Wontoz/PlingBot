@@ -21,7 +21,7 @@ public class DashboardBuilder
         this.evaluator = evaluator;
     }
 
-    public string Build(TipsConfig tipsConfig, string? playerMessage = null, IReadOnlyList<CouponEvent>? events = null)
+    public string Build(TipsConfig tipsConfig, IReadOnlyList<CouponEvent>? events = null)
     {
         IReadOnlyList<TipsMatch> tips = tipsConfig.TipsMatches;
 
@@ -34,8 +34,6 @@ public class DashboardBuilder
         string player = tipsConfig.Data.MetaData.Player;
 
         sb.AppendLine($"{game} {date} - {player}");
-
-        //if(!string.IsNullOrWhiteSpace(playerMessage)) sb.AppendLine(playerMessage);
         sb.AppendLine();
 
         int matchColumnWidth = GetMatchColumnWidth(tips, MinimumMatchColumnWidth, MaximumMatchColumnWidth);

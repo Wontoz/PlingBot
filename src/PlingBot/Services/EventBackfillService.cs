@@ -134,7 +134,7 @@ public class EventBackfillService
                 if (isOwnGoal) { if (scorerIsHome) away++; else home++; }
                 else           { if (scorerIsHome) home++; else away++; }
 
-                string currentSymbol = home > away ? "1" : home < away ? "2" : "X";
+                string currentSymbol = CouponEvaluator.GetSymbolFromScores(home, away);
                 string symbol = Helpers.GetEventSymbol(tip, currentSymbol);
                 string score  = Helpers.FormatScore(home, away, isOwnGoal ? !scorerIsHome : scorerIsHome);
                 string detail = isOwnGoal ? " (Självmål)" : isPenalty ? " (Straff)" : "";
@@ -151,7 +151,7 @@ public class EventBackfillService
             {
                 bool isHome   = e.TeamId == tip.HomeTeamId;
                 string team   = isHome ? tip.HomeTeam : tip.AwayTeam;
-                string currentSymbol = home > away ? "1" : home < away ? "2" : "X";
+                string currentSymbol = CouponEvaluator.GetSymbolFromScores(home, away);
                 string symbol = Helpers.GetEventSymbol(tip, currentSymbol, team, isHomeEvent: isHome, isBadEvent: true);
                 string player = !string.IsNullOrWhiteSpace(e.Player) ? $" - {e.Player}" : "";
                 bool isYellow = string.Equals(e.Detail, "Yellow Card", StringComparison.OrdinalIgnoreCase);
@@ -182,7 +182,7 @@ public class EventBackfillService
             {
                 bool isHome   = e.TeamId == tip.HomeTeamId;
                 string team   = isHome ? tip.HomeTeam : tip.AwayTeam;
-                string currentSymbol = home > away ? "1" : home < away ? "2" : "X";
+                string currentSymbol = CouponEvaluator.GetSymbolFromScores(home, away);
                 string symbol = Helpers.GetEventSymbol(tip, currentSymbol, team, isHomeEvent: isHome, isBadEvent: true);
                 string score  = Helpers.FormatScore(home, away, isHome);
                 string player = !string.IsNullOrWhiteSpace(e.Player) ? $" - {e.Player}" : "";

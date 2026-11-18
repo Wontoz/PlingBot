@@ -56,6 +56,10 @@ function renderIdle() {
   if (isIdle) return;
   isIdle = true;
 
+  const gameClasses = ['game-stryktipset', 'game-europatipset', 'game-topptipset', 'game-annat'];
+  document.querySelector('header').classList.remove(...gameClasses);
+  document.getElementById('app').classList.remove(...gameClasses);
+
   morph(document.querySelector('.game-header'), `<span class="game-name svenskaspel-lookalike-text">PlingBot</span>`);
   morph(document.querySelector('.main-layout'), `
     <div class="idle-state">
@@ -397,17 +401,13 @@ function renderTipButtons(m, status) {
     return `<div class="tip-btn ${cls}">${opt}</div>`;
   }).join('');
 
+  // Oddsen visas inte längre inline per rad (gav plats-problem i den smala
+  // kolumnen) — de finns istället samlade i "Inför omgången"-panelen.
   const pctsRow = hasPct
     ? `<div class="tip-pcts-row">${pcts.map(p => `<div class="tip-pct">${p != null ? p + '%' : ''}</div>`).join('')}</div>`
     : '';
 
-  const odds = [m.Odds1, m.OddsX, m.Odds2];
-  const hasOdds = odds.some(o => o != null);
-  const oddsRow = hasOdds
-    ? `<div class="tip-pcts-row tip-odds-row">${odds.map(o => `<div class="tip-pct tip-odds">${o != null ? parseFloat(o).toFixed(2).replace('.', ',') : ''}</div>`).join('')}</div>`
-    : '';
-
-  return `<div class="tip-btns">${oddsRow}<div class="tip-btns-row">${btns}</div>${pctsRow}</div>`;
+  return `<div class="tip-btns"><div class="tip-btns-row">${btns}</div>${pctsRow}</div>`;
 }
 
 // ── Events feed ───────────────────────────────────────────────────────────────
@@ -792,11 +792,24 @@ function renderPreMatch(matches) {
       <span class="value-pct">${f.odds.toFixed(2).replace('.', ',')}${f.pct != null ? ` · ${f.pct}%` : ''}</span>
     </div>`;
 
+  const oddsRow = m => `
+    <div class="value-row">
+      <span class="value-num">#${m.Number}</span>
+      <span class="value-team">${m.HomeTeam} – ${m.AwayTeam}</span>
+      <span class="odds-trio">
+        <span class="odds-val">${m.Odds1 != null ? parseFloat(m.Odds1).toFixed(2).replace('.', ',') : '–'}</span>
+        <span class="odds-val">${m.OddsX != null ? parseFloat(m.OddsX).toFixed(2).replace('.', ',') : '–'}</span>
+        <span class="odds-val">${m.Odds2 != null ? parseFloat(m.Odds2).toFixed(2).replace('.', ',') : '–'}</span>
+      </span>
+    </div>`;
+  const oddsMatches = matches.filter(m => m.Odds1 != null || m.OddsX != null || m.Odds2 != null);
+
   return renderSection('Största favoriter', topFavs, favRow)
     + `<div class="pre-match-value-row">`
     + renderSection('Bästa streckvärde', best, v => valueRow(v, true), 'Tecknen med bäst streckvärde baserat på streckprocent kontra odds')
     + renderSection('Sämsta streckvärde', worst, v => valueRow(v, false), 'Tecknen med sämst streckvärde baserat på streckprocent kontra odds')
-    + `</div>`;
+    + `</div>`
+    + renderSection('Odds', oddsMatches, oddsRow);
 }
 
 // ── H2H tab ───────────────────────────────────────────────────────────────────
@@ -1070,18 +1083,46 @@ function applyGameClass(gameName) {
 
 // ── Light / dark theme ────────────────────────────────────────────────────────
 
-function toggleTheme() {
-  const cur  = document.documentElement.dataset.theme || 'dark';
-  const next = cur === 'dark' ? 'light' : 'dark';
-  document.documentElement.dataset.theme = next;
-  localStorage.setItem('plingbot-theme', next);
-  updateThemeBtn(next);
+function resolveTheme(mode) {
+  if (mode === 'system') return matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+  return mode;
 }
 
-function updateThemeBtn(theme) {
-  const btn = document.getElementById('theme-toggle');
-  if (btn) btn.textContent = theme === 'dark' ? '☀' : '☾';
+// Sätter faktisk ljus/mörk-färg + flyttar den runda "thumb" till rätt knapp i reglaget.
+function applyThemeMode(mode) {
+  document.documentElement.dataset.theme = resolveTheme(mode);
+
+  const buttons = [...document.querySelectorAll('.theme-switch-btn')];
+  const index   = buttons.findIndex(b => b.dataset.mode === mode);
+  buttons.forEach(b => b.classList.toggle('active', b.dataset.mode === mode));
+
+  const thumb = document.querySelector('.theme-switch-thumb');
+  if (thumb && index >= 0) thumb.style.transform = `translateX(${buttons[index].offsetLeft - buttons[0].offsetLeft}px)`;
 }
+
+// Animerar temabytet som en cirkel som växer ut från knappen man klickade på,
+// med View Transitions API — faller tillbaka till ett direkt byte i webbläsare
+// som saknar stöd (t.ex. Firefox).
+function setTheme(mode, evt) {
+  localStorage.setItem('plingbot-theme', mode);
+  const run = () => applyThemeMode(mode);
+
+  if (!document.startViewTransition || !evt) { run(); return; }
+
+  const x = evt.clientX, y = evt.clientY;
+  const radius = Math.hypot(Math.max(x, innerWidth - x), Math.max(y, innerHeight - y));
+
+  document.startViewTransition(run).ready.then(() => {
+    document.documentElement.animate(
+      { clipPath: [`circle(0px at ${x}px ${y}px)`, `circle(${radius}px at ${x}px ${y}px)`] },
+      { duration: 550, easing: 'ease-in-out', pseudoElement: '::view-transition-new(root)' }
+    );
+  });
+}
+
+matchMedia('(prefers-color-scheme: dark)').addEventListener('change', () => {
+  if ((localStorage.getItem('plingbot-theme') || 'dark') === 'system') applyThemeMode('system');
+});
 
 // ── Bootstrap ─────────────────────────────────────────────────────────────────
 
@@ -1106,9 +1147,7 @@ document.getElementById('panel-tabs').addEventListener('click', e => {
   renderActiveTabContent();
 });
 
-const savedTheme = localStorage.getItem('plingbot-theme') || 'dark';
-document.documentElement.dataset.theme = savedTheme;
-updateThemeBtn(savedTheme);
+applyThemeMode(localStorage.getItem('plingbot-theme') || 'dark');
 
 refresh();
 setInterval(refresh, 5000);

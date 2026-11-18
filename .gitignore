@@ -26,3 +26,8 @@ src/PlingBot/Historisk Data/
 CLAUDE.md
 
 cloudflared/config.yml
+
+exports/
+
+scripts/export-sheet.ps1
+scripts/export-sheet.bat

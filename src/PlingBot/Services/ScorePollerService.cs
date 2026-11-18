@@ -22,7 +22,6 @@ public class ScorePollerService
     private readonly TipsConfig tipsConfig;
     private readonly Logger _logger;
     private readonly DashboardService dashboardService;
-    private readonly PlayerMessageService statusMessageService;
     private readonly CouponPercentageService couponPercentageService;
     private readonly PayoutScraperService payoutScraper;
     private readonly FixtureMappingService fixtureMapper;
@@ -36,7 +35,6 @@ public class ScorePollerService
         TipsConfig tipsConfig,
         Logger logger,
         DashboardService dashboardService,
-        PlayerMessageService statusMessageService,
         CouponPercentageService couponPercentageService,
         PayoutScraperService payoutScraper,
         FixtureMappingService fixtureMapper,
@@ -47,7 +45,6 @@ public class ScorePollerService
         this.tipsConfig = tipsConfig;
         _logger = logger;
         this.dashboardService = dashboardService;
-        this.statusMessageService = statusMessageService;
         this.couponPercentageService = couponPercentageService;
         this.payoutScraper = payoutScraper;
         this.fixtureMapper = fixtureMapper;
@@ -175,8 +172,7 @@ public class ScorePollerService
             // Posta bara om dashboarden vid uppstart om den inte redan är kanalens senaste
             // meddelande — annars blir den kvar högre upp i kanalen istället för att hamna
             // längst ner igen. Ligger den redan sist räcker det att redigera den på plats.
-            string message = statusMessageService.Generate(tipsConfig.Data.MetaData.Player);
-            await dashboardService.RepostIfNotLastAsync(channel, message);
+            await dashboardService.RepostIfNotLastAsync(channel);
         }
 
     }
@@ -199,8 +195,6 @@ public class ScorePollerService
             }
 
             await CheckScoresAsync(client);
-
-            dashboardService.RefreshExtraMessageIfNeeded(statusMessageService);
             await dashboardService.UpdateIfExistsAsync(client);
         }
         catch (Exception ex)

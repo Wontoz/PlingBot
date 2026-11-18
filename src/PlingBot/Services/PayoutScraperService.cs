@@ -8,8 +8,7 @@ public class PayoutScraperService
 {
     private readonly TipsConfig tipsConfig;
     private readonly Logger _logger;
-    private IPlaywright? playwright;
-    private IBrowser? browser;
+    private readonly PlaywrightBrowser browser = new();
     private CancellationTokenSource? cts;
     private readonly object syncLock = new();
     private readonly SemaphoreSlim fetchLock = new(1, 1);
@@ -71,13 +70,6 @@ public class PayoutScraperService
             string url  = $"https://spela.svenskaspel.se/{game}/resultat/{date}/statistik";
 
             _logger.Log($"Fetching payouts: {url}", ConsoleColor.Cyan);
-
-            if (browser == null || !browser.IsConnected)
-            {
-                playwright?.Dispose();
-                playwright = await Playwright.CreateAsync();
-                browser = await playwright.Chromium.LaunchAsync(new BrowserTypeLaunchOptions { Headless = true });
-            }
 
             var page = await browser.NewPageAsync();
             try
