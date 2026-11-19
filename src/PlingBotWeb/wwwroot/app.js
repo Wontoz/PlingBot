@@ -1088,17 +1088,26 @@ function resolveTheme(mode) {
   return mode;
 }
 
-// Sätter faktisk ljus/mörk-färg + flyttar den runda "thumb" till rätt knapp i reglaget.
+// Flyttar den runda "thumb" till rätt knapp i reglaget — egen funktion så den även kan
+// köras om vid fönster-resize (knapparnas pixelposition ändras vid brytpunkter).
+function repositionThumb(mode) {
+  const buttons = [...document.querySelectorAll('.theme-switch-btn')];
+  const index   = buttons.findIndex(b => b.dataset.mode === mode);
+  const thumb   = document.querySelector('.theme-switch-thumb');
+  if (thumb && index >= 0) thumb.style.transform = `translateX(${buttons[index].offsetLeft - buttons[0].offsetLeft}px)`;
+}
+
+// Sätter faktisk ljus/mörk-färg + flyttar thumben till rätt knapp i reglaget.
 function applyThemeMode(mode) {
   document.documentElement.dataset.theme = resolveTheme(mode);
 
   const buttons = [...document.querySelectorAll('.theme-switch-btn')];
-  const index   = buttons.findIndex(b => b.dataset.mode === mode);
   buttons.forEach(b => b.classList.toggle('active', b.dataset.mode === mode));
 
-  const thumb = document.querySelector('.theme-switch-thumb');
-  if (thumb && index >= 0) thumb.style.transform = `translateX(${buttons[index].offsetLeft - buttons[0].offsetLeft}px)`;
+  repositionThumb(mode);
 }
+
+window.addEventListener('resize', () => repositionThumb(localStorage.getItem('plingbot-theme') || 'dark'));
 
 // Animerar temabytet som en cirkel som växer ut från knappen man klickade på,
 // med View Transitions API — faller tillbaka till ett direkt byte i webbläsare
