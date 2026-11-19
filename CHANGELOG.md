@@ -1,5 +1,7 @@
 
 
+## [4.0.2] - 2026-11-19
+- CSS fix
 ## [4.0.1] - 2026-11-18
 - Fixed bug with theme switch animation
 

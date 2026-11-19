@@ -51,8 +51,8 @@
 }
 
 /* Score badges — pastell med mättad textfärg i light mode */
-:root[data-theme="light"] .score-badge.correct { background: #107e28; color: #7fe6a5; border-color: #37b164; }
-:root[data-theme="light"] .score-badge.wrong   { background: #720b0b; color: #da7a7a; border-color: #da7a7a; }
+:root[data-theme="light"] .score-badge.correct { background: #dcfce7; color: #15803d; border-color: #86efac; }
+:root[data-theme="light"] .score-badge.wrong   { background: #fee2e2; color: #b91c1c; border-color: #fca5a5; }
 :root[data-theme="light"] .score-badge.live    { background: #fef3c7; color: #92400e; border-color: #fde68a; }
 
 /* Stats-bar minority fill is #e8e8e8 — invisible on light surface-alt */
@@ -1373,7 +1373,7 @@ footer {
   .tip-btns    { flex-direction: column; gap: 3px; }
   .tip-pcts-row { position: static; width: auto; }
 
-  #app { height: auto; display: flex; flex-direction: column; }
+  #app { min-height: 100dvh; display: flex; flex-direction: column; }
 
   /* ── Header ── */
   header      { flex-wrap: nowrap; gap: 8px; padding: 8px 24px; }
@@ -1397,7 +1397,7 @@ footer {
   .team-sep       { display: none; }
 
   /* ── Kupong-layout ── */
-  .main-layout  { flex-direction: column; overflow: visible; height: auto; }
+  .main-layout  { flex-direction: column; flex: 1; overflow: visible; }
 
   .coupon-panel,
   .coupon-table { overflow: visible; height: auto; flex: none; }
