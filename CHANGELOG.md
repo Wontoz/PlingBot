@@ -1,4 +1,7 @@
 
+## [4.1.1] - 2026-11-21
+- Increased spacing between the score badge and the 1/X/2 tip symbols
+
 ## [4.1] - 2026-11-20
 - Fixed header text overflow causing horizontal scroll on narrow mobile screens
 - Removed the date next to the game badge on mobile (still shown on desktop)

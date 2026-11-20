@@ -1321,7 +1321,7 @@ footer {
 
 /* ── Compact match list (always applied — odds on top, tight row spacing) ── */
 
-#matches.matches-compact .tip-btns     { flex-direction: column; gap: 1px; padding-left: 10px; }
+#matches.matches-compact .tip-btns     { flex-direction: column; gap: 1px; padding-left: 18px; }
 #matches.matches-compact .tip-pcts-row { position: static; width: auto; }
 #matches.matches-compact .match-row    { padding-top: 4px; padding-bottom: 4px; flex: none; min-height: 60px; }
 
@@ -1349,7 +1349,7 @@ footer {
 @media (min-width: 821px) and (max-width: 1300px) {
   .side-panel  { width: 300px; }
   .match-row   { grid-template-columns: 24px 1fr 18px 44px 95px 60px 75px; }
-  .tip-btns    { padding-left: 10px; }
+  #matches.matches-compact .tip-btns { padding-left: 26px; }
 
   /* Fliknamnen + "Uppdaterad ..."-texten får inte plats på samma rad i den
      smalare sidopanelen — timestampen trycks ut ur synligt område av
