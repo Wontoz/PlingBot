@@ -186,6 +186,7 @@ header {
 .header-right{
   display: flex;
   flex-direction: row;
+  flex-shrink: 0;
 }
 .svenskaspel-lookalike-text {
   font-family: 'Futura XBlk BT', 'Inter', Arial, sans-serif;
@@ -491,6 +492,7 @@ header {
   display: inline-flex;
   align-items: center;
   justify-content: center;
+  white-space: nowrap;
   padding: 2px 8px;
   border-radius: 20px;
   font-size: 0.77rem;
@@ -533,6 +535,7 @@ header {
   border-radius: 3px;
   font-size: 0.72rem;
   font-weight: 700;
+  font-variant-numeric: tabular-nums;
   text-align: center;
   line-height: 20px;
   color: var(--muted);
@@ -1377,10 +1380,11 @@ footer {
 
   /* ── Header ── */
   header      { flex-wrap: nowrap; gap: 8px; padding: 8px 24px; }
-  .game-header, #plingbot-text  { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .header-left { min-width: 0; flex-shrink: 1; }
+  .game-header, #plingbot-text  { min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
   .game-header .game-name,
-  .game-header .game-date,
   #plingbot-text                { font-size: 1.3rem; }
+  .game-date                    { display: none; }
 
   /* ── Lagnamn: grid med logo | namn per rad ── */
   .match-teams {
@@ -1401,7 +1405,7 @@ footer {
 
   .coupon-panel,
   .coupon-table { overflow: visible; height: auto; flex: none; }
-  #matches      { display: flex; flex-direction: column; height: 55vh; flex: none; }
+  #matches      { display: flex; flex-direction: column; flex: none; }
 
   /* 5-kolumns grid (result-icon döljs) */
   .match-row {
@@ -1419,17 +1423,17 @@ footer {
 
   .match-info-col { padding-left: 8px; }
 
-  .match-teams          { font-size: 0.92rem; gap: 3px; }
+  .match-teams          { font-size: 0.8rem; gap: 3px; }
   .team-logo            { width: 16px; height: 16px; }
   .team-logo-placeholder { width: 16px; height: 16px; }
 
-  .match-status { font-size: 0.8rem; }
+  .match-status { font-size: 0.66rem; }
 
-  .score-badge  { font-size: 0.88rem; min-width: 42px; padding: 2px 5px; }
+  .score-badge  { font-size: 0.74rem; min-width: 36px; padding: 2px 5px; }
 
   .tip-btns     { gap: 4px; }
-  .tip-btn      { width: 28px; height: 26px; font-size: 0.8rem; line-height: 24px; }
-  .tip-pct      { width: 28px; font-size: 0.72rem; }
+  .tip-btn      { width: 24px; height: 22px; font-size: 0.68rem; line-height: 20px; }
+  .tip-pct      { width: 24px; font-size: 0.65rem; }
 
   /* ── Sidopanel ── */
   .side-panel   { width: 100%; flex-shrink: 1; overflow: visible; height: auto;
@@ -1460,33 +1464,35 @@ footer {
 }
 
 @media (max-width: 492px) {
-  /* Badgens vänsterkant känns längre ut i bild än pickerns högerkant trots
-     samma padding-värde — drar in vänstersidan istället för att öka högersidan
-     (som skulle kunna trigga horisontell scroll igen). */
-  header { padding-left: 16px; }
-
   /* Temaväljaren skapade horisontell sidscroll i smala mobilvyer */
   .theme-switch        { padding: 2px; gap: 1px; }
   .theme-switch-thumb  { width: 26px; height: 26px; top: 2px; left: 2px; }
   .theme-switch-btn    { width: 26px; height: 26px; }
   .theme-switch-btn svg { width: 14px; height: 14px; }
 
-  .match-teams     { flex-direction: column; align-items: flex-start; gap: 2px; }
-  .team-sep        { display: none; }
-  #matches         { height: auto; }
-  .match-row      { flex: none; min-height: 64px; }
   #plingbot-text  {display: none;}
 }
 
 @media (max-width: 820px) {
   #matches.matches-compact                       { height: auto; }
-  #matches.matches-compact .match-row            { flex: none; min-height: 64px; }
-  #matches.matches-compact .match-teams          { flex-direction: column; align-items: flex-start; gap: 2px; }
-  #matches.matches-compact .team-sep             { display: none; }
+  #matches.matches-compact .match-row            { flex: none; min-height: 58px; }
+  #matches.matches-compact .match-teams          { flex-direction: column; align-items: flex-start; gap: 5px; }
 
   .h2h-date-chip  { font-size: 0.62rem; padding: 5px 12px 3px; }
   .h2h-row        { padding: 5px 12px 7px; gap: 8px; }
   .h2h-team       { font-size: 0.78rem; gap: 6px; }
   .h2h-logo       { width: 18px; height: 18px; }
   .h2h-score      { font-size: 0.82rem; }
+}
+
+@media (min-width: 493px) and (max-width: 820px) {
+  /* Större textstorlekar som bara ryms i den bredare mobil-/surfplatte-nivån
+     (492-820px) — under 492px är det för trångt, se den egna brytpunkten. */
+  .match-row    { grid-template-columns: 18px 1fr 78px 48px 92px; }
+  .match-teams  { font-size: 0.92rem; }
+  .match-status { font-size: 0.8rem; }
+  .score-badge  { font-size: 0.88rem; min-width: 42px; }
+  .tip-btn      { width: 28px; height: 26px; font-size: 0.8rem; line-height: 24px; }
+  .tip-pct      { width: 28px; font-size: 0.72rem; }
+  #matches.matches-compact .match-row { min-height: 64px; }
 }

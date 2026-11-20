@@ -1,4 +1,15 @@
 
+## [4.1] - 2026-11-20
+- Fixed header text overflow causing horizontal scroll on narrow mobile screens
+- Removed the date next to the game badge on mobile (still shown on desktop)
+- Fixed the theme switcher's selection indicator losing alignment when the window is resized
+- Fixed the "1"/"X"/"2" tip symbols looking slightly off-center due to font metrics
+- Adjusted light theme score colors to softer, pastel backgrounds instead of saturated ones
+- Increased spacing between stacked team names on mobile
+- Fine-tuned text and button sizes across the two mobile breakpoints for a better balance between readability and fitting on screen
+- Fixed the footer not sticking to the bottom of the screen on mobile when there's little content (e.g. the idle placeholder)
+- Minor CSS cleanup (removed dead/redundant rules)
+
 ## [4.0.3] - 2026-11-19
 - Another CSS fix
 ## [4.0.2] - 2026-11-19
